@@ -19,7 +19,7 @@
 
 
 
-# The tdriver_editor application example must be compiled and in PATH for this test to work 
+# The tdriver_visualizer application example must be compiled and in PATH for this test to work 
 require 'tdriver'
 
 include TDriverVerify
