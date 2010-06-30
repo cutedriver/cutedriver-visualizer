@@ -19,7 +19,7 @@
 
 
 TEMPLATE = app
-TARGET = tdriver_visualizer
+TARGET = ../../bin/tdriver_visualizer
 DEPENDPATH += .. \
     ../inc
 INCLUDEPATH += .. \
@@ -68,7 +68,7 @@ SOURCES += ../src/tdriver_xml.cpp
 SOURCES += ../src/tdriver_find_dialog.cpp
 QT += xml
 
-# QMAKE_POST_LINK = $(COPY) listener.rb release && $(COPY) listener.rb debug
+
 # install
 unix: {
     target.path = /opt/tdriver_visualizer

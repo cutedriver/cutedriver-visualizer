@@ -21,3 +21,4 @@
 TEMPLATE = lib
 HEADERS += version.h \
     version.h
+DLLDESTDIR = ../bin

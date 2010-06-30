@@ -27,6 +27,7 @@ QT += network \
 QT -= gui
 TARGET = tdriverutil
 DESTDIR = ./
+DLLDESTDIR = ../bin
 TEMPLATE = lib
 CONFIG += shared
 CONFIG += create_prl

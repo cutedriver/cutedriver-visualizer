@@ -22,6 +22,7 @@
 # -------------------------------------------------
 TARGET = tdrivereditor
 DESTDIR = ./
+DLLDESTDIR = ../bin
 TEMPLATE = lib
 CONFIG += shared
 CONFIG += create_prl
