@@ -1,25 +1,25 @@
 ############################################################################
-## 
-## Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-## All rights reserved. 
-## Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-## 
-## This file is part of Testability Driver. 
-## 
-## If you have questions regarding the use of this file, please contact 
-## Nokia at testabilitydriver@nokia.com . 
-## 
-## This library is free software; you can redistribute it and/or 
-## modify it under the terms of the GNU Lesser General Public 
-## License version 2.1 as published by the Free Software Foundation 
-## and appearing in the file LICENSE.LGPL included in the packaging 
-## of this file. 
-## 
+##
+## Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+## All rights reserved.
+## Contact: Nokia Corporation (testabilitydriver@nokia.com)
+##
+## This file is part of Testability Driver.
+##
+## If you have questions regarding the use of this file, please contact
+## Nokia at testabilitydriver@nokia.com .
+##
+## This library is free software; you can redistribute it and/or
+## modify it under the terms of the GNU Lesser General Public
+## License version 2.1 as published by the Free Software Foundation
+## and appearing in the file LICENSE.LGPL included in the packaging
+## of this file.
+##
 ############################################################################
 
 
 TEMPLATE = app
-TARGET = tdriver_editor
+TARGET = tdriver_visualizer
 DEPENDPATH += .. \
     ../inc
 INCLUDEPATH += .. \
@@ -70,12 +70,12 @@ QT += xml
 
 # QMAKE_POST_LINK = $(COPY) listener.rb release && $(COPY) listener.rb debug
 # install
-unix: { 
+unix: {
     target.path = /opt/tdriver_visualizer
     documentation.path = /opt/tdriver_visualizer/help
     documentation.files = ../doc/help/qdoc-temp/*
-    
-    # tdriver_editor.files = debian/etc/tdriver/visualizer/tdriver_editor.sh
+
+    # tdriver_editor.files = debian/etc/tdriver/visualizer/tdriver_visualizer.sh
     tdriver_editor_complete.files += listener.rb
     tdriver_editor_complete.files += $$EDITORLIBDIR/tdriver_rubyinteract.rb
 
@@ -92,12 +92,12 @@ unix: {
 
     tdriver_editor_complete.files += $$EDITORUTILDIR/libtdriverutil.so.1
 
-    tdriver_editor_complete.files += $$EDITOR_PROTO_DIR/editor_proto                                   
-                                   
+    tdriver_editor_complete.files += $$EDITOR_PROTO_DIR/editor_proto
+
     tdriver_editor_complete.path = /opt/tdriver_visualizer
     OBJECTS_DIR = ../build/tdriver_editor
     MOC_DIR = ../build/tdriver_editor
-    
+
     # Standalone version, no dependencies embedded
     tdriver_editor_standalone.files += $$TARGET
     tdriver_editor_standalone.path = /usr/bin
@@ -110,7 +110,7 @@ unix: {
         tdriver_editor_standalone_share \
         documentation_standalone
 }
-win32: { 
+win32: {
     DLLDIR = $$dirname(QMAKE_QMAKE)
     target.path = C:/tdriver/visualizer
     tdriver_editor_complete.path = C:/tdriver/visualizer
@@ -119,9 +119,9 @@ win32: {
     tdriver_editor_complete.files += $$DLLDIR/QtCore4.dll
     tdriver_editor_complete.files += $$DLLDIR/QtGui4.dll
     tdriver_editor_complete.files += $$DLLDIR/QtNetwork4.dll
-    
+
     # message($$tdriver_editor_complete.files)  #debug
-    # tdriver_editor_completefiles = debian/etc/tdriver/visualizer/tdriver_editor.sh
+    # tdriver_editor_completefiles = debian/etc/tdriver/visualizer/tdriver_visualizer.sh
     tdriver_editor_complete.files += listener.rb
     tdriver_editor_complete.files += $$EDITORLIBDIR/tdriver_rubyinteract.rb
     documentation.path = C:/tdriver/visualizer/help

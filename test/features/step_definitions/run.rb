@@ -19,7 +19,7 @@
 
 
 
-# The tdriver_editor application example must be compiled and in PATH for this test to work 
+# The tdriver_visualizer application must be compiled and in PATH for this test to work 
 
 require 'tdriver'
 
@@ -31,13 +31,13 @@ Before do
   # <fixtures>            <fixture name="visualizer" plugin="visualizeraccessor" />    </fixtures>
   MobyUtil::Parameter[:sut_qt][:fixtures][:visualizer_fixture] = "visualizeraccessor"
         if /win/ =~ RUBY_PLATFORM
-                @tdriver_editor_path = "C:/tdriver/visualizer/tdriver_editor.exe"
+                @tdriver_visualizer_path = "C:/tdriver/visualizer/tdriver_visualizer.exe"
         elsif /linux/ =~ RUBY_PLATFORM
-                @tdriver_editor_path = "/usr/bin/tdriver_editor"
+                @tdriver_visualizer_path = "/usr/bin/tdriver_visualizer"
         else
                 raise 'Unsupported ruby platfrom'
         end
-        #puts "***** visualizer binary: #{@tdriver_editor_path}"
+        #puts "***** visualizer binary: #{@tdriver_visualizer_path}"
 end
 
 
@@ -56,7 +56,7 @@ end
 
 When("I run visualizer binary") do
         @os_name = ""
-        @app = @sut.run( :name => @tdriver_editor_path, :arguments => "-testability")
+        @app = @sut.run( :name => @tdriver_visualizer_path, :arguments => "-testability")
 end
 
 
@@ -110,7 +110,7 @@ end
 Given("visualizer application is ready") do
   @sut = TDriver.sut(:Id=>'sut_qt')
   @os_name = ""
-        @app = @sut.run( :name => @tdriver_editor_path, :arguments => "-testability")
+        @app = @sut.run( :name => @tdriver_visualizer_path, :arguments => "-testability")
   if ((@os_name == "linux") and RUBY_PLATFORM.downcase.include?("linux")) or
     ((@os_name == "windows") and RUBY_PLATFORM.downcase.include?("mswin")) or
     (@os_name == "")

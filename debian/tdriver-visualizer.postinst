@@ -24,17 +24,17 @@ case "$1" in
 	chmod o+w $dirname
 
 	# create launcher script
-	echo "#!/usr/bin/env sh" >  $dirname/launch_tdriver_editor.sh
-	echo "dirname=/opt/tdriver_visualizer/"  >>  $dirname/launch_tdriver_editor.sh
-	echo "LD_LIBRARY_PATH=\$dirname" >> $dirname/launch_tdriver_editor.sh
-	echo "export LD_LIBRARY_PATH=\$dirname" >> $dirname/launch_tdriver_editor.sh
-	echo "\$dirname/tdriver_editor \$*" >> $dirname/launch_tdriver_editor.sh
+	echo "#!/usr/bin/env sh" >  $dirname/launch_tdriver_visualizer.sh
+	echo "dirname=/opt/tdriver_visualizer/"  >>  $dirname/launch_tdriver_visualizer.sh
+	echo "LD_LIBRARY_PATH=\$dirname" >> $dirname/launch_tdriver_visualizer.sh
+	echo "export LD_LIBRARY_PATH=\$dirname" >> $dirname/launch_tdriver_visualizer.sh
+	echo "\$dirname/tdriver_visualizer \$*" >> $dirname/launch_tdriver_visualizer.sh
 	
 	# grant execution access
-	chmod +x $dirname/launch_tdriver_editor.sh
+	chmod +x $dirname/launch_tdriver_visualizer.sh
 
-	# create symlink to tdriver_editor
-	ln -f -s $dirname/launch_tdriver_editor.sh /usr/bin/tdriver_editor
+	# create symlink to tdriver_visualizer
+	ln -f -s $dirname/launch_tdriver_visualizer.sh /usr/bin/tdriver_visualizer
 	
     ;;
 

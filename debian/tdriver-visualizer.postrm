@@ -12,8 +12,8 @@ case "$1" in
 	dirname=/opt/tdriver_visualizer
 
 	rm -f $dirname/visualizer.ini
-	rm -f $dirname/tdriver_editor.log
-	rm -f $dirname/launch_tdriver_editor.sh
+	rm -f $dirname/tdriver_visualizer.log
+	rm -f $dirname/launch_tdriver_visualizer.sh
 
 	rmdir $dirname
 
