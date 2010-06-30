@@ -19,7 +19,9 @@
 
 
 TEMPLATE = app
-TARGET = ../../bin/tdriver_visualizer
+win32: TARGET = ../../bin/tdriver_visualizer
+unix: TARGET = tdriver_visualizer
+
 DEPENDPATH += .. \
     ../inc
 INCLUDEPATH += .. \
