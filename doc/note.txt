@@ -1,0 +1,1 @@
+Docs to be transferred here, check package creation and project files (especially tdriver_editor's pro file) for correct paths after that.

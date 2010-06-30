@@ -1,0 +1,35 @@
+TDriver Editor Definition File: type=MultiLine lineseparator=---
+begin
+
+end
+
+---
+def
+
+end
+
+---
+if  { }
+
+---
+if  then
+
+end
+
+---
+while  { }
+
+---
+while  do
+
+end
+
+---
+begin
+
+end while
+
+---
+until
+
+end

@@ -1,0 +1,15 @@
+require 'tdriver'
+include TDriverVerify
+
+# Note: change :Id to match your SUT platform.
+@sut = TDriver.connect_sut(:Id => 'sut_qt')
+
+# Note: change :name to be the application you want to run.
+# :name must contain full path unless application is in PATH.
+# :arguments needs to include testability plugin loading only if it's not compiled into application.
+@app = @sut.run( :name => "app_executable", :arguments => "-testability")
+
+# Add your interaction and verify code here...
+
+# This closes the currently active application on SUT.
+@sut.application.close

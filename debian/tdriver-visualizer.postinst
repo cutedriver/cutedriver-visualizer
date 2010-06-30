@@ -1,0 +1,52 @@
+#!/usr/bin/env sh
+# preinst script for Testability Driver Visualizer
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <new-preinst> `install'
+#        * <new-preinst> `install' <old-version>
+#        * <new-preinst> `upgrade' <old-version>
+#        * <old-preinst> `abort-upgrade' <new-version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+case "$1" in
+    
+    install|upgrade|configure)
+
+	# installation directory
+	dirname=/opt/tdriver_visualizer
+
+	# add writing access to other
+	chmod o+w $dirname
+
+	# create launcher script
+	echo "#!/usr/bin/env sh" >  $dirname/launch_tdriver_editor.sh
+	echo "dirname=/opt/tdriver_visualizer/"  >>  $dirname/launch_tdriver_editor.sh
+	echo "LD_LIBRARY_PATH=\$dirname" >> $dirname/launch_tdriver_editor.sh
+	echo "export LD_LIBRARY_PATH=\$dirname" >> $dirname/launch_tdriver_editor.sh
+	echo "\$dirname/tdriver_editor \$*" >> $dirname/launch_tdriver_editor.sh
+	
+	# grant execution access
+	chmod +x $dirname/launch_tdriver_editor.sh
+
+	# create symlink to tdriver_editor
+	ln -f -s $dirname/launch_tdriver_editor.sh /usr/bin/tdriver_editor
+	
+    ;;
+
+    abort-upgrade)
+    ;;
+
+    *)
+        echo "preinst called with unknown argument: '$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0
+
+

@@ -1,0 +1,23 @@
+Source: testability-driver-visualizer
+Section: devel
+Priority: extra
+Maintainer: Petri Kiiskinen <ext-petri.ak.kiiskinen@nokia.com>
+Build-Depends: debhelper (>= 5), libqt4-dev, libqt4-sql
+Standards-Version: 3.7.2
+
+Package: testability-driver-visualizer
+Architecture: any
+Depends: libc6 (>= 2.4), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.1.1)
+Description: Testability Driver Visualizer 
+ Testability Driver Visualizer is a tool for visualizing the content of qt applications.
+ Test developers can use the object information from visualizer to build test scripts.
+
+
+Package: visualizer
+Architecture: any
+Depends: libc6 (>= 2.4), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.1.1), libqt4-core, libqt4-network, libqt4-xml, ui-fonts, libqt4-sql
+Description: Testability Driver Visualizer 
+ Testability Driver Visualizer is a tool for visualizing the content of qt applications.
+ Test developers can use the object information from visualizer to build test scripts.
+
+

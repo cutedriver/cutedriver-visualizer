@@ -1,0 +1,1 @@
+mingw32-make install && cd test && cucumber && cd ..

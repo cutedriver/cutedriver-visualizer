@@ -1,0 +1,39 @@
+# The following line includes the complete tdriver environment 
+require 'tdriver'
+include TDriverVerify
+
+# Require ruby unit test framework: This enables execution of test cases and also includes assertions (Test::Unit::Assertions).
+# The test methods starting with test_ found in TC_Calculator (or any Test::Unit::TestCase derived class)
+# can be executed by running this file.
+require 'test/unit'
+
+class TC_ < Test::Unit::TestCase
+
+  attr_accessor :setup_executed
+
+  # setup and teardown methods are always executed before each and after each test case method
+  def setup
+    
+    if @setup_executed.nil? then
+      @setup_executed = true
+      # code to be executed only once for the whole test case class comes here
+    end
+    
+    # get the calculator app running 
+    @sut = TDriver.sut(:Id => "sut_qt")    
+    @app = @sut.run(:name => "")
+    
+  end
+  
+  def teardown   
+    @app.close        
+  end
+  
+  # NOTE: test_cases are executed in alphabetical order (not in the order they are defined)
+  # This is one of the reasons why test cases must not have any sequential dependencies/coupling
+  def test_
+    @app.
+    verify_
+  end
+  
+end
