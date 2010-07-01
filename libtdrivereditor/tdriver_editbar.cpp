@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 #include "tdriver_editbar.h"
@@ -45,11 +45,13 @@ TDriverEditBar::TDriverEditBar(QWidget *parent) :
     findPrevAct->setObjectName("search prev");
     addAction(findPrevAct);
     connect(findPrevAct, SIGNAL(triggered()), this, SLOT(findPrev()));
+    connect(findPrevAct, SIGNAL(triggered()), findField, SLOT(externallyTriggered())); // add text to combobox history list
 
     findNextAct->setObjectName("search next");
     addAction(findNextAct);
     connect(findNextAct, SIGNAL(triggered()), this, SLOT(findNext()));
-    connect(findField, SIGNAL(triggered(QString)), this, SLOT(findNext())); // causes activating an item to do find
+    connect(findNextAct, SIGNAL(triggered()), findField, SLOT(externallyTriggered())); // add text to combobox history list
+    connect(findField, SIGNAL(triggered(QString)), this, SLOT(findNext())); // do action with enter in combobox
 
     toggleCaseAct->setObjectName("case toggle");
     toggleCaseAct->setCheckable(true);
@@ -64,11 +66,13 @@ TDriverEditBar::TDriverEditBar(QWidget *parent) :
 
     replaceFindNextAct->setObjectName("replace next");
     connect(replaceFindNextAct, SIGNAL(triggered()), this, SLOT(replaceFindNext()));
-    connect(replaceField, SIGNAL(triggered(QString)), this, SLOT(replaceFindNext()));
+    connect(replaceFindNextAct, SIGNAL(triggered()), replaceField, SLOT(externallyTriggered())); // add text to combobox history list
+    connect(replaceField, SIGNAL(triggered(QString)), this, SLOT(replaceFindNext())); // do action with enter in combobox
     addAction(replaceFindNextAct);
 
     replaceAllAct->setObjectName("replace all");
     connect(replaceAllAct, SIGNAL(triggered()), this, SLOT(replaceAll()));
+    connect(replaceAllAct, SIGNAL(triggered()), replaceField, SLOT(externallyTriggered())); // add text to combobox history list
     addAction(replaceAllAct);
     addSeparator();
 
