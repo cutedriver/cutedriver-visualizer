@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 #ifndef TDRIVER_TABBEDEDITOR_H
@@ -60,6 +60,7 @@ public:
     const QList<QAction *> &fileActions() const { return fileActs; }
     const QList<QAction *> &recentFileActions() const { return recentFileActs; }
     const QList<QAction *> &editActions() const { return editActs; }
+    const QList<QAction *> &codeActions() const { return codeActs; }
     const QList<QAction *> &optionActions() const { return optActs; }
     const QList<QAction *> &runActions() const { return runActs; }
 
@@ -177,6 +178,7 @@ private:
 
     QList<QAction *> fileActs;
     QList<QAction *> editActs;
+    QList<QAction *> codeActs;
     QList<QAction *> optActs;
     QList<QAction *> runActs;
     QList<QAction *> recentFileActs;
@@ -194,10 +196,14 @@ private:
     // edit actions
     QAction *undoAct;
     QAction *redoAct;
-    QAction *selectAllAct;
     QAction *cutAct;
     QAction *copyAct;
     QAction *pasteAct;
+    QAction *selectAllAct;
+
+
+    // code manipulation actions
+    QAction *commentCodeAct;
 
     // option actions
     QAction *toggleUsingTabulatorsModeAct;

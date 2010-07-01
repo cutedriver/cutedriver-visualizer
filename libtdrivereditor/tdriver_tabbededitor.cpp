@@ -93,10 +93,13 @@ void TDriverTabbedEditor::disconnectTabSignals()
     // disconnect signals from actions connecting to editor widgets in tabs
     disconnect(undoAct, SIGNAL(triggered()), 0, 0);
     disconnect(redoAct, SIGNAL(triggered()), 0, 0);
-    disconnect(selectAllAct, SIGNAL(triggered()), 0, 0);
     disconnect(cutAct, SIGNAL(triggered()), 0, 0);
     disconnect(copyAct, SIGNAL(triggered()), 0, 0);
     disconnect(pasteAct, SIGNAL(triggered()), 0, 0);
+    disconnect(selectAllAct, SIGNAL(triggered()), 0, 0);
+
+    disconnect(commentCodeAct, SIGNAL(triggered()), 0, 0);
+
     disconnect(toggleUsingTabulatorsModeAct, SIGNAL(toggled(bool)), 0, 0);
     disconnect(toggleRubyModeAct, SIGNAL(toggled(bool)), 0, 0);
     disconnect(toggleWrapModeAct, SIGNAL(toggled(bool)), 0, 0);
@@ -117,10 +120,13 @@ void TDriverTabbedEditor::connectTabSignals(TDriverCodeTextEdit *editor)
 {
     connect(undoAct, SIGNAL(triggered()), editor, SLOT(undo()));
     connect(redoAct, SIGNAL(triggered()), editor, SLOT(redo()));
-    connect(selectAllAct, SIGNAL(triggered()), editor, SLOT(selectAll()));
     connect(cutAct, SIGNAL(triggered()), editor, SLOT(cut()));
     connect(copyAct, SIGNAL(triggered()), editor, SLOT(copy()));
     connect(pasteAct, SIGNAL(triggered()), editor, SLOT(paste()));
+    connect(selectAllAct, SIGNAL(triggered()), editor, SLOT(selectAll()));
+
+    connect(commentCodeAct, SIGNAL(triggered()), editor, SLOT(commentCode()));
+
     connect(editor, SIGNAL(copyAvailable(bool)), copyAct, SLOT(setEnabled(bool)));
     connect(editor, SIGNAL(copyAvailable(bool)), cutAct, SLOT(setEnabled(bool)));
 
@@ -281,6 +287,14 @@ void TDriverTabbedEditor::createActions()
     editActs.append(selectAllAct);
 
     // a tdriver_codetextedit action
+    commentCodeAct = new QAction(tr("&Comment/Uncomment region/line"), this);
+    commentCodeAct->setObjectName("editor commentcode");
+    commentCodeAct->setShortcut(QKeySequence(tr("Ctrl+/")));
+    commentCodeAct->setToolTip(tr("Comments or uncomments selected code or current line"));
+    codeActs.append(commentCodeAct);
+
+
+    // a tdriver_codetextedit action
     toggleUsingTabulatorsModeAct = new QAction(tr("&Use TAB characters"), this);
     toggleUsingTabulatorsModeAct->setObjectName("editor toggle usetabs");
     toggleUsingTabulatorsModeAct->setToolTip(tr("Toggle converting tabs to spaces and using spaces as indentation"));
@@ -359,6 +373,7 @@ void TDriverTabbedEditor::createActions()
     // make actions() to return a flat list of all actions
     addActions(fileActs);
     addActions(editActs);
+    addActions(codeActs);
     addActions(optActs);
     addActions(runActs);
 }
@@ -677,8 +692,8 @@ TDriverCodeTextEdit *TDriverTabbedEditor::prepareExtAction()
 
 
 void TDriverTabbedEditor::connectConsoles(TDriverRunConsole *rConsole, QWidget *rContainer,
-                                        TDriverDebugConsole *dConsole, QWidget *dContainer,
-                                        TDriverRubyInteract *iConsole, QWidget *iContainer)
+                                          TDriverDebugConsole *dConsole, QWidget *dContainer,
+                                          TDriverRubyInteract *iConsole, QWidget *iContainer)
 {
     runConsoleContainer = rContainer;
     runConsole = rConsole;
@@ -1153,6 +1168,8 @@ QMenuBar *TDriverTabbedEditor::createEditorMenuBar(QWidget *parent)
     bar->actions().last()->setObjectName("editor edit");
     editMenu->setObjectName("editor edit");
     editMenu->addActions(editActions());
+    editMenu->addSeparator();
+    editMenu->addActions(codeActions());
 
     QMenu *optMenu = bar->addMenu(tr("Toggles"));
     bar->actions().last()->setObjectName("editor opt");

@@ -80,7 +80,7 @@ static inline void verifySettings()
            MEC::settings->contains(SK_TABLE) &&
            MEC::settings->contains(SK_USER) &&
            MEC::settings->contains(SK_PASSWORD))) {
-        qWarning() << "TDriverCodeTextEdit creating default translation database settings";
+        qWarning("TDriverCodeTextEdit creating default translation database settings");
         MEC::settings->setValue(SK_HOST, "trtdriver1.nmp.nokia.com");
         MEC::settings->setValue(SK_NAME, "tdriver_locale");
         MEC::settings->setValue(SK_TABLE, "TB10_1_week16_loc");
@@ -346,35 +346,80 @@ void TDriverCodeTextEdit::completerActivated(const QModelIndex &index)
 static int tabSize = 8;
 static int indentSize = 2;
 
-static inline void countIndentation(const QString &line, int &indentLevel, int &indentChars)
+
+static inline bool adjustSpaceIndent(int &spaceIndent, QChar ch)
 {
-    int lineind = 0;
-    int pos;
-
-    for (pos = 0; pos < line.length(); ++pos) {
-        char ch = line.at(pos).toAscii();
-
-        if (ch == '\t') lineind = ((lineind + tabSize) % tabSize) * tabSize;
-        else if (ch == ' ')    lineind += 1;
-        else break;
+    if (ch.isSpace()) {
+        if (ch == '\t') {
+            spaceIndent = (spaceIndent - (spaceIndent % tabSize)) + tabSize;
+        }
+        else {
+            ++spaceIndent;
+        }
+        return true;
     }
-
-    indentChars = pos;
-    indentLevel = (lineind+1)/indentSize;
-
-    // qDebug() << FFL << indentLevel << indentChars;
+    else return false;
 }
 
 
-static inline int countIndentChars(const QString &str)
+static inline void countIndentation(const QString &line, int &indentLevel, int &indentChars)
 {
-    int i;
-    for(i=0 ; i < str.size(); ++i) {
-        if(!str[i].isSpace()) break;
-        QChar::Category cat = str[i].category();
+    // counts indentation level (eg 1 if there are only spaces and their count is indentSize)
+    int spaceIndent = 0;
+    int pos;
+
+    for (pos = 0; pos < line.length(); ++pos) {
+        QChar ch = line.at(pos);
+
+        if (!adjustSpaceIndent(spaceIndent, ch))
+            break;
+    }
+
+    indentChars = pos;
+    indentLevel = (spaceIndent+indentSize-1)/indentSize; // round indentLevel up
+}
+
+
+static inline QChar countSpaceIndentation(const QString &line, int &spaceIndent)
+{
+    QChar ch; // creates null QChar
+    spaceIndent = 0;
+
+    for (int pos = 0; pos < line.size(); ++pos) {
+        ch = line.at(pos);
+        if (!adjustSpaceIndent(spaceIndent, ch))
+            break;
+    }
+
+    return ch;
+}
+
+
+static inline int spaceIndentToPos(const QString &line, int spaceIndent)
+{
+    int pos = 0;
+    int spcInd = 0;
+
+    while (spaceIndent > spcInd && pos < line.size()) {
+        QChar ch = line.at(pos);
+        if (!adjustSpaceIndent(spcInd, ch))
+            break;
+        ++pos;
+    }
+
+    return pos;
+}
+
+
+static inline int countIndentChars(const QString &line)
+{
+    int ii;
+    for(ii=0 ; ii < line.size(); ++ii) {
+        if(!line.at(ii).isSpace()) break;
+        QChar::Category cat = line[ii].category();
         if( cat == QChar::Separator_Line || cat == QChar::Separator_Paragraph ) break;
     }
-    return i;
+    return ii;
 }
 
 
@@ -506,7 +551,7 @@ void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
         dbOk = true;
     }
     else {
-        qWarning() << FCFL << "Database connection error!";
+        qWarning("Translation database connection error!");
         dbOk = false;
     }
     delete translator; translator = NULL;
@@ -1166,6 +1211,55 @@ void TDriverCodeTextEdit:: doReplaceAll(QString findText, QString replaceText, Q
 }
 
 
+void TDriverCodeTextEdit::commentCode()
+{
+    QTextCursor cur = textCursor();
+    if (!cur.hasSelection()) {
+        cur.select(QTextCursor::BlockUnderCursor);
+    }
+
+    bool doCommenting = false;
+    int commentSpaceIndent = -1;
+
+    QString text = cur.selectedText();
+    MEC::replaceUnicodeSeparators(text);
+    QStringList lines = text.split("\n", QString::KeepEmptyParts);
+    foreach (QString line, lines) {
+        int spcInd;
+        QChar firstRealChar = countSpaceIndentation(line, spcInd);
+        if (!doCommenting && firstRealChar != '#' && !line.trimmed().isEmpty()) {
+            // line does not start with comment and is not blank line
+            // -> do commenting instead of uncommenting
+            doCommenting = true;
+        }
+
+        if (spcInd < commentSpaceIndent || commentSpaceIndent < 0 ) {
+            // keep track of position where column of comment marks is to be placed
+            commentSpaceIndent=spcInd;
+        }
+    }
+
+    for(int ii=0; ii < lines.size(); ++ii) {
+        QString &line = lines[ii];
+        if(doCommenting) {
+            int pos = spaceIndentToPos(line, commentSpaceIndent);
+            line.insert(pos, '#');
+        }
+        else {
+            int dummy;
+            int whitespaces;
+            countIndentation(line, dummy, whitespaces);
+            if (whitespaces < line.length() && line.at(whitespaces) == '#') {
+                // remove first char after whitespaces
+                line.remove(whitespaces, 1);
+            }
+        }
+    }
+
+    cur.insertText(lines.join("\n"));
+}
+
+
 void TDriverCodeTextEdit::setRunning(bool state)
 {
     //qDebug() << FCFL << fileName() << state;
@@ -1500,7 +1594,7 @@ void TDriverCodeTextEdit::rdebugDelBreakpoint(int rdebugInd)
     Q_ASSERT(count == 1); // rdebugBpSet use must make sure this holds!
 
     updateHighlights();
-    if (count > 1) qWarning() << FFL << "Removed multiple breakpoints with same rdebug breakpoint index" << rdebugInd;
+    if (count > 1) qDebug() << FCFL << "Removed multiple breakpoints with same rdebug breakpoint index" << rdebugInd;
 }
 
 
