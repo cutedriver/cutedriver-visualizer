@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 
@@ -26,82 +26,54 @@ void MainWindow::createTopMenuBar() {
     menubar = new QMenuBar();
     menubar->setObjectName( "main menubar" );
 
-// file
-
     createFileMenu();
-
-// view
-
     createViewMenu();
-
-// view
-
     createSearchMenu();
-
-
-// devices
-
     createDevicesMenu();
-
-// application
-
     createApplicationsMenu();
-
-// record
-
     createRecordMenu();
-
-
-// help
-
     createHelpMenu();
-
-
 }
 
 
 void MainWindow::createFileMenu() {
 
-// menu
+    // menu
 
     fileMenu = new QMenu( tr( " &File " ), this );
     fileMenu->setObjectName("main file");
 
-// parse tdriver parameters xml
-    QList<QKeySequence> tmpSeq;
+    // parse tdriver parameters xml
 
     parseSUT = fileMenu->addAction( "&Parse TDRIVER parameters xml file..." );
     parseSUT->setObjectName("main parsesut");
-    tmpSeq.clear(); tmpSeq <<
-            QKeySequence(tr("Ctrl+M, P")) <<
-            QKeySequence(tr("Ctrl+M, Ctrl+P"));
-    parseSUT->setShortcuts(tmpSeq);
+    parseSUT->setShortcuts(QList<QKeySequence>() <<
+                           QKeySequence(tr("Ctrl+M, P")) <<
+                           QKeySequence(tr("Ctrl+M, Ctrl+P")));
     parseSUT->setDisabled( true );
     fileMenu->addSeparator();
 
-// Load state xml file
+    // Load state xml file
 
     loadXmlAction = new QAction( this );
     loadXmlAction->setObjectName("main loadxml");
     loadXmlAction->setText( "&Load state XML file" );
-    tmpSeq.clear(); tmpSeq <<
-            QKeySequence(tr("Ctrl+M, L")) <<
-            QKeySequence(tr("Ctrl+M, Ctrl+L"));
-    loadXmlAction->setShortcuts(tmpSeq);
+    loadXmlAction->setShortcuts(QList<QKeySequence>() <<
+                                QKeySequence(tr("Ctrl+M, L")) <<
+                                QKeySequence(tr("Ctrl+M, Ctrl+L")));
     fileMenu->addAction( loadXmlAction );
 
-// save state xml
+    // save state xml
 
     saveStateAction = new QAction( this );
     saveStateAction->setObjectName("main savestate");
     saveStateAction->setText( "&Save current state to folder..." );
-    tmpSeq.clear(); tmpSeq <<
-            QKeySequence(tr("Ctrl+M, S")) <<
-            QKeySequence(tr("Ctrl+M, Ctrl+S"));
-    saveStateAction->setShortcuts(tmpSeq);
+    saveStateAction->setShortcuts(QList<QKeySequence>() <<
+                                  QKeySequence(tr("Ctrl+M, S")) <<
+                                  QKeySequence(tr("Ctrl+M, Ctrl+S")));
     fileMenu->addAction( saveStateAction );
 
-// font
+    // font
 
     fileMenu->addSeparator();
     fontAction = new QAction( this );
@@ -111,35 +83,32 @@ void MainWindow::createFileMenu() {
     fileMenu->addAction( fontAction );
     fileMenu->addSeparator();
 
-// refresh
+    // refresh
 
     refreshAction = new QAction( this );
     refreshAction->setObjectName("main refresh");
     refreshAction->setText( "&Refresh" );
-    tmpSeq.clear(); tmpSeq <<
-           QKeySequence(tr("Ctrl+R"));// <<
-           //QKeySequence(QKeySequence::Refresh);
-    refreshAction->setShortcuts(tmpSeq); //QKeySequence(tr("Ctrl+R"))); //QKeySequence( Qt::ControlModifier + Qt::Key_R ) );
+    refreshAction->setShortcut(QKeySequence(tr("Ctrl+R")));
+    // this is F5 in some platforms, Ctrl+R in some: QKeySequence(QKeySequence::Refresh);
     refreshAction->setDisabled( true );
     fileMenu->addAction( refreshAction );
 
-// tap and auto-refresh on Image View click
+    // tap and auto-refresh on Image View click
     //note:  action constructed in MainWindow::createImageViewDockWidget()
 
-// disconnect
+    // disconnect
 
     disconnectCurrentSUT = new QAction( this );
     disconnectCurrentSUT->setObjectName("main disconnectsut");
     disconnectCurrentSUT->setText( "Dis&connect SUT" );
-    tmpSeq.clear(); tmpSeq <<
-            QKeySequence(tr("Ctrl+M, C")) <<
-            QKeySequence(tr("Ctrl+M, Ctrl+C"));
-    disconnectCurrentSUT->setShortcuts(tmpSeq);
+    disconnectCurrentSUT->setShortcuts(QList<QKeySequence>() <<
+                                       QKeySequence(tr("Ctrl+M, C")) <<
+                                       QKeySequence(tr("Ctrl+M, Ctrl+C")));
     disconnectCurrentSUT->setDisabled( true );
     fileMenu->addAction( disconnectCurrentSUT );
     fileMenu->addSeparator();
 
-// exit
+    // exit
 
     exitAction = fileMenu->addAction( "E&xit" );
     exitAction->setObjectName("main exit");
@@ -149,7 +118,7 @@ void MainWindow::createFileMenu() {
     menubar->actions().last()->setObjectName("main file");
 
 
-// signals
+    // signals
 
     connect( parseSUT, SIGNAL( triggered() ), this, SLOT( getParameterXML() ) );
     connect( loadXmlAction, SIGNAL( triggered() ), this, SLOT( loadFileData() ) );
@@ -166,7 +135,7 @@ void MainWindow::createSearchMenu() {
     searchMenu = new QMenu( " &Search ", this );
     searchMenu->setObjectName("main search");
 
-// dockable widget menu: clipboard
+    // dockable widget menu: clipboard
 
     findAction = new QAction( this );
     findAction->setObjectName("main find");
@@ -182,16 +151,16 @@ void MainWindow::createSearchMenu() {
 
 void MainWindow::createViewMenu() {
 
-// menu
+    // menu
 
     viewMenu = new QMenu( " &View ", this );
     viewMenu->setObjectName("main view");
-// dockable widget menu
+    // dockable widget menu
 
     viewMenuDockWidgets = new QMenu( "&Dockable widgets", viewMenu );
     viewMenuDockWidgets->setObjectName("main view dockwidgets");
 
-// dockable widget menu: clipboard
+    // dockable widget menu: clipboard
 
     viewClipboard = new QAction( this );
     viewClipboard->setObjectName("main toggle clipboard");
@@ -199,7 +168,7 @@ void MainWindow::createViewMenu() {
     viewClipboard->setCheckable( true );
     viewMenuDockWidgets->addAction( viewClipboard );
 
-// dockable widget menu: view images
+    // dockable widget menu: view images
 
     viewImage = new QAction( this );
     viewImage->setObjectName("main toggle imageview");
@@ -207,7 +176,7 @@ void MainWindow::createViewMenu() {
     viewImage->setCheckable( true );
     viewMenuDockWidgets->addAction( viewImage );
 
-// dockable widget menu: properties view
+    // dockable widget menu: properties view
 
     viewProperties = new QAction( this );
     viewProperties->setObjectName("main toggle properties");
@@ -217,7 +186,7 @@ void MainWindow::createViewMenu() {
     viewMenuDockWidgets->addAction( viewProperties );
     viewProperties->setVisible( false );
 
-// dockable widget menu: shortcuts
+    // dockable widget menu: shortcuts
 
     viewShortcuts = new QAction( this );
     viewShortcuts->setObjectName("main toggle shortcuts");
@@ -225,7 +194,7 @@ void MainWindow::createViewMenu() {
     viewShortcuts->setCheckable( true );
     viewMenuDockWidgets->addAction( viewShortcuts );
 
-// dockable widget menu: editor
+    // dockable widget menu: editor
 
     viewEditor = new QAction( this );
     viewEditor->setObjectName("main toggle editor");
@@ -234,7 +203,7 @@ void MainWindow::createViewMenu() {
     viewMenuDockWidgets->addAction( viewEditor );
 
 
-// dockable widget menu: (s60) navigation buttons
+    // dockable widget menu: (s60) navigation buttons
 
     viewButtons = new QAction( this );
     viewButtons->setObjectName("main toggle navigationbuttons");
@@ -245,12 +214,12 @@ void MainWindow::createViewMenu() {
     viewMenu->addMenu( viewMenuDockWidgets );
     viewMenu->actions().last()->setObjectName("main view widgets");
 
-// object tree menu:
+    // object tree menu:
 
     viewMenuObjectTree = new QMenu( "&Object tree", viewMenu );
     viewMenuObjectTree->setObjectName("main view tree");
 
-// object tree menu: expand all
+    // object tree menu: expand all
 
     viewExpandAll = new QAction( this );
     viewExpandAll->setObjectName("main tree expand");
@@ -259,7 +228,7 @@ void MainWindow::createViewMenu() {
     viewExpandAll->setCheckable( false );
     viewMenuObjectTree->addAction( viewExpandAll );
 
-// object tree menu: collapse all
+    // object tree menu: collapse all
 
     viewCollapseAll = new QAction( this );
     viewCollapseAll->setObjectName("main tree collapse");
@@ -273,7 +242,7 @@ void MainWindow::createViewMenu() {
 
     viewMenu->addSeparator();
 
-// Show XML
+    // Show XML
 
     showXmlAction = new QAction( this );
     showXmlAction->setObjectName("main showxml");
@@ -284,7 +253,7 @@ void MainWindow::createViewMenu() {
     menubar->addMenu( viewMenu );
     menubar->actions().last()->setObjectName("main view");
 
-// signals
+    // signals
 
     connect( viewClipboard, SIGNAL( triggered() ), this, SLOT( changeClipboardVisibility() ) );
     connect( viewImage, SIGNAL( triggered() ), this, SLOT( changeImagesVisibility() ) );
@@ -302,7 +271,7 @@ void MainWindow::createViewMenu() {
 
 void MainWindow::createDevicesMenu() {
 
-// menu
+    // menu
 
     deviceMenu = new QMenu( tr( " &Devices " ), this );
     deviceMenu->setObjectName("main device");
@@ -314,7 +283,7 @@ void MainWindow::createDevicesMenu() {
 
 void MainWindow::createApplicationsMenu() {
 
-// menu
+    // menu
 
     appsMenu = new QMenu( tr( " &Applications " ), this );
     appsMenu->setObjectName("main applications");
@@ -326,13 +295,13 @@ void MainWindow::createApplicationsMenu() {
 
 void MainWindow::createRecordMenu() {
 
-// menu
+    // menu
 
     recordMenu = new QMenu( tr( " &Record " ), this );
     recordMenu->setObjectName("main record");
     recordMenu->setDisabled( true );
 
-// open record dialog
+    // open record dialog
 
     recordAction = new QAction( this );
     recordAction->setObjectName("main record");
@@ -343,7 +312,7 @@ void MainWindow::createRecordMenu() {
     menubar->addMenu( recordMenu );
     menubar->actions().last()->setObjectName("main record");
 
-// signals
+    // signals
 
     connect( recordAction, SIGNAL( triggered() ), this, SLOT( openRecordWindow() ) );
 
@@ -351,15 +320,13 @@ void MainWindow::createRecordMenu() {
 
 
 
-void MainWindow::createHelpMenu() {
-
-// menu
-
+void MainWindow::createHelpMenu()
+{
+    // menu
     helpMenu = new QMenu( tr( " &Help " ), this );
     helpMenu->setObjectName("main help");
 
-// TDRIVER help
-
+    // TDRIVER help
     visualizerAssistant = new QAction( this );
     visualizerAssistant->setObjectName("main help assistant");
     visualizerAssistant->setText( tr( "TDRIVER &Help" ) );
@@ -367,16 +334,14 @@ void MainWindow::createHelpMenu() {
     visualizerAssistant->setShortcut( tr( "F1" ) );
     helpMenu->addAction( visualizerAssistant );
 
-// Visualizer Help
-
+    // Visualizer Help
     visualizerHelp = new QAction( this );
     visualizerHelp->setObjectName("main help visualizer");
     visualizerHelp->setText( tr( "&Visualizer Help" ) );
     helpMenu->addAction( visualizerHelp );
     helpMenu->addSeparator();
 
-// About TDRIVER
-
+    // About TDRIVER
     aboutVisualizer = new QAction( this );
     aboutVisualizer->setObjectName("main help about");
     aboutVisualizer->setText( tr( "About Visualizer" ) );
@@ -384,18 +349,18 @@ void MainWindow::createHelpMenu() {
     menubar->addMenu( helpMenu );
     menubar->actions().last()->setObjectName("main help");
 
-// signals
-
+    // signals
     connect( visualizerAssistant, SIGNAL( triggered() ), this, SLOT( showMainVisualizerAssistant() ) );
     connect( visualizerHelp, SIGNAL( triggered() ), this, SLOT( showVisualizerHelp() ) );
     connect( aboutVisualizer, SIGNAL( triggered() ), this, SLOT( showAboutVisualizer() ) );
-
 }
 
-// Function to send disconnect sut to listener (slot)
-bool MainWindow::disconnectSUT() {
 
+// Function to send disconnect sut to listener (slot)
+bool MainWindow::disconnectSUT()
+{
     bool result = true;
+
     QString status = "SUT disconnected";
 
     if ( !execute_command( commandDisconnectSUT, QString( activeDevice.value( "name" ) + " disconnect" ), activeDevice.value( "name" ) ) ) {
@@ -404,9 +369,7 @@ bool MainWindow::disconnectSUT() {
     }
 
     statusbar( status, 2000 );
-
     return result;
-
 }
 
 
@@ -615,13 +578,13 @@ bool MainWindow::createStateArchive( QString targetPath )
     if ( filesExist ) {
 
         QMessageBox::StandardButton selectedButton =
-            QMessageBox::question(
-                this,
-                "Overwrite?",
-                "Files already exist in the target folder and will be overwritten, do you wish to continue?",
-                QMessageBox::Yes | QMessageBox::No,
-                QMessageBox::No
-            );
+                QMessageBox::question(
+                        this,
+                        "Overwrite?",
+                        "Files already exist in the target folder and will be overwritten, do you wish to continue?",
+                        QMessageBox::Yes | QMessageBox::No,
+                        QMessageBox::No
+                        );
 
 
         if ( selectedButton == QMessageBox::No ) { return true; }
