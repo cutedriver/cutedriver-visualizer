@@ -1226,14 +1226,17 @@ void TDriverCodeTextEdit::commentCode()
     QStringList lines = text.split("\n", QString::KeepEmptyParts);
     foreach (QString line, lines) {
         int spcInd;
-        QChar firstRealChar = countSpaceIndentation(line, spcInd);
-        if (!doCommenting && firstRealChar != '#' && !line.trimmed().isEmpty()) {
-            // line does not start with comment and is not blank line
-            // -> do commenting instead of uncommenting
-            doCommenting = true;
+        bool blankLine = MEC::isBlankLine(line);
+        if (!doCommenting && !blankLine) {
+            QChar firstRealChar = countSpaceIndentation(line, spcInd);
+            if (firstRealChar != '#') {
+                // line does not start with comment and is not blank line
+                // -> do commenting instead of uncommenting
+                doCommenting = true;
+            }
         }
 
-        if (spcInd < commentSpaceIndent || commentSpaceIndent < 0 ) {
+        if ((!blankLine && spcInd < commentSpaceIndent) || commentSpaceIndent < 0 ) {
             // keep track of position where column of comment marks is to be placed
             commentSpaceIndent=spcInd;
         }
@@ -1242,8 +1245,12 @@ void TDriverCodeTextEdit::commentCode()
     for(int ii=0; ii < lines.size(); ++ii) {
         QString &line = lines[ii];
         if(doCommenting) {
-            int pos = spaceIndentToPos(line, commentSpaceIndent);
-            line.insert(pos, '#');
+            if (!line.isEmpty()) { // don't comment completely empty lines
+                int pos = spaceIndentToPos(line, commentSpaceIndent);
+                if (line.length()) {
+                    line.insert(pos, '#');
+                }
+            }
         }
         else {
             int dummy;
