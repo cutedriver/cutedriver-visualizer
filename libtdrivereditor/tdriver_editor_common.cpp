@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 #include "tdriver_editor_common.h"
@@ -37,8 +37,6 @@
 
 QSettings *MEC::settings = NULL;
 
-const QRegExp * const MEC::SpaceRegExp = new QRegExp("\\s");
-
 
 void MEC::dumpStdItem(int indent, const QStandardItem *item)
 {
@@ -48,7 +46,7 @@ void MEC::dumpStdItem(int indent, const QStandardItem *item)
         qDebug() << indstr + "NULL ITEM!";
         return;
     }
-    qDebug() << /*indent <<*/ indstr + item->text()+"\t" << item->data(CountRole);
+    qDebug() << indstr + item->text()+"\t" << item->data(Qt::DisplayRole) << item->data(Qt::EditRole);
     for (int row=0 ; row < item->rowCount(); ++row) {
         dumpStdItem(indent+1, item->child(row));
     }
@@ -263,6 +261,18 @@ QString &MEC::replaceUnicodeSeparators(QString &str)
     return str
             .replace(QChar::LineSeparator, QChar::ParagraphSeparator)
             .replace(QChar::ParagraphSeparator, "\n");
+}
+
+
+bool MEC::isBlankLine(const QString &line)
+{
+    const QChar *cp = line.constData();
+    unsigned count = line.length();
+    while (count--) {
+        if (!cp->isSpace()) return false;
+        ++cp;
+    }
+    return true;
 }
 
 
@@ -493,6 +503,12 @@ char MEC::getPair(char ch)
     case '(': return ')';
     case '[': return ']';
     case '{': return '}';
+    case '<': return '>';
+
+    case ')': return '(';
+    case ']': return '[';
+    case '}': return '{';
+    case '>': return '<';
 
     default: return ch;
     }
