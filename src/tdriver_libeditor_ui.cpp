@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 #include "tdriver_main_window.h"
@@ -46,7 +46,10 @@ void MainWindow::createEditorDocks() {
     Q_ASSERT(defaultFont);
     tabEditor->setEditorFont(*defaultFont);
     connect(this, SIGNAL(defaultFontSet(QFont)), tabEditor, SLOT(setEditorFont(QFont)));
+    connect(this, SIGNAL(disconnectSUTResult(bool)), tabEditor, SLOT(proceedRun()));
     connect(this, SIGNAL(insertToCodeEditor(QString,bool,bool)), tabEditor, SLOT(smartInsert(QString,bool,bool)));
+    connect(tabEditor, SIGNAL(requestRunPreparations(QString)), this, SLOT(disconnectExclusiveSUT()));
+
     Q_ASSERT(imageWidget);
     connect(imageWidget, SIGNAL(insertToCodeEditor(QString,bool,bool)), tabEditor, SLOT(smartInsert(QString,bool,bool)));
 

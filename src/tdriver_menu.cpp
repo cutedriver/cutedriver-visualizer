@@ -369,7 +369,20 @@ bool MainWindow::disconnectSUT()
     }
 
     statusbar( status, 2000 );
+    emit disconnectSUTResult(result);
     return result;
+}
+
+
+bool MainWindow::disconnectExclusiveSUT()
+{
+    if ( activeDevice.value( "type" ).contains( "s60", Qt::CaseInsensitive ) ) {
+        return disconnectSUT();
+    }
+    else {
+        emit disconnectSUTResult(false);
+        return false;
+    }
 }
 
 

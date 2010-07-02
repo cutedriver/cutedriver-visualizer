@@ -58,6 +58,7 @@ static inline QString strippedName(const QString &fullFileName) {
 TDriverTabbedEditor::TDriverTabbedEditor(QWidget *parent) :
         QTabWidget(parent),
         editorFont(),
+        proceedRunPending(false),
         editBarP(new TDriverEditBar(this)),
         rubyHighlighter(new TDriverRubyHighlighter()),
         plainHighlighter(new TDriverHighlighter()),
@@ -708,7 +709,8 @@ void TDriverTabbedEditor::connectConsoles(TDriverRunConsole *rConsole, QWidget *
     connect(rConsole, SIGNAL(needDebugConsole(bool)), dConsole, SLOT(clear()));
 
     connect(this, SIGNAL(requestRun(QString,TDriverRunConsole::RunRequestType)),
-            rConsole, SLOT(runFile(QString,TDriverRunConsole::RunRequestType)));
+            this, SLOT(runFilePrep(QString,TDriverRunConsole::RunRequestType)));
+            //rConsole, SLOT(runFilePrep(QString,TDriverRunConsole::RunRequestType)));
 
     connect(rConsole, SIGNAL(requestRemoteDebug(QString,quint16,quint16, TDriverRunConsole*)),
             dConsole, SLOT(connectTo(QString,quint16,quint16, TDriverRunConsole*)));
@@ -1184,13 +1186,32 @@ QMenuBar *TDriverTabbedEditor::createEditorMenuBar(QWidget *parent)
     return bar;
 }
 
+
 void TDriverTabbedEditor::setEditorFont(QFont font)
 {
     editorFont = font;
     for (int ind = 0; ind < count() ; ++ind) {
         TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(widget(ind));
-        if (editor)     setEditorFontAndTabWidth(editor, editorFont);
+        if (editor) setEditorFontAndTabWidth(editor, editorFont);
     }
+}
+
+
+void TDriverTabbedEditor::runFilePrep(QString fileName, TDriverRunConsole::RunRequestType type)
+{
+    proceedRunFilename = fileName;
+    proceedRunType = type;
+    proceedRunPending = true;
+    emit requestRunPreparations(fileName);
+}
+
+
+bool TDriverTabbedEditor::proceedRun()
+{
+    if (!proceedRunPending) return false;
+
+    proceedRunPending = false;
+    return runConsole->runFile(proceedRunFilename, proceedRunType);
 }
 
 

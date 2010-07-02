@@ -82,6 +82,7 @@ protected:
 
 signals:
     void requestRun(QString filename, TDriverRunConsole::RunRequestType);
+    void requestRunPreparations(QString filename);
 
     // breakpoint signals below are just forwarders for TDriverCodeTextEdit signals
     void addedBreakpoint(struct MEC::Breakpoint);
@@ -92,6 +93,9 @@ signals:
 
 public slots:
     void setEditorFont(QFont font);
+
+    void runFilePrep(QString fileName, TDriverRunConsole::RunRequestType type);
+    bool proceedRun();
 
     void addBreakpoint(struct MEC::Breakpoint);
     void addBreakpointList(QList<struct MEC::Breakpoint>);
@@ -154,6 +158,9 @@ private slots:
 
 private:
     QFont editorFont;
+    QString proceedRunFilename;
+    TDriverRunConsole::RunRequestType proceedRunType;
+    bool proceedRunPending;
 
     TDriverEditBar *editBarP;
 
