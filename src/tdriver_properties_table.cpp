@@ -533,7 +533,7 @@ void MainWindow::propertiesItemPressed ( QTableWidgetItem * item )
             QList<QTableWidgetItem *> selectedItems;
             selectedItems = item->tableWidget()->selectedItems();
 
-            // combine object type and selected attribute rows into a TDRIVER ruby test object selection script
+            // combine object type and selected attribute rows into a TDriver ruby test object selection script
             QString objectIdentification = objectType + "(";
 
             for ( int i = 0; i < selectedItems.size(); i++ ) {

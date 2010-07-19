@@ -1,23 +1,23 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
- 
- 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
+
+
 
 #include "tdriver_main_window.h"
 
@@ -44,7 +44,7 @@ void MainWindow::createXMLFileDataWindow() {
     // reset find dialog position, stored before closing the dialog and restored when dialog opened
     xmlViewPos = QPoint(-1, -1);
 
-    xmlView->setWindowTitle( "TDRIVER Visualizer XML" );
+    xmlView->setWindowTitle( "TDriver Visualizer XML" );
 
     QVBoxLayout *layout = new QVBoxLayout( xmlView );
     //QGridLayout *layout = new QGridLayout( xmlView );
@@ -73,7 +73,7 @@ void MainWindow::createXMLFileDataWindow() {
     QGridLayout* layout2 = new QGridLayout( groupBox );
     layout2->setObjectName("xmlview search");
 
-    // search text combobox 
+    // search text combobox
     findStringComboBox = new QComboBox;
     findStringComboBox->setObjectName("xmlview search");
     findStringComboBox->setEditable( true );
@@ -121,7 +121,7 @@ void MainWindow::createXMLFileDataWindow() {
 
     layout2->addWidget( showXmlMatchCase, 2, 0);
     layout2->addWidget( showXmlMatchEntireWord, 3, 0);
-    layout2->addWidget( showXmlBackwards, 2, 1);    
+    layout2->addWidget( showXmlBackwards, 2, 1);
     layout2->addWidget( showXmlWrapAround, 3, 1);
 
     layout2->addWidget( showXmlFindButton, 2, 3);
@@ -186,7 +186,7 @@ void MainWindow::findStringFromXml() {
 
                 // no matches found, check if text already selected? if not, show warning popup
                 if ( !sourceEdit->textCursor().selectedText().contains( findStringComboBox->currentText(), showXmlMatchCase->isChecked() ? Qt::CaseSensitive : Qt::CaseInsensitive ) ) {
-            
+
                     sourceEdit->setTextCursor( beginPos );
 
                     QMessageBox::warning( 0, tr( "Find" ), " No matches found with '" + findStringComboBox->currentText() + "' " );
@@ -197,7 +197,7 @@ void MainWindow::findStringFromXml() {
                 break;
             }
         }
-    
+
     }
 
 }

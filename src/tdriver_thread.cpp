@@ -54,9 +54,8 @@ bool RubyThread::start()
     if ( !QFile::exists( listener ) && !listenerNotFound ) {
         execute_status = false;
         listenerNotFound = true;
-        msgBoxTitle = "Failed to initialize TDRIVER Driver";
-        msgBoxContent =
-                QString( "Could not find Visualizer listener server file:\n\n%1" ).arg(listener);
+        msgBoxTitle = "Failed to initialize TDriver";
+        msgBoxContent = QString( "Could not find Visualizer listener server file:\n\n%1" ).arg(listener);
 
     } else {
         process.start( "ruby", QStringList() << listener );
@@ -89,25 +88,25 @@ bool RubyThread::start()
                 if ( !resultByteArray.contains( "done" ) ) {
 
                     execute_status = false;
-                    msgBoxTitle = "Failed to initialize TDRIVER Driver";
+                    msgBoxTitle = "Failed to initialize TDriver";
 
-                    if ( resultByteArray.contains( "LoadError: TDRIVER GEM" ) ) {
+                    if ( resultByteArray.contains( "LoadError: tdriver GEM" ) ) {
                         QString rubyoptString = getenv( "RUBYOPT" );
                         msgBoxContent =
-                                QString( "Please verify that TDRIVER gem is installed properly.  " ) +
+                                QString( "Please verify that tdriver GEM is installed properly.  " ) +
                                 QString( rubyoptString.contains( "rubygems", Qt::CaseInsensitive ) ? "" : "\n\nNote: RUBYOPT environment setting must be set to 'rubygems'  " );
 
                     } else {
 
                         msgBoxContent =
-                                QString( "Error occured while initializing TDRIVER Driver.\nSee details for more information.\n\nIf the problem persists, please contact support.  " );
+                                QString( "Error occured while initializing TDriver.\nSee details for more information.\n\nIf the problem persists, please contact support.  " );
 
                     }
                 }
 
             } else {
-                msgBoxTitle = "Failed to initialize TDRIVER Driver";
-                msgBoxContent = "Error reading data from Ruby process";
+                msgBoxTitle = "Failed to initialize TDriver";
+                msgBoxContent = "Error reading data from listener server process";
                 execute_status = false;
 
             }
@@ -183,12 +182,12 @@ bool RubyThread::execute_cmd( QString cmd, QString & errorMessage )
     QString tmp_cmd = cmd + "\n";
 
     if ( listenerNotFound || offlineMode ) {
-        errorMessage = "TDRIVER Driver or listener server is not running. Please verify that TDRIVER Driver is installed properly and restart TDRIVER Visualizer.  \n\nIf the problem persists, please contact support.  \n";
+        errorMessage = "TDriver or listener server is not running. Please verify that TDriver is installed properly and restart Visualizer.  \n\nIf the problem persists, please contact support.\n";
         return false;
     }
 
     if ( !running() ) {
-        qDebug() << "RubyThread: Warning: Ruby thread not running anymore! Restaring Ruby process...";
+        qDebug() << "RubyThread: Warning: Ruby thread not running anymore! Restaring listener server process...";
         start();
     }
 

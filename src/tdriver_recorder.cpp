@@ -1,23 +1,23 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
- 
- 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
+
+
 
 #include <QtCore/QFile>
 
@@ -29,12 +29,12 @@
 
 /*!
     \class TDriverRecorder
-    \brief Uses TDRIVER to record script fragments from testable applications.
-    
-    TDriverRecorder uses TDRIVER framework to record scripts from testable qt
+    \brief Uses TDriver to record script fragments from testable applications.
+
+    TDriverRecorder uses TDriver framework to record scripts from testable qt
     applications. Certain mouse events are tracked and test script fragment
     is generated from them. Ouputs the fragment to an editor window.
-    
+
  */
 
 TDriverRecorder::TDriverRecorder( RubyThread& thread, QWidget* parent ) : QDialog( parent ), mThread( thread ) {
@@ -63,7 +63,7 @@ void TDriverRecorder::setup() {
 
     resize( 800,500 );
 
-    setWindowTitle( "TDRIVER Visualizer Recorder" );
+    setWindowTitle( "TDriver Visualizer Recorder" );
 
     mScriptField = new QTextEdit( this );
     mScriptField->setObjectName("recorder text");
@@ -152,7 +152,7 @@ void TDriverRecorder::stopRecording() {
 
     if(!mThread.execute_cmd( command, errorMessage ) ){
 
-        QMessageBox::critical( 0, tr( "Error" ), errorMessage ); 
+        QMessageBox::critical( 0, tr( "Error" ), errorMessage );
 
     } else {
 
@@ -183,7 +183,7 @@ void TDriverRecorder::stopRecording() {
 
         } else {
 
-            QMessageBox::critical( 0, tr( "Error" ), "Could not open recorded script file."); 
+            QMessageBox::critical( 0, tr( "Error" ), "Could not open recorded script file.");
 
         }
 
@@ -207,7 +207,7 @@ void TDriverRecorder::testRecording() {
 
     if ( !file.open( QIODevice::WriteOnly | QIODevice::Text ) ){
 
-        QMessageBox::critical( 0, tr( "Error" ), "Could not store recorded script file."); 
+        QMessageBox::critical( 0, tr( "Error" ), "Could not store recorded script file.");
 
     } else {
 
@@ -215,7 +215,7 @@ void TDriverRecorder::testRecording() {
 
         for( int i = 0 ; i < doc->lineCount(); i++ ){
 
-            file.write( doc->findBlockByLineNumber( i ).text().toUtf8().data() ); 
+            file.write( doc->findBlockByLineNumber( i ).text().toUtf8().data() );
             // file.write( doc->findBlockByLineNumber( i ).text().toAscii().data() );
 
             file.write( "\n" );
@@ -229,7 +229,7 @@ void TDriverRecorder::testRecording() {
 
         if( !mThread.execute_cmd( command, errorMessage ) ){
 
-            QMessageBox::critical( 0, tr( "Error" ), errorMessage ); 
+            QMessageBox::critical( 0, tr( "Error" ), errorMessage );
 
         }
 

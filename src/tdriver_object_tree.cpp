@@ -638,7 +638,7 @@ QString MainWindow::treeObjectIdentification(int treeItemPtr, int sutItemPtr)
     QString objText = attributesMap.value( treeItemPtr ).value("text").value("value");
 
     if ( sutItemPtr == treeItemPtr && objIdentification == "sut" ) {
-        objIdentification = tr( "TDRIVER.sut( :Id => '" ) + activeDevice.value( "name" ) + tr( "' )" );
+        objIdentification = tr( "TDriver.sut( :Id => '" ) + activeDevice.value( "name" ) + tr( "' )" );
     } else if ( objName != "NoName" && !objName.isEmpty() ) {
         objIdentification.append("( :name => '" + objName + "' )");
     } else if(objText != "" && !objText.isEmpty()) {

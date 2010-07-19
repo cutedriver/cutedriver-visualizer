@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 #include "tdriver_main_window.h"
@@ -72,7 +72,7 @@ bool MainWindow::checkVersion( QString currentVersion, QString requiredVersion )
 // to setup UI of Visualizer
 bool MainWindow::setup() {
 
-    // determine if connection to TDRIVER established -- if not, allow user to run TDRIVER Visualizer in viewer/offline mode
+    // determine if connection to TDriver established -- if not, allow user to run TDriver Visualizer in viewer/offline mode
     if ( thread.running() ){
 
         offlineMode = false;
@@ -83,8 +83,8 @@ bool MainWindow::setup() {
 
             QMessageBox::critical(
                     0,
-                    tr("TDRIVER Visualizer v") + VISUALIZER_VERSION,
-                    tr("TDRIVER Visualizer is not compatible with this version of TDRIVER Driver. Please update your TDRIVER environment.\n\n") +
+                    tr("TDriver Visualizer v") + VISUALIZER_VERSION,
+                    tr("TDriver Visualizer is not compatible with this version of TDriver. Please update your TDriver environment.\n\n") +
                     tr("Installed version: ") + installedDriverVersion +
                     tr("\nRequired version: ") + REQUIRED_DRIVER_VERSION + tr(" or later")+
                     tr("\n\nLaunching in offline mode.")
@@ -152,11 +152,11 @@ bool MainWindow::setup() {
         QMessageBox::critical(
                 0,
                 "Error",
-                "Could not locate TDRIVER parameters file (tdriver_parameters.xml) from folder: " + tdriverPath + "\n\n" +
+                "Could not locate TDriver parameters file (tdriver_parameters.xml) from folder: " + tdriverPath + "\n\n" +
                 "Please select folder where configuration files are located.\n"
                 );
 
-        tdriverPath = selectFolder( "Select TDRIVER configuration file folder", "Folder", QFileDialog::AcceptOpen ) + "/";
+        tdriverPath = selectFolder( "Select TDriver configuration file folder", "Folder", QFileDialog::AcceptOpen ) + "/";
 
     }
 
@@ -646,7 +646,7 @@ bool MainWindow::execute_command( ExecuteCommandType commandType, QString comman
                 break;
 
             case commandGetVersionNumber:
-                errorPrefix = "Failed to retrieve TDRIVER Driver version number.\n\n";
+                errorPrefix = "Failed to retrieve TDriver version number.\n\n";
                 break;
 
             default:

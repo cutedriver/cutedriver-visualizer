@@ -45,7 +45,7 @@ void MainWindow::createFileMenu() {
 
     // parse tdriver parameters xml
 
-    parseSUT = fileMenu->addAction( "&Parse TDRIVER parameters xml file..." );
+    parseSUT = fileMenu->addAction( "&Parse TDriver parameters xml file..." );
     parseSUT->setObjectName("main parsesut");
     parseSUT->setShortcuts(QList<QKeySequence>() <<
                            QKeySequence(tr("Ctrl+M, P")) <<
@@ -326,10 +326,10 @@ void MainWindow::createHelpMenu()
     helpMenu = new QMenu( tr( " &Help " ), this );
     helpMenu->setObjectName("main help");
 
-    // TDRIVER help
+    // TDriver help
     visualizerAssistant = new QAction( this );
     visualizerAssistant->setObjectName("main help assistant");
-    visualizerAssistant->setText( tr( "TDRIVER &Help" ) );
+    visualizerAssistant->setText( tr( "TDriver &Help" ) );
     // Remove the next line if F1 presses are to be handled in the custom event handler ( for context sensitivity ).
     visualizerAssistant->setShortcut( tr( "F1" ) );
     helpMenu->addAction( visualizerAssistant );
@@ -341,7 +341,7 @@ void MainWindow::createHelpMenu()
     helpMenu->addAction( visualizerHelp );
     helpMenu->addSeparator();
 
-    // About TDRIVER
+    // About TDriver
     aboutVisualizer = new QAction( this );
     aboutVisualizer->setObjectName("main help about");
     aboutVisualizer->setText( tr( "About Visualizer" ) );
@@ -454,7 +454,7 @@ void MainWindow::openRecordWindow()
 
         if ( currentApplication.value( "id" ).isEmpty() ) {
 
-            QMessageBox::warning( this, tr( "TDRIVER Visualizer Recorder" ), "In order to start recording a target application must be selected\nfrom applications menu.\n\nPlease select one and try again." );
+            QMessageBox::warning( this, tr( "TDriver Visualizer Recorder" ), "In order to start recording a target application must be selected\nfrom applications menu.\n\nPlease select one and try again." );
 
         } else {
 
