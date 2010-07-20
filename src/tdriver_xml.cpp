@@ -139,7 +139,9 @@ void MainWindow::buildBehavioursMap() {
 
                 QString methodName = methodElement.attribute( "name" );
 
+/*
                 QString methodDescription("");
+
                 QXmlStreamReader xmlReader(methodElement.elementsByTagName( "description" ).item( 0 ).toElement().text());
                 while (!xmlReader.atEnd()) {
                     if ( xmlReader.readNext() == QXmlStreamReader::Characters ) {
@@ -148,6 +150,7 @@ void MainWindow::buildBehavioursMap() {
                 }
 
                 QString methodExample("");
+
                 xmlReader.clear();
                 xmlReader.addData(methodElement.elementsByTagName( "example" ).item( 0 ).toElement().text());
                 while (!xmlReader.atEnd()) {
@@ -161,7 +164,20 @@ void MainWindow::buildBehavioursMap() {
                 QMap<QString, QString> methodDetails;
 
                 methodDetails.insert( "description", methodDescription );
-                methodDetails.insert( "template", methodExample );
+                methodDetails.insert( "example", methodExample );
+*/
+
+                //QString methodDescription = methodElement.elementsByTagName( "description" ).item( 0 ).toElement().text();
+
+                //QString methodExample = methodElement.elementsByTagName( "example" ).item( 0 ).toElement().text();
+
+                //qDebug() << methodName << methodDescription << methodExample;
+
+                QMap<QString, QString> methodDetails;
+
+                methodDetails.insert( "description", (QString) methodElement.elementsByTagName( "description" ).item( 0 ).toElement().text() );
+
+                methodDetails.insert( "example", (QString) methodElement.elementsByTagName( "example" ).item( 0 ).toElement().text() );
 
                 behaviour.addMethod( methodName, methodDetails );
 
