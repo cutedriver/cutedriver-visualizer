@@ -26,7 +26,7 @@ begin
 rescue LoadError => ex
 
   # do not change the following sting
-  STDOUT.puts "LoadError: TDriver GEM\n#{ ex.message }"
+  STDOUT.puts "LoadError: tdriver GEM\n#{ ex.message }"
   exit;
 
 rescue => ex
@@ -52,7 +52,7 @@ end
 
 def check_version
 
-  STDOUT.puts ENV['TDriver_VERSION']
+  STDOUT.puts ENV['TDRIVER_VERSION']
 
 end
 
