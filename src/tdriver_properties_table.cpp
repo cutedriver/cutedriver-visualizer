@@ -256,7 +256,7 @@ void MainWindow::updateMethodsTableContent() {
                     methodsTable->setItem( rowNumber, 0, methodName );
 
                     // add method example
-                    QTableWidgetItem *methodExample = new QTableWidgetItem( method.value( "template" ) );
+                    QTableWidgetItem *methodExample = new QTableWidgetItem( method.value( "example" ) );
                     methodExample->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEnabled );
                     methodExample->setToolTip( method.value( "description" ) );
                     methodExample->setFont( *defaultFont );
