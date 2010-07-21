@@ -1026,7 +1026,7 @@ void TDriverCodeTextEdit::keyPressEvent(QKeyEvent *event)
             // perform special indentation handling
             QTextCursor tc(textCursor());
             int pos = tc.columnNumber();
-            tc.select(QTextCursor::BlockUnderCursor);
+            tc.select(QTextCursor::LineUnderCursor);
             enum { doNothing, doTab, doBS, doDel } action = doNothing;
 
             int indLevel, indChars;
