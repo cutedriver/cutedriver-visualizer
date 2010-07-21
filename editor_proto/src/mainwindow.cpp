@@ -82,6 +82,8 @@ MainWindow::MainWindow(QStringList filelist, QWidget *parent) :
 
     tabs->connectConsoles(runConsole, runDock, debugConsole, debugDock, irConsole, irDock);
 
+    connect(tabs, SIGNAL(requestRunPreparations(QString)), tabs, SLOT(proceedRun()));
+
     restoreGeometry(MEC::settings->value("editor/geometry").toByteArray());
     restoreState(MEC::settings->value("editor/windowstate").toByteArray());
 
