@@ -24,8 +24,8 @@
 #include <QLineEdit>
 
 TDriverComboLineEdit::TDriverComboLineEdit(QWidget *parent) :
-    QComboBox(parent),
-    clearOnTriggerPriv(false)
+        QComboBox(parent),
+        clearOnTriggerPriv(false)
 {
     setEditable(true);
     setInsertPolicy(QComboBox::InsertAtTop);
@@ -38,38 +38,41 @@ TDriverComboLineEdit::TDriverComboLineEdit(QWidget *parent) :
 void TDriverComboLineEdit::trigger(){
     externallyTriggered();
     emit triggered(currentText());
+
+    if (clearOnTriggerPriv) {
+        clearEditText();
+    }
 }
 
 
 void TDriverComboLineEdit::externallyTriggered()
 {
-    if (insertPolicy() != QComboBox::NoInsert) {
+    QString text(lineEdit()->text());
 
-        QString text(currentText());
+    if (insertPolicy() != QComboBox::NoInsert && !text.isEmpty()) {
 
-        // emulate duplicatesEnabled property
-        if (!duplicatesEnabled()) {
-            for(int ii=count()-1; ii >= 0; --ii) {
-                if (itemText(ii) == text) {
-                    removeItem(ii);
+        if(count() == 0 || itemText(0) != text) {
+
+            // emulate duplicatesEnabled property
+            if (!duplicatesEnabled()) {
+                for(int ii=count()-1; ii >= 0; --ii) {
+                    if (itemText(ii) == text) {
+                        removeItem(ii);
+                    }
                 }
             }
-        }
 
-        // emulate insertPolicy property
-        switch (insertPolicy()) {
+            // emulate insertPolicy property
+            switch (insertPolicy()) {
 
-        case QComboBox::InsertAtTop:
-            insertItem(0, text);
-            break;
+            case QComboBox::InsertAtTop:
+                insertItem(0, text);
+                setCurrentIndex(0);
+                break;
 
-        case QComboBox::InsertAtBottom:
-            addItem(text);
-            break;
-
-        default:
-            qWarning("%s:%s: unsupported insertPolicy", __FILE__, __FUNCTION__);
-            addItem(text);
+            default:
+                qWarning("%s:%s: unsupported insertPolicy", __FILE__, __FUNCTION__);
+            }
         }
     }
     lineEdit()->selectAll();
@@ -84,14 +87,15 @@ void TDriverComboLineEdit::setClearOnTrigger(bool clear)
 
 void TDriverComboLineEdit::keyPressEvent(QKeyEvent *event)
 {
-    QComboBox::keyPressEvent(event);
 
     switch(event->key()) {
+
     case Qt::Key_Enter:
     case Qt::Key_Return:
-        emit triggered(currentText());
-        if (clearOnTriggerPriv) {
-            clearEditText();
-        }
+        trigger();
+        break;
+
+    default:
+        QComboBox::keyPressEvent(event);
     }
 }
