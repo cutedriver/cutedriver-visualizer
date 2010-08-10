@@ -1,3 +1,9 @@
+testability-driver-visualizer (0.9.1-1) unstable; urgency=low
+
+  * new release tag
+
+ -- Ville Kankainen <ext-ville.kankainen@nokia.com>  Tue, 10 Aug 2010 17:00:15 +0300
+
 testability-driver-visualizer (0.9.0-2) unstable; urgency=low
 
   * Fixed connecting signal of uninitialized object by re-arranging initialization order.
