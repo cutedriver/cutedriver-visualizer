@@ -240,6 +240,8 @@ void MainWindow::findDialogTextChanged( const QString & text )
 
 void MainWindow::objectTreeCurrentChanged(QTreeWidgetItem*current)
 {
+    if (!findDialogSubtreeOnly || !current) return;
+
     if (findDialogSubtreeOnly->checkState() != Qt::Unchecked) {
         while(current) {
             if (current == findDialogSubtreeRoot) return; // ok!
@@ -369,9 +371,7 @@ void MainWindow::createFindDialog() {
     connect( findDialogText, SIGNAL( editTextChanged( const QString & ) ),
              this, SLOT( findDialogTextChanged( const QString & ) ) );
 
-    Q_ASSERT(objectTree);
-    connect (objectTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
-             this, SLOT(objectTreeCurrentChanged(QTreeWidgetItem*)));
+    //Q_ASSERT(objectTree);    connect (objectTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),             this, SLOT(objectTreeCurrentChanged(QTreeWidgetItem*)));
 
     connect( findDialogFindButton, SIGNAL( pressed() ), this, SLOT( findNextTreeObject() ) );
     connect( findDialogCloseButton, SIGNAL( pressed() ), this, SLOT( closeFindDialog() ) );
