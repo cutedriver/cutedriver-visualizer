@@ -366,10 +366,12 @@ void MainWindow::createFindDialog() {
 
     connect( findDialogSubtreeOnly, SIGNAL(stateChanged(int)),
              this, SLOT(findDialogSubtreeChanged(int)));
-    connect (objectTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
-             this, SLOT(objectTreeCurrentChanged(QTreeWidgetItem*)));
     connect( findDialogText, SIGNAL( editTextChanged( const QString & ) ),
              this, SLOT( findDialogTextChanged( const QString & ) ) );
+
+    Q_ASSERT(objectTree);
+    connect (objectTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
+             this, SLOT(objectTreeCurrentChanged(QTreeWidgetItem*)));
 
     connect( findDialogFindButton, SIGNAL( pressed() ), this, SLOT( findNextTreeObject() ) );
     connect( findDialogCloseButton, SIGNAL( pressed() ), this, SLOT( closeFindDialog() ) );
