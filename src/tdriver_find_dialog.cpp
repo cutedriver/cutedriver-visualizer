@@ -219,7 +219,6 @@ void MainWindow::findFromSubTree(QTreeWidgetItem *current, const QString &findSt
 
         if (compareTreeItem(current, findString, matchCase, entireWords, searchAttributes)) {
             // found
-            Q_ASSERT( objectTreeMap.contains( (int)current ) && current == objectTreeMap.value( (int)current ));
             objectTree->setCurrentItem( current );
             return;
         }
