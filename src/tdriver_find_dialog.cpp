@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 
@@ -100,16 +100,16 @@ void MainWindow::findNextTreeObject()
     switch ( findDialogSubtreeOnly->checkState() ) {
 
     case Qt::Unchecked:
-        if (findDialogSubtreeRoot != objectTree->topLevelItem(0)) {
-            findDialogSubtreeRoot = objectTree->topLevelItem(0);
-        }
+        // search entire tree
+        findDialogSubtreeRoot = objectTree->topLevelItem(0);
         break;
 
     case Qt::PartiallyChecked:
+        // if subtreeroot already set, use it
         if (findDialogSubtreeRoot) {
             break;
         }
-                // fall through
+        // else fall through
 
     case Qt::Checked:
         findDialogSubtreeOnly->setCheckState(Qt::PartiallyChecked);
@@ -238,19 +238,29 @@ void MainWindow::findDialogTextChanged( const QString & text )
 }
 
 
-void MainWindow::objectTreeCurrentChanged(QTreeWidgetItem*current)
+void MainWindow::findDialogHandleTreeCurrentChange(QTreeWidgetItem*current)
 {
-    if (!findDialogSubtreeOnly || !current) return;
+    if (!findDialogSubtreeOnly) return; // not initialized yet
 
-    if (findDialogSubtreeOnly->checkState() != Qt::Unchecked) {
+    if (findDialogSubtreeOnly->checkState() == Qt::Unchecked) return; // don't care
+
+    // subtree searching enabled, check if current is in subtree
+    // and set current to NULL if subtree search needs to be disabled
+    if (!findDialogSubtreeRoot) {
+        current = NULL;
+    }
+    else {
         while(current) {
-            if (current == findDialogSubtreeRoot) return; // ok!
+            if (current == findDialogSubtreeRoot) break;
             current = current->parent();
         }
+    }
+
+    if (!current) {
         // current not in selected subtree, switch off subtree-only searching
         findDialogSubtreeOnly->setCheckState(Qt::Unchecked);
+        findDialogSubtreeRoot = NULL;
     }
-    else findDialogSubtreeOnly = NULL;
 }
 
 
@@ -371,7 +381,9 @@ void MainWindow::createFindDialog() {
     connect( findDialogText, SIGNAL( editTextChanged( const QString & ) ),
              this, SLOT( findDialogTextChanged( const QString & ) ) );
 
-    //Q_ASSERT(objectTree);    connect (objectTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),             this, SLOT(objectTreeCurrentChanged(QTreeWidgetItem*)));
+    Q_ASSERT(objectTree);
+    connect (objectTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
+             this, SLOT(findDialogHandleTreeCurrentChange(QTreeWidgetItem*)));
 
     connect( findDialogFindButton, SIGNAL( pressed() ), this, SLOT( findNextTreeObject() ) );
     connect( findDialogCloseButton, SIGNAL( pressed() ), this, SLOT( closeFindDialog() ) );

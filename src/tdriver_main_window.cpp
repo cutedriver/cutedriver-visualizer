@@ -187,9 +187,6 @@ bool MainWindow::setup() {
     // create tdriver recorder
     mRecorder = new TDriverRecorder( thread, this );
 
-    // create find dialog
-    createFindDialog();
-
     // create show xml dialog
     createXMLFileDataWindow();
 
@@ -199,6 +196,9 @@ bool MainWindow::setup() {
 
     // create user interface
     createUi();
+
+    // create find dialog
+    createFindDialog();
 
     // parse parameters xml to retrieve all devices
     if ( !offlineMode ){

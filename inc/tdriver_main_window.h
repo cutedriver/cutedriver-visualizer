@@ -645,7 +645,7 @@ private slots:
     void findNextTreeObject();
 
     void findDialogTextChanged( const QString & text );
-    void objectTreeCurrentChanged(QTreeWidgetItem*current);
+    void findDialogHandleTreeCurrentChange(QTreeWidgetItem*current);
     void findDialogSubtreeChanged( int value);
     void closeFindDialog();
 
