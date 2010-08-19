@@ -523,7 +523,7 @@ MainWindow::ContextMenuSelection MainWindow::showCopyAppendContextMenu()
         else if ( selectedAction == insertPath )
             result = insertPathAction;
         else
-            qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << "Bad context menu result";
+            qWarning("Bad context menu action in %s:%s", __FILE__, __FUNCTION__);
 
     }
     return result;

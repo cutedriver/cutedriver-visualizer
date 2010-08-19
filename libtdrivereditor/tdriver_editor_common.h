@@ -23,10 +23,6 @@
 
 // Debug-related stuff
 
-#include <QDebug>
-#define FFL __FILE__ << ':' << __FUNCTION__ << ':' << __LINE__ << ": "
-#define FCFL __FILE__ << QString(metaObject()->className())+"::"+__FUNCTION__ << ':' << __LINE__ << ": "
-
 // this will make rdebug control console visible and non-quiet
 #define DEBUG_RDEBUG_CONTROL 0
 

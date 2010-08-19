@@ -24,6 +24,7 @@
 #include <QtGui/QTextDocument>
 #include <QtGui/QTextBlock>
 #include <QtGui/QProgressDialog>
+#include <QtGui/QMessageBox>
 
 #include "tdriver_recorder.h"
 
@@ -37,10 +38,10 @@
 
  */
 
-TDriverRecorder::TDriverRecorder( RubyThread& thread, QWidget* parent ) : QDialog( parent ), mThread( thread ) {
-
+TDriverRecorder::TDriverRecorder( QWidget* parent ) :
+        QDialog( parent )
+{
     setup();
-
 }
 
 TDriverRecorder::~TDriverRecorder() {
@@ -108,14 +109,18 @@ void TDriverRecorder::setup() {
     setLayout( grid );
 
     setSizeGripEnabled( true );
-
 }
 
-void TDriverRecorder::startRecording() {
 
-    mRecButton->setEnabled( false );
-    mStopButton->setEnabled( true );
-    mTestButton->setEnabled( false );
+void TDriverRecorder::setActionsEnabled(bool start, bool stop, bool test)
+{
+    mRecButton->setEnabled( start );
+    mStopButton->setEnabled( stop );
+    mTestButton->setEnabled( test );
+}
+
+
+void TDriverRecorder::startRecording() {
 
     mScriptField->clear();
     mScriptField->setEnabled( false );
@@ -123,79 +128,59 @@ void TDriverRecorder::startRecording() {
     QString command = mStrActiveDevice + " start_record " + mActiveApp;
     QString errorMessage;
 
-    if( !mThread.execute_cmd( command, errorMessage ) ){
+    BAListMap msg;
+    msg["input"] << command.toAscii();
 
-        QMessageBox::critical( 0, tr( "Error" ), errorMessage );
-
+    setActionsEnabled(false, false, false);
+    if (TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 15000)) {
+        qDebug("Recording started");
+        setActionsEnabled(false, true, false);
     }
-
+    else {
+        qWarning("Recording start failed");
+        QMessageBox::critical( 0, tr( "Can't start recording" ), errorMessage );
+        setActionsEnabled(true, false, true);
+    }
 }
+
 
 void TDriverRecorder::stopRecording() {
 
-    QProgressDialog progressDialog( this );
-
-    progressDialog.setWindowTitle( tr( "Generating script" ) );
-
-    progressDialog.setMinimumDuration( 0 );
-
-    progressDialog.setRange( 0, 100 );
-
-    progressDialog.setLabelText( tr( "Stopping recorder" ) );
-
-    progressDialog.setValue( 1 );
-    progressDialog.setValue( 15 );
-
     QString command = mStrActiveDevice + " stop_record " + mActiveApp;
-
     QString errorMessage;
 
-    if(!mThread.execute_cmd( command, errorMessage ) ){
+    BAListMap msg;
+    msg["input"] << command.toAscii();
+    setActionsEnabled(false, false, false);
 
-        QMessageBox::critical( 0, tr( "Error" ), errorMessage );
-
-    } else {
-
-        progressDialog.setLabelText( tr( "Generating script" ) );
-
-        progressDialog.setValue( 50 );
+    if (TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 15000)) {
         mScriptField->clear();
         mScriptField->setEnabled( true );
 
         QFile data( outputPath + "/visualizer_rec_fragment.rb" );
 
         if ( data.open( QFile::ReadOnly ) ) {
-
             QTextStream stream( &data );
             QString line;
 
-            progressDialog.setValue( 65 );
-
             do {
-
                 line = stream.readLine();
-
-                if ( !line.isNull() ) { mScriptField->append( line ); }
-
+                if ( !line.isNull() ) {
+                    mScriptField->append( line );
+                }
             } while( !line.isNull() );
 
-            progressDialog.setValue( 85 );
-
         } else {
-
             QMessageBox::critical( 0, tr( "Error" ), "Could not open recorded script file.");
-
         }
-
     }
-
-    progressDialog.setValue( 100 );
-
-    mRecButton->setEnabled( true );
-    mStopButton->setEnabled( false );
-    mTestButton->setEnabled( true );
-
+    else {
+        QMessageBox::critical( 0, tr( "Can't stop recording" ), errorMessage );
+        qDebug("Recording stop failed, aborting anyway");
+    }
+    setActionsEnabled(true, false, true);
 }
+
 
 void TDriverRecorder::testRecording() {
 
@@ -227,16 +212,17 @@ void TDriverRecorder::testRecording() {
         QString command = mStrActiveDevice + " test_record";
         QString errorMessage;
 
-        if( !mThread.execute_cmd( command, errorMessage ) ){
-
-            QMessageBox::critical( 0, tr( "Error" ), errorMessage );
-
+        BAListMap msg;
+        msg["input"] << command.toAscii();
+        setActionsEnabled(false, false, false);
+        if (TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 15000)) {
+            QMessageBox::critical( 0, tr( "Recording test ok" ), errorMessage );
         }
-
-        mRecButton->setEnabled( true );
-        mStopButton->setEnabled( false );
-        mTestButton->setEnabled( true );
-
+        else {
+            QMessageBox::critical( 0, tr( "Can't test recording" ), errorMessage );
+        }
+        setActionsEnabled(true, false, true);
     }
-
 }
+
+

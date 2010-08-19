@@ -41,6 +41,7 @@
 #include <tdriver_util.h>
 #include <tdriver_translationdb.h>
 #include "tdriver_editor_common.h"
+#include <tdriver_debug_macros.h>
 
 #define ALWAYS_USE_RUBY_SYMBOLS 1
 
@@ -896,7 +897,7 @@ void TDriverCodeTextEdit::tryInteractiveCompletion(QKeyEvent *)
     }
     else if (lastBaseText == newBaseText) {
         popupCompleterInfo(tr("Searching completions for:\n") + lastBaseText);
-        emit requestInteractiveCompletion(MEC::replaceUnicodeSeparators(lastBaseText));
+        emit requestInteractiveCompletion(MEC::replaceUnicodeSeparators(lastBaseText).toLocal8Bit());
     }
     else {
         popupCompleterInfo(tr("CTRL+I to complete:") + newBaseText);
@@ -906,7 +907,7 @@ void TDriverCodeTextEdit::tryInteractiveCompletion(QKeyEvent *)
 }
 
 
-void TDriverCodeTextEdit::popupInteractiveCompletion(QObject *client, QString statement, QStringList completions)
+void TDriverCodeTextEdit::popupInteractiveCompletion(QObject *client, QByteArray statement, QStringList completions)
 {
     Q_UNUSED(statement);
     if (client != this) return; // not for us
@@ -934,15 +935,16 @@ void TDriverCodeTextEdit::popupInteractiveCompletion(QObject *client, QString st
 }
 
 
-void TDriverCodeTextEdit::errorInteractiveCompletion(QObject *client, QString statement, QStringList completions)
+void TDriverCodeTextEdit::errorInteractiveCompletion(QObject *client, QByteArray statement, QStringList completions)
 {
     Q_UNUSED(completions);
+    QString stmStr(QString::fromLocal8Bit(statement));
     if (client != this) return; // not for us
     //qDebug() << FCFL << "got" << statement << "/" << completions;
     if (completionType != BASIC_COMPLETION) return; // obsolete
 
     //qDebug() << FCFL << "base" << lastBaseText << "vs statement" << statement;
-    if (lastBaseText != statement) return;
+    if (lastBaseText != stmStr) return;
 
     qDebug() << FCFL << "canceling completion";
     cancelCompletion();
@@ -1097,7 +1099,7 @@ void TDriverCodeTextEdit::doInteractiveEval()
     QString selText(cur.selectedText());
     //qDebug() << FCFL << "emit requestInteractiveEvaluation" << cur.selectedText();
     if (!selText.trimmed().isEmpty()) {
-        emit requestInteractiveEvaluation(MEC::replaceUnicodeSeparators(selText));
+        emit requestInteractiveEvaluation(MEC::replaceUnicodeSeparators(selText).toLocal8Bit());
     }
 }
 

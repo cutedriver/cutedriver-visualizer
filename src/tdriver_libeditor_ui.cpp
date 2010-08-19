@@ -36,10 +36,10 @@
 void MainWindow::createEditorDocks() {
     MEC::settings = applicationSettings;
 
-    tabEditor = new TDriverTabbedEditor();
-    runConsole = new TDriverRunConsole();
-    debugConsole = new TDriverDebugConsole();
-    irConsole = new TDriverRubyInteract();
+    tabEditor = new TDriverTabbedEditor(this);
+    runConsole = new TDriverRunConsole(true, this);
+    debugConsole = new TDriverDebugConsole(this);
+    irConsole = new TDriverRubyInteract(this);
 
     //tabEditor->newFile();
 

@@ -360,10 +360,11 @@ void MainWindow::createHelpMenu()
 bool MainWindow::disconnectSUT()
 {
     bool result = true;
-
     QString status = "SUT disconnected";
 
-    if ( !execute_command( commandDisconnectSUT, QString( activeDevice.value( "name" ) + " disconnect" ), activeDevice.value( "name" ) ) ) {
+    if ( !execute_command( commandDisconnectSUT,
+                           QString( activeDevice.value( "name" ) + " disconnect" ),
+                           activeDevice.value( "name" )) ) {
         status = "SUT disconnecting failed";
         result = false;
     }
@@ -397,7 +398,7 @@ void MainWindow::openFontDialog() {
         defaultFont->fromString( font.toString() );
         emit defaultFontSet(*defaultFont);
 
-        refreshData( false );
+        refreshDataDisplay();
 
     }
 
@@ -479,40 +480,32 @@ void MainWindow::appSelected() {
     if ( action ) {
 
         if( action->isChecked() == true ) {
-
             // if the action is not already checked, check it and uncheck all other actions
             QList<QAction *> menuActions;
 
             menuActions = appsMenu->actions();
 
-            for ( int i = 0; i < menuActions.size(); i++ ) { menuActions.at( i )->setChecked( false ); }
+            for ( int i = 0; i < menuActions.size(); i++ ) {
+                menuActions.at( i )->setChecked( false );
+            }
 
             QString processId = applicationsProcessIdMap.value( ( int )( action ) );
-
             currentApplication.clear();
             currentApplication.insert( "name", applicationsHash.value( processId ) );
             currentApplication.insert( "id",   processId );
-
             action->setChecked( true );
-
             foregroundApplication = ( processId == "0" ) ? true : false;
-
             // application changed, perform refresh
-            refreshData( true );
-
+            refreshData();
 
         } else {
-
             // item already selected - keep as checked
             action->setChecked( true );
-
+            updateWindowTitle();
         }
-
     }
-
-    updateWindowTitle();
-
 }
+
 
 // Helper function, called when device is selected from list
 void MainWindow::deviceSelected() {

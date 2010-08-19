@@ -21,63 +21,51 @@
 
 #include "tdriver_main_window.h"
 
-void MainWindow::collectGeometries( QTreeWidgetItem * item ) {
+#include <tdriver_debug_macros.h>
 
+void MainWindow::collectGeometries( QTreeWidgetItem * item )
+{
     //qDebug() << "collectGeometries";
-
     QStringList geometries;
-
     collectGeometries( item, geometries );
-
 }
 
-bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, float & x, float & y ) {
 
+bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, float & x, float & y )
+{
     //qDebug() << "getParentItemOffset";
-
     bool result = false;
-
     // QTreeWidgetItem * tmpItem = item;
 
     while ( x == -1 && y == -1 && item != NULL ) {
-
         // retrieve selected items attributes
         QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( ( int )( item ) );
-
         x = attributes.value( "x" ).value( "value", "-1" ).toFloat();
         y = attributes.value( "y" ).value( "value", "-1" ).toFloat();
-
         item = item->parent();
-
     }
 
     result = ( x != -1 && y != -1 );
-
     return result;
-
 }
 
-void MainWindow::collectGeometries( QTreeWidgetItem * item, QStringList & geometries ) {
 
+void MainWindow::collectGeometries( QTreeWidgetItem * item, QStringList & geometries )
+{
     //qDebug() << "collectGeometries";
-
     float x, y, width, height;
     QString geometry;
 
     if ( item != NULL ) {
-
         int itemPtr = ( int )( item );
 
         if ( geometriesMap.contains( itemPtr ) ) {
-
             // retrieve geometries list from cache
             geometries = geometriesMap.value( itemPtr );
-
-        } else {
-
+        }
+        else {
             // retrieve selected items attributes
             QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( itemPtr );
-
             geometry = attributes.value( "geometry" ).value( "value" );
 
             // retrieve x, y: if value not found return -1
@@ -90,17 +78,14 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, QStringList & geomet
 
             // if x, y, width, height found add, create geometry of those
             if ( x != -1 && y != -1 && width != -1 && height != -1 ) {
-
                 // create geometry for object
                 geometry = QString( QString::number( x ) + "," + QString::number( y ) + "," + QString::number( width )+ "," + QString::number( height )    );
-
                 geometriesMap.insert( itemPtr, QStringList( geometry ) );
+            }
 
-            } else if ( !geometry.isEmpty() ) {
-
+            else if ( !geometry.isEmpty() ) {
                 // retrieve parent location as offset, looking recursively through parents until an offset is obtained
                 if ( getParentItemOffset( item, x, y) ) {
-
                     QStringList geometryList = geometry.split(",");
 
                     // create geometry for object
@@ -108,54 +93,36 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, QStringList & geomet
                             QString::number( geometryList[ 0 ].toFloat() + x ) + "," + QString::number( geometryList[ 1 ].toFloat() + y ) + "," +
                             QString::number( geometryList[ 2 ].toFloat() )+ "," + QString::number( geometryList[ 3 ].toFloat() )
                             );
-
                     geometriesMap.insert( itemPtr, QStringList( geometry ) );
-
                 }
-
             }
 
             // retrieve child nodes geometries
             if ( item->childCount() > 0 ) {
-
                 for ( int childIndex = 0; childIndex < item->childCount(); childIndex++ ) {
-
                     QStringList childGeometries;
-
                     collectGeometries( item->child( childIndex ), childGeometries );
-
                     QStringList tmp = geometriesMap.value( itemPtr );
-
                     // store current items and its childs geometries to cache
                     geometriesMap.insert( itemPtr, tmp << geometriesMap.value( ( int )( item->child( childIndex ) ) ) );
-
                 }
-
             }
-
-
-
         }
-
     }
-
 }
 
 
 
-void MainWindow::objectTreeItemChanged() {
-
+void MainWindow::objectTreeItemChanged()
+{
     //qDebug() << "objectTreeItemChanged";
-
     // if item changed, tabs in properties table willss be updated when activated next time
     propertyTabLastTimeUpdated.clear();
-
     // update current properties table
     updatePropetriesTable();
-
     drawHighlight( ( int )( objectTree->currentItem() ) );
-
 }
+
 
 QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem * parentItem, QString type, QString name, QString id ) {
 
@@ -201,8 +168,8 @@ void MainWindow::storeItemToObjectTreeMap( QTreeWidgetItem *item, QString type, 
 
 }
 
-void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement ) {
-
+void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement )
+{
     //qDebug() << "buildObjectTree";
 
     // create attributes container for each QTreeWidgetItem
@@ -213,25 +180,19 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 
     QTreeWidgetItem *childItem = 0;
     QDomNode node = parentElement.firstChild();
-
     int parentPtr = ( int )( parentItem );
-
     QDomElement element;
 
     while ( !node.isNull() ) {
-
         if ( node.isElement() && node.nodeName() == "attributes" ) {
             buildObjectTree( parentItem, node.toElement() );
-
         }
 
         if ( node.isElement() && node.nodeName() == "objects" ) {
             buildObjectTree( parentItem, node.toElement() );
         }
 
-
         if ( node.isElement() && node.nodeName() == "attribute" ) {
-
             element = node.toElement();
 
             // empty attributes container
@@ -254,30 +215,23 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 
             // insert container to attributesMap
             attributesMap.insert( parentPtr, attributeContainer );
-
         }
 
-
         if ( node.isElement() && node.nodeName() == "object" ) {
-
             element = node.toElement();
-
             QString type = element.attribute( "type" );
             QString name = element.attribute( "name" );
             QString id   = element.attribute( "id"   );
 
             // store id of current application ui dump
             if ( type.toLower() == "application" ) {
-
                 currentApplication.clear();
                 currentApplication.insert( "name", name );
                 currentApplication.insert( "id", id );
-
             }
 
             // create child item
             childItem = createObjectTreeItem( parentItem, type, name, id );
-
             int childPtr = ( int )( childItem );
 
             // iterate the node recursively if child nodes exists
@@ -288,32 +242,27 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 
             // is visible?
             if ( attributesMap.contains( childPtr ) ) {
-
                 attributeContainer = attributesMap.value( childPtr );
 
-                if (
-                        attributeContainer.value( "visible" ).value( "value" ).toLower() == "true"  ||
-                        attributeContainer.value( "isvisible" ).value( "value" ).toLower() == "true" ||
-                        attributeContainer.value( "iswindow" ).value( "value" ).toLower() == "true" ) {
-
+                if ( attributeContainer.value( "visible" ).value( "value" ).toLower() == "true"  ||
+                     attributeContainer.value( "isvisible" ).value( "value" ).toLower() == "true" ||
+                     attributeContainer.value( "iswindow" ).value( "value" ).toLower() == "true" )
+                {
                     // sometimes object has visible and visibleOnScreen attribute, make sure that object is really visible also on screen
                     if ( attributeContainer.value("visibleonscreen").value("value").toLower() != "false" ) {
                         visibleObjectsList << childPtr;
                     }
-
                 }
             }
-
-        }
+        } // end if node is element and node name is "object"
 
         node = node.nextSibling();
-
-    }
-
+    } // end while node not null
 }
 
-void MainWindow::clearObjectTreeMappings() {
 
+void MainWindow::clearObjectTreeMappings()
+{
     // empty visible objects list
     visibleObjectsList.clear();
 
@@ -331,13 +280,12 @@ void MainWindow::clearObjectTreeMappings() {
 
     // empty object tree data mappings (eg. type, name & id)
     objectTreeData.clear();
-
 }
 
-void MainWindow::updateObjectTree( QString filename ) {
 
+void MainWindow::updateObjectTree( QString filename )
+{
     //qDebug() << "updateObjectTree";
-
     QTreeWidgetItem *sutItem  = new QTreeWidgetItem( 0 );
 
     // QDomDocument xmlDocument;
@@ -348,7 +296,6 @@ void MainWindow::updateObjectTree( QString filename ) {
     QString currentFocusId = objectTreeData.value( ( int )( objectTree->currentItem() ) ).value( "id" );
 
     clearObjectTreeMappings();
-
     // empty object tree
     objectTree->clear();
 
@@ -358,14 +305,11 @@ void MainWindow::updateObjectTree( QString filename ) {
     //qDebug() << "xmlDocument ptr: " << (int)(&xmlDocument);
 
     if ( !xmlDocument.isNull() ) {
-
         node = xmlDocument.documentElement().firstChild();
 
         while ( !node.isNull() ) {
-
             // find tasInfo element from xmlDocument
             if ( node.isElement() && node.nodeName() == "tasInfo" ) {
-
                 element = node.toElement();
 
                 // add sut to the top of the object tree
@@ -393,13 +337,11 @@ void MainWindow::updateObjectTree( QString filename ) {
                 // build object tree with xml
                 buildObjectTree( sutItem, element );
 
-                break;
-
+                break; // while node is not null
             }
 
             node = node.nextSibling();
         }
-
     }
 
     // collect geometries for item and its childs
@@ -415,18 +357,13 @@ void MainWindow::updateObjectTree( QString filename ) {
         for ( objectTreeIterator = objectTreeData.constBegin(); objectTreeIterator != objectTreeData.constEnd(); ++objectTreeIterator ) {
 
             if ( objectTreeIterator.value().value( "id" ) == currentFocusId ) {
-
                 // select item that was focused before refresh
                 objectTree->setCurrentItem( objectTreeMap.value( objectTreeIterator.key() ) );
                 itemFocusChanged = true;
                 // item found, no need to iterate the list
                 break;
-
             }
-
         }
-
-
     }
 
     // set focus to SUT item unless previously focused item visible
@@ -434,15 +371,13 @@ void MainWindow::updateObjectTree( QString filename ) {
 
     // highlight current object
     drawHighlight( (int)( objectTree->currentItem() ) );
-
     updatePropetriesTable();
-
 }
 
 
 
-void MainWindow::connectObjectTreeSignals() {
-
+void MainWindow::connectObjectTreeSignals()
+{
     // Item select - command
     QObject::connect( objectTree, SIGNAL( itemPressed ( QTreeWidgetItem *, int )), this, SLOT(objectViewItemClicked ( QTreeWidgetItem *, int )));
     QObject::connect( objectTree, SIGNAL( currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem *)), this, SLOT( objectViewCurrentItemChanged( QTreeWidgetItem *, QTreeWidgetItem * ) ) );
@@ -450,10 +385,11 @@ void MainWindow::connectObjectTreeSignals() {
     // Item expand/collapse
     QObject::connect( objectTree, SIGNAL( itemExpanded( QTreeWidgetItem* ) ), this, SLOT( expandTreeWidgetItem( QTreeWidgetItem* ) ) );
     QObject::connect( objectTree, SIGNAL( itemCollapsed( QTreeWidgetItem* ) ), this, SLOT( collapseTreeWidgetItem( QTreeWidgetItem* ) ) );
-
 }
 
-void MainWindow::delayedRefreshData() {
+
+void MainWindow::delayedRefreshData()
+{
     if  ( !isDeviceSelected() ) {
         noDeviceSelectedPopup();
     }
@@ -466,8 +402,9 @@ void MainWindow::delayedRefreshData() {
     }
 }
 
-void MainWindow::forceRefreshData() {
 
+void MainWindow::forceRefreshData()
+{
     if  ( !isDeviceSelected() ) {
         noDeviceSelectedPopup();
     }
@@ -476,118 +413,82 @@ void MainWindow::forceRefreshData() {
         delayedRefreshButton->setDown(false);
         refreshButton->setDisabled(false);
         refreshButton->setDown(false);
-        refreshData( true );
+        refreshData();
     }
-
 }
 
-bool MainWindow::getApplicationsList() {
 
-    QString errorMessage = "";
+void MainWindow::refreshData()
+{
+    bool listAppsOk = false;
+    bool isS60 = false;
+    bool refreshOk = false;
+    BAListMap listAppsReply;
+    BAListMap refreshReply;
 
-    bool result = false;
+    QTime t;
+    t.start();
 
+    // request application list (unless s60)
+    if ( activeDevice.value( "type" ).toLower() == "s60" ) { // contains( "s60", Qt::CaseInsensitive ) ) {
+        resetApplicationsList();
+        appsMenu->setDisabled( true );
+        isS60 = true;
+    }
+    else {
+        QString listCommand = QString( activeDevice.value( "name" ) + " list_apps" );
+        statusbar( "Refreshing application list...", 0);
+        qDebug() << FCFL << "app list refresh started at" << float(t.elapsed())/1000.0;
+        listAppsOk = execute_command( commandListApps, listCommand, "", &listAppsReply );
+    }
 
-    if ( execute_command( commandListApps, QString( activeDevice.value( "name" ) + " list_apps" ) ) ) {
+    // request ui xml file
+    {
+        QString refreshCommand = activeDevice.value( "name" ) + " refresh";
+        // use target application if user has chosen one
+        if ( !currentApplication.value( "id" ).isEmpty() && applicationsHash.contains( currentApplication.value( "id" ) ) ) {
+            refreshCommand += " " + currentApplication.value( "id" );
+        }
+        statusbar( "Refreshing UI XML data...", 0);
+        qDebug() << FCFL << "xml refresh started at" << float(t.elapsed())/1000.0;
+        refreshOk = execute_command( commandRefreshUI, refreshCommand, "", &refreshReply );
+    }
 
+    statusbar( "Parsing refreshed data...", 0);
+    qDebug() << FCFL << "parse started at" << float(t.elapsed())/1000.0;
+
+    if (listAppsOk) {
         parseApplicationsXml( outputPath + "/visualizer_applications_" + activeDevice.value( "name" ) + ".xml" );
-        result = true;
-
     }
 
-    return result;
-
-}
-
-// Function to refresh data - shows progress bar and executes sut_refresh command on active sut
-// After this creates path to file (located in same directory as tdriver_visualizer) and loads it, also
-// loads image. Name has sut_id appended for multiple editors.
-bool MainWindow::refreshData( bool needUpdate = true ) {
-
-    // no updating allowed in offline mode
-    if ( offlineMode ){ return true; }
-
-    QString filename = outputPath + "/visualizer_dump_" + activeDevice.value( "name" );
-
-    // disable all current highlightings
-    imageWidget->disableDrawHighlight();
-
-    QString errorMessage = "";
-    QString resultXml = "";
-
-    statusbar( "Refreshing...", 0, 6 );
-
-    if ( needUpdate ) {
-
-        // update application list
-        if ( activeDevice.value( "type" ).toLower() == "s60" ) { // contains( "s60", Qt::CaseInsensitive ) ) {
-
-            resetApplicationsList();
-            appsMenu->setDisabled( true );
-
-        } else {
-
-            if ( !getApplicationsList() ) {
-
-                statusbar( "Error: Failed to update applications list", 1000 );
-                return false;
-            }
-
-        }
-
-        statusbar( "Refreshing...", 1, 6 );
-
-        // Exit function if refreshing fails
-        if ( !refreshUiXml() ) {
-
-            statusbar( "Error: Failed to refresh xml from device", 1000 );
-            return false;
-        }
-
-    }
-
-    statusbar( "Refreshing...", 2, 6 );
-
-    //load XMLfile and populate tree
-    updateObjectTree( filename + ".xml" );
-
-    statusbar( "Refreshing...", 3, 6 );
-
-    // load & refresh image
-    if ( needUpdate ) {
-
+    if (refreshOk) {
+        QString filename = outputPath + "/visualizer_dump_" + activeDevice.value( "name" );
+        imageWidget->disableDrawHighlight();
         imageWidget->refreshImage( QString( filename + ".png"), false );
         imageWidget->update();
-
-    }
-
-    statusbar( "Refreshing...", 4, 6 );
-
-    // update applications list & select active application in it
-    if ( needUpdate ) {
-
-        updateApplicationsList();
-
-    }
-
-    statusbar( "Refreshing...", 5, 6 );
-
-    updateBehaviourXml();
-
-    updatePropetriesTable();
-
-    statusbar( "Refreshing...", 6, 6 );
-
-    if ( needUpdate ) {
-
+        updateObjectTree( filename + ".xml" );
+        updateBehaviourXml();
+        updatePropetriesTable();
         updateWindowTitle();
-
     }
+    qDebug() << FCFL << "done ("<< listAppsOk << refreshOk << ") at" << float(t.elapsed())/1000.0;
 
-    statusbar( "Ready", 1500 );
+    if ((listAppsOk || isS60) && refreshOk) statusbar( "Refresh done!", 1500 );
+    else if (refreshOk) statusbar( "Refreshed only UI XML data!", 1500 );
+    else if (listAppsOk) statusbar( "Refreshed only Application List!", 1500 );
+    else statusbar( "Refresh failed!", 1500 );
+}
 
-    return true;
 
+// Function to refresh visible data - creates path to xml file (located in same directory as tdriver_visualizer) and loads it.
+void MainWindow::refreshDataDisplay()
+{
+    // disable all current highlightings
+    imageWidget->disableDrawHighlight();
+    //load XMLfile and populate tree
+    updateObjectTree( outputPath + "/visualizer_dump_" + activeDevice.value( "name" ) + ".xml" );
+    updateBehaviourXml();
+    updatePropetriesTable();
 }
 
 
@@ -598,35 +499,26 @@ void MainWindow::resizeObjectTree() {
     objectTree->resizeColumnToContents( objectTree->currentColumn() );
 
     if ( objectTree->columnWidth( objectTree->currentColumn() ) < old_width ) {
-
         // column width smaller after resize --> restore to previous width
         objectTree->setColumnWidth( objectTree->currentColumn(), old_width );
 
     } else {
-
         // add some padding
         objectTree->setColumnWidth( objectTree->currentColumn(), objectTree->columnWidth( objectTree->currentColumn() ) + 25 );
-
     }
-
 }
 
 
 void MainWindow::objectViewCurrentItemChanged ( QTreeWidgetItem * itemCurrent, QTreeWidgetItem * /*itemPrevious*/ )
 {
-
     Q_UNUSED( itemCurrent );
     // qDebug() << "objectViewCurrentItemChanged";
 
     collapsedObjectTreeItemPtr = 0;
     expandedObjectTreeItemPtr = 0;
-
     objectTreeItemChanged();
-
     imageWidget->update();
-
     resizeObjectTree();
-
 }
 
 

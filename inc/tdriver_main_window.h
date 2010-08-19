@@ -88,7 +88,6 @@ public:
 
     QString tdriverPath;
 
-    void setApplicationPath();
     void checkInit();
 
     bool setup();
@@ -147,19 +146,16 @@ private:
     // command executing & error handling
 
     bool processErrorMessage( QString & resultMessage, ExecuteCommandType commandType, int & resultEnum );
-    bool execute_command( ExecuteCommandType commandType, QString commandString, QString additionalInformation = "" );
-    bool execute_command( ExecuteCommandType commandType, QString commandString, QString additionalInformation, QString & errorMessage );
+    bool execute_command( ExecuteCommandType commandType, QString commandString, QString additionalInformation = QString(), BAListMap *reply = NULL);
 
     // global data & caches
 
     bool offlineMode;
 
-    RubyThread thread;
     TDriverRecorder *mRecorder;
     //Assistant *tdriverAssistant;
 
     QSettings *applicationSettings;
-    QString applicationPath;
     QString outputPath;
 
     QFont *defaultFont;
@@ -200,6 +196,8 @@ private:
 
 
     // helper functions
+    static QByteArray cleanDoneResult(QByteArray output);
+
 
     void updateWindowTitle();
 
@@ -317,7 +315,6 @@ private:
 
     // ui dump xml
     QDomDocument xmlDocument;
-    bool refreshUiXml();
 
     // behaviours xml
     QDomDocument behaviorDomDocument;
@@ -327,7 +324,6 @@ private:
     void updateDevicesList();
 
     // visualizer_applications_sut_id.xml
-    bool getApplicationsList();
     void parseApplicationsXml( QString filename );
     void updateApplicationsList();
     void resetApplicationsList();
@@ -553,10 +549,11 @@ private slots:
 
 
     // object tree
-
     void delayedRefreshData();
     void forceRefreshData();
-    bool refreshData( bool needUpdate );
+
+    void refreshData();
+    void refreshDataDisplay();
 
     void objectViewItemClicked( QTreeWidgetItem *item, int column );
     void objectViewItemAction( QTreeWidgetItem *item, int column, ContextMenuSelection action, QString method = QString() );

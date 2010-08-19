@@ -50,12 +50,11 @@ void MainWindow::clearPropertiesTableContents() {
 
 }
 
-void MainWindow::updatePropetriesTable() {
-
+void MainWindow::updatePropetriesTable()
+{
     // qDebug() << "updatePropetriesTable()";
 
     if ( objectTree->currentItem() != NULL ) {
-
         // retrieve pointer of current item selected in object tree
         int currentItemPtr = (int)(objectTree->currentItem());
 
@@ -63,55 +62,52 @@ void MainWindow::updatePropetriesTable() {
         int currentTab = tabWidget->currentIndex();
 
         if ( currentTab == 0 && propertyTabLastTimeUpdated.value( "attributes" ) != currentItemPtr ) {
-
             updateAttributesTableContent();
 
         } else if ( currentTab == 1 && propertyTabLastTimeUpdated.value( "methods" ) != currentItemPtr ) {
-
             updateMethodsTableContent();
 
         } else if ( currentTab == 2 && propertyTabLastTimeUpdated.value( "signals" ) != currentItemPtr ) {
-
             updateSignalsTableContent();
 
         } else if ( currentTab == 3  && propertyTabLastTimeUpdated.value( "api_methods" ) != currentItemPtr ) {
-
             updateApiTableContent();
-
         }
-
     }
-
 }
 
-bool MainWindow::checkApiFixture() {
 
-    return execute_command( commandCheckApiFixture, QString( activeDevice.value( "name" ) + " check_fixture" ) );
-
+bool MainWindow::checkApiFixture()
+{
+    return execute_command( commandCheckApiFixture, activeDevice.value( "name" ) + " check_fixture");
 }
 
-void MainWindow::getClassMethods( QString objectType ) {
 
-    if ( execute_command( commandClassMethods, QString( activeDevice.value( "name" ) + " fixture " + objectType ), objectType ) ) {
-
+void MainWindow::getClassMethods( QString objectType )
+{
+    if ( execute_command( commandClassMethods,
+                          activeDevice.value( "name" ) + " fixture " + objectType,
+                          objectType ) ) {
         parseApiMethodsXml( outputPath + "/visualizer_class_methods_" + activeDevice.value( "name" ) + ".xml" );
-
     }
 }
+
 
 void MainWindow::getClassSignals(QString objectType, QString objectId)
 {
     // list_signals
     if (activeDevice.value( "name" ).contains("qt")){
-        if (!apiSignalsMap.contains(objectType))
-        {
-            if ( execute_command( commandSignalList, QString( activeDevice.value( "name" ) + " list_signals " + currentApplication.value( "name" ) + " " + objectId + " " + objectType ))) {
-
-                apiSignalsMap.insert(objectType, parseSignalsXml( outputPath + "/visualizer_class_signals_" + activeDevice.value( "name" ) + ".xml" ));
+        if (!apiSignalsMap.contains(objectType)) {
+            if ( execute_command( commandSignalList,
+                                  activeDevice.value( "name" ) + " list_signals " + currentApplication.value( "name" ) + " " + objectId + " " + objectType )) {
+                apiSignalsMap.insert(objectType,
+                                     parseSignalsXml( outputPath + "/visualizer_class_signals_" + activeDevice.value( "name" ) + ".xml" ));
             }
         }
     }
 }
+
+
 void MainWindow::updateApiTableContent() {
 
     int currentItemPtr = ( int )( objectTree->currentItem() );
@@ -423,8 +419,8 @@ void MainWindow::connectTabWidgetSignals()
 }
 
 
-void MainWindow::changePropertiesTableValue( QTableWidgetItem *item ) {
-
+void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
+{
     // this feature is not supported in with s60 devices
     if ( activeDevice.value( "type" ).toLower() != "s60" ) {
 
@@ -439,35 +435,25 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item ) {
         QString objName = treeItemData.value( "name" );
         QString objId   = treeItemData.value( "id"   );
 
-
         QString objIdentification = objType;
 
         if ( objName != "application" ) {
-
             objIdentification.append("(:name=>'" + objName + "',:id=>'" + objId + "')");
 
         } else {
-
             objIdentification.append("(:id=>'" + objId + "')");
-
         }
 
         QString targetDataType = attributesMap.value( currentItemPtr ).value( attributeName ).value( "datatype" );
 
         if (targetDataType.size() == 0) {
-
             QMessageBox::critical( 0, "Error", "No data type found for attribute " + attributeName );
 
         } else {
-
             QString attributeNameAndValue = attributeName + " '" + item->text() + "'";
-
-            //bool cmd_result = true;
-
-            if ( execute_command( commandSetAttribute, QString( activeDevice.value( "name" ) + " set_attribute " + objIdentification + " " + targetDataType + " " + attributeNameAndValue ) ) ) {
-
-                refreshData( true );
-
+            if ( execute_command( commandSetAttribute,
+                                  activeDevice.value( "name" ) + " set_attribute " + objIdentification + " " + targetDataType + " " + attributeNameAndValue ) ) {
+                refreshData();
             }
         }
     }
@@ -507,7 +493,7 @@ void MainWindow::methodItemPressed( QTableWidgetItem * item ) {
                 break;
 
             default:
-                qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << "Unhandled context menu action" << action;
+                qWarning("Bad context menu action in %s:%s", __FILE__, __FUNCTION__);
             }
 
         }

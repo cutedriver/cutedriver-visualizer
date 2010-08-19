@@ -21,62 +21,75 @@
 #include "tdriver_main_window.h"
 
 #include <tdriver_tabbededitor.h>
-
+#include <tdriver_rubyinterface.h>
 #include "../common/version.h"
 
-void MainWindow::setApplicationPath() {
+#include <QApplication>
 
-    applicationPath = QApplication::applicationDirPath();
+#include <tdriver_debug_macros.h>
 
-}
 
 // Performs post-initialization checking.
-void MainWindow::checkInit() {
+void MainWindow::checkInit()
+{
     // check if RUBYOPT has been set
     QString current( getenv( tr( "RUBYOPT" ).toLatin1().data() ) );
     if ( current != "rubygems" ) { putenv( tr( "RUBYOPT=rubygems" ).toLatin1().data() ); }
 }
 
-bool MainWindow::checkVersion( QString currentVersion, QString requiredVersion ) {
 
+bool MainWindow::checkVersion( QString currentVersion, QString requiredVersion )
+{
     // convert required version to array
     QStringList tmpRequiredVersionArray = requiredVersion.split( QRegExp("[.-]") );
 
     // convert installed driver version to array
     QStringList tmpDriverVersionArray = currentVersion.split( QRegExp("[.-]") );
 
-    // make version arrays as same length
-    while ( tmpDriverVersionArray.count() < tmpRequiredVersionArray.count() ) { tmpDriverVersionArray.append("0"); }
+    // make version arrays same length
+    while ( tmpDriverVersionArray.count() < tmpRequiredVersionArray.count() ) {
+        tmpDriverVersionArray.append("0");
+    }
 
     bool versionOk = true;
 
     for ( int index = 0; index < tmpRequiredVersionArray.count();  index++ ) {
-
         int current_version = tmpDriverVersionArray.at( index ).toInt();
         int required_version = tmpRequiredVersionArray.at( index ).toInt();
 
         // check if installed version is new enough
-        if ( current_version > required_version ) { break; } else {
-
-            if ( current_version < required_version ){ versionOk = false; break; }
-
+        if ( current_version > required_version ) {
+            break;
         }
-
+        else {
+            if ( current_version < required_version ){
+                versionOk = false;
+                break;
+            }
+        }
     }
 
     return versionOk;
-
 }
+
 
 // Function entered when creating Visulizer. Sets default and calls helper functions
 // to setup UI of Visualizer
-bool MainWindow::setup() {
+bool MainWindow::setup()
+{
+    setObjectName("main");
+    QTime t;  // for performance debugging, can be removed
+
+    // read visualizer settings from visualizer.ini file
+    //applicationSettings = new QSettings( QApplication::applicationDirPath() + "/visualizer.ini", QSettings::IniFormat );
+    applicationSettings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "Nokia", "TDriver_Visualizer");
+
+    TDriverRubyInterface::startGlobalInstance();
 
     // determine if connection to TDriver established -- if not, allow user to run TDriver Visualizer in viewer/offline mode
-    if ( thread.running() ){
-
-        offlineMode = false;
-
+    offlineMode = true;
+    t.start();
+    if ( TDriverRubyInterface::globalInstance()->goOnline()) {
         QString installedDriverVersion = getDriverVersionNumber();
 
         if ( !checkVersion( installedDriverVersion, REQUIRED_DRIVER_VERSION ) ) {
@@ -89,22 +102,18 @@ bool MainWindow::setup() {
                     tr("\nRequired version: ") + REQUIRED_DRIVER_VERSION + tr(" or later")+
                     tr("\n\nLaunching in offline mode.")
                     );
-
-            offlineMode = true;
-
         }
-
-    } else {
-
-        offlineMode = true;
-
+        else {
+            offlineMode = false; // TDriver successfully initialized!
+        }
     }
+    qDebug() << FCFL << "RBI goOnline  result" << !offlineMode << "secs" << float(t.elapsed())/1000.0;
 
-    // ini file
 
-    // read visualizer settings from visualizer.ini file
-    //applicationSettings = new QSettings( QString( applicationPath + "/visualizer.ini"), QSettings::IniFormat );
-    applicationSettings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "Nokia", "TDriver_Visualizer");
+    if (offlineMode) {
+        qWarning("Failed to initialize TDriver, closing Ruby process");
+        TDriverRubyInterface::globalInstance()->requestClose();
+    }
 
     tdriverPath = applicationSettings->value( "files/location", "" ).toString();
 
@@ -136,14 +145,12 @@ bool MainWindow::setup() {
     // initialize & default settings
 
     if ( tdriverPath.isEmpty() ) {
-
         // construct QString tdriverPath depending on OS
 #if (defined(Q_OS_WIN32))
         tdriverPath = "c:/tdriver/";
 #else
         tdriverPath = "/etc/tdriver/";
 #endif
-
     }
 
     // if ( !QDir( tdriverPath ).exists() ||
@@ -185,14 +192,10 @@ bool MainWindow::setup() {
     //tdriverAssistant = new Assistant;
 
     // create tdriver recorder
-    mRecorder = new TDriverRecorder( thread, this );
+    mRecorder = new TDriverRecorder( this );
 
     // create show xml dialog
     createXMLFileDataWindow();
-
-    // create ui
-
-    setObjectName("main");
 
     // create user interface
     createUi();
@@ -202,18 +205,14 @@ bool MainWindow::setup() {
 
     // parse parameters xml to retrieve all devices
     if ( !offlineMode ){
-
         getDevicesList( parametersFile );
 
         if ( deviceList.count() > 0 ) {
-
             deviceMenu->setEnabled( true );
             disconnectCurrentSUT->setEnabled( true );
             refreshAction->setEnabled( true );
             parseSUT->setEnabled( true );
-
         }
-
     }
 
     // parse behaviours xml
@@ -252,35 +251,28 @@ bool MainWindow::setup() {
 
     // xml/screen capture output path depending on OS
 #if (defined(Q_OS_WIN32))
-
     outputPath = QString( getenv( "TEMP" ) ) + "/";
-
 #else
-
     outputPath = "/tmp/";
-
 #endif
 
-    if ( !offlineMode && !execute_command( commandSetOutputPath, "listener set_output_path " + outputPath ) ) {
-
-        outputPath = applicationPath;
-
+    if ( !offlineMode &&
+         !execute_command( commandSetOutputPath, "listener set_output_path " + outputPath) ) {
+        outputPath = QApplication::applicationDirPath();
     }
 
     deviceSelected();
-
     return true;
 
 } // setup
 
-void MainWindow::setActiveDevice( QString deviceName ) {
 
+void MainWindow::setActiveDevice( QString deviceName )
+{
     activeDevice.clear();
-
     QHash<QString, QString> sut;
 
     if ( deviceList.contains( deviceName ) ) {
-
         sut = deviceList.value( deviceName );
 
         activeDevice["name"] = sut.value( "name" );
@@ -288,77 +280,63 @@ void MainWindow::setActiveDevice( QString deviceName ) {
 
         // Eisable record menu if active device type is kind of QT
         if ( sut.value( "type" ).contains( "qt", Qt::CaseInsensitive ) ) {
-
             recordMenu->setEnabled( !applicationsHash.empty() );
-
         }
     }
 }
 
-QString MainWindow::getDriverVersionNumber() {
+QString MainWindow::getDriverVersionNumber()
+{
+#if 1
+    QString ver(TDriverRubyInterface::globalInstance()->getTDriverVersion());
+    qDebug() << FCFL << "got version" << ver;
+    return  (ver.isEmpty()) ? "Unknown" : ver;
+#else
+    QByteArray result = "Unknown";
+    BAListMap reply;
 
-    QString result = "Unknown";
-    QString errorMessage = "";
-
-    if ( execute_command( commandGetVersionNumber, QString( "listener check_version" ), "", errorMessage ) ) {
-
-        // retrieve index of 'done' string
-        int doneIndex = errorMessage.indexOf( QString( "done" ) );
-
-        if ( doneIndex > -1 ) {
-
-            // remove done from the end of string
-            result = errorMessage.remove( doneIndex, 4 );
-
-            // remove linefeed characters
-            result.remove( QString( "\n" ) );
-            result.remove( QString( "\r" ) );
-        }
-
+    if ( execute_command( commandGetVersionNumber, "listener check_version", "", &reply ) ) {
+        result = cleanDoneResult(reply["OUTPUT"].first());
     }
 
-    return result;
-
+    qDebug() << FCFL << "GOT VERSION" << result;
+    return QString(result);
+#endif
 }
 
-QString MainWindow::getDeviceType( QString deviceName ) {
-
-
-    QString result = "Unknown";
-    QString errorMessage = "";
-
-    QString command = QString( deviceName + " get_parameter type" );
-
-    if ( execute_command( commandGetDeviceType, command, deviceName, errorMessage ) ) {
-
-        // retrieve index of 'done' string
-        int doneIndex = errorMessage.indexOf( QString( "done" ) );
-
-        if ( doneIndex > -1 ) {
-
-            // remove done from the end of string
-            result = errorMessage.remove( doneIndex, 4 );
-
-            // remove linefeed characters
-            result.remove( QString( "\n" ) );
-            result.remove( QString( "\r" ) );
-        }
-
+QByteArray MainWindow::cleanDoneResult(QByteArray output)
+{
+    int doneIndex = output.indexOf("done");
+    if ( doneIndex > -1 ) {
+        // remove done from the end of string
+        output.truncate(doneIndex);
     }
-
-    return result;
-
+    // remove linefeed characters
+    return output.trimmed();
 }
 
 
-void MainWindow::connectSignals() {
+QString MainWindow::getDeviceType( QString deviceName )
+{
+    QByteArray result = "Unknown";
+    BAListMap reply;
+    QString command = deviceName + " get_parameter type";
 
+    if ( execute_command( commandGetDeviceType, command, deviceName, &reply ) ) {
+        result = cleanDoneResult(reply["OUTPUT"].first());
+    }
+
+    return QString(result);
+}
+
+
+void MainWindow::connectSignals()
+{
     connectObjectTreeSignals();
     connectTabWidgetSignals();
     connectImageWidgetSignals();
 
     QMetaObject::connectSlotsByName( this );
-
 }
 
 // This is called when closing Visualizer. Call threads close method, which
@@ -401,7 +379,7 @@ void MainWindow::closeEvent( QCloseEvent *event )
 
     applicationSettings->setValue( "font/settings", defaultFont->toString() );
 
-    thread.close();
+    TDriverRubyInterface::globalInstance()->requestClose();
 }
 
 // Event filter, catches F1/HELP key events and processes them, calling Assistant to display the corresponding help page.
@@ -440,46 +418,32 @@ bool MainWindow::eventFilter(QObject * object, QEvent *event) {
 
 
 // MainWindow listener for keypresses
-void MainWindow::keyPressEvent ( QKeyEvent * event ) {
-
+void MainWindow::keyPressEvent ( QKeyEvent * event )
+{
     // qDebug() << "MainWindow::keyPressEvent: " << event->key();
-
-#if 0 // moved to be in action key sequence list
-    // additional buttos for refresh
-    if ( event->key() == Qt::Key_F5 ) { //|| event->modifiers() && Qt::AltModifier && event->key() == Qt::Key_R ) {
-
-        forceRefreshData();
-
-    }
-    else
-#endif
-
-        if ( QApplication::focusWidget() == objectTree && objectTree->currentItem() != NULL ) {
-
+    if ( QApplication::focusWidget() == objectTree && objectTree->currentItem() != NULL )
         objectTreeKeyPressEvent( event );
-    }
-    else event->ignore();
+    else
+        event->ignore();
 
     collapsedObjectTreeItemPtr = 0;
     expandedObjectTreeItemPtr = 0;
-
 }
 
-bool MainWindow::isDeviceSelected() {
 
+bool MainWindow::isDeviceSelected()
+{
     return !activeDevice.isEmpty();
-
 }
 
-void MainWindow::noDeviceSelectedPopup() {
 
+void MainWindow::noDeviceSelectedPopup()
+{
     if ( !offlineMode ){
-
         QMessageBox::critical(0, tr( "Error" ), "Unable to refresh due to no device selected.\n\nPlease select one from devices menu." );
-
     }
-
 }
+
 
 QString MainWindow::selectFolder( QString title, QString filter, QFileDialog::AcceptMode mode ) {
 
@@ -577,29 +541,28 @@ bool MainWindow::processErrorMessage( QString & resultMessage, ExecuteCommandTyp
 
 }
 
-bool MainWindow::execute_command( ExecuteCommandType commandType, QString commandString, QString additionalInformation ) {
 
-    QString errorMessage = "";
-
-    return execute_command( commandType, commandString, additionalInformation, errorMessage );
-
-}
-
-bool MainWindow::execute_command( ExecuteCommandType commandType, QString commandString, QString additionalInformation, QString & errorMessage ) {
-
-
-    QString errorPrefix = "";
-    errorMessage = "";
-
+bool MainWindow::execute_command( ExecuteCommandType commandType, QString commandString, QString additionalInformation, BAListMap *reply )
+{
+    QString errorPrefix;
+    QString errorMessage;
     bool exit = false;
     bool result = true;
     int iteration = 0;
     int resultEnum;
     QString originalErrorMessage;
 
-    while ( exit == false ) {
+    do {
+        BAListMap msg;
+        msg["input"] = commandString.toAscii().split(' ');
 
-        if ( !thread.execute_cmd( commandString, errorMessage ) ) {
+        qDebug() << FCFL << "going to execute" << msg;
+        QTime t;
+        t.start();
+        if ( !TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 30000 )) {
+            qDebug() << FCFL << "failure time" << float(t.elapsed())/1000.0 << "reply" << msg;
+            if (msg["OUTPUT"].isEmpty()) msg["OUTPUT"].append("");
+            errorMessage = msg.value("OUTPUT").first();
 
             // store original error message for details box
             originalErrorMessage = errorMessage;
@@ -608,102 +571,65 @@ bool MainWindow::execute_command( ExecuteCommandType commandType, QString comman
             exit = true;
 
             switch ( commandType ) {
-
-            case commandListApps:
-                errorPrefix = "Error retrieving applications list:\n\n";
-                break;
-
-            case commandClassMethods:
-                errorPrefix = "Error retrieving methods list for " + additionalInformation + ".\n\n";
-                break;
-
-            case commandSignalList:
-                errorPrefix = "Error retrieving signal list for " + additionalInformation + ".\n\n";
-                break;
-
-            case commandDisconnectSUT:
-                errorPrefix = "Error disconnecting SUT '" + additionalInformation + "'\n\n";
-                break;
-
-            case commandTapScreen:
-                errorPrefix = "Error performing tap to screen\n\n";
-                break;
-
-            case commandRefreshUI:
-                errorPrefix = "Failed to refresh application\n\n";
-                break;
-
-            case commandKeyPress:
-                errorPrefix = "Failed to press key '" + additionalInformation + "'.\n\n";
-                break;
-
-            case commandSetAttribute:
-                errorPrefix = "Failed to set attribute '" + additionalInformation + "'.\n\n";
-                break;
-
-            case commandGetDeviceType:
-                errorPrefix = "Failed to get device type for " + additionalInformation + ".\n\n";
-                break;
-
-            case commandGetVersionNumber:
-                errorPrefix = "Failed to retrieve TDriver version number.\n\n";
-                break;
-
-            default:
-                errorPrefix = "Error: Failed to execute command \""+ commandString + "\".\n\n";
-                break;
+            case commandListApps: errorPrefix = "Error retrieving applications list:\n\n"; break;
+            case commandClassMethods: errorPrefix = "Error retrieving methods list for " + additionalInformation + ".\n\n"; break;
+            case commandSignalList: errorPrefix = "Error retrieving signal list for " + additionalInformation + ".\n\n"; break;
+            case commandDisconnectSUT: errorPrefix = "Error disconnecting SUT '" + additionalInformation + "'\n\n"; break;
+            case commandTapScreen: errorPrefix = "Error performing tap to screen\n\n"; break;
+            case commandRefreshUI: errorPrefix = "Failed to refresh application\n\n"; break;
+            case commandKeyPress: errorPrefix = "Failed to press key '" + additionalInformation + "'.\n\n"; break;
+            case commandSetAttribute: errorPrefix = "Failed to set attribute '" + additionalInformation + "'.\n\n"; break;
+            case commandGetDeviceType: errorPrefix = "Failed to get device type for " + additionalInformation + ".\n\n"; break;
+            case commandGetVersionNumber: errorPrefix = "Failed to retrieve TDriver version number.\n\n"; break;
+            default: errorPrefix = "Error: Failed to execute command \""+ commandString + "\".\n\n";
             }
 
             result = processErrorMessage( errorMessage, commandType, resultEnum );
-
             errorMessage = errorPrefix + errorMessage;
-
             qCritical( "MainWindow::execute_command failed. Error: %s", qPrintable(errorMessage) );
 
             if ( resultEnum & FAIL || iteration > 0 ) {
-
                 // exit if failed again or no retries allowed..
                 exit = true;
+            }
 
-            } else {
-
+            else {
                 if ( resultEnum & DISCONNECT ) {
-
                     // disconnect
-                    if ( !thread.execute_cmd( QString( activeDevice.value( "name" ) + " disconnect" ), errorMessage ) ) {
-
+                    msg.clear();
+                    msg["input"] << activeDevice.value( "name" ).toAscii() << "disconnect";
+                    if ( !TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 5000 ) ) {
+                        if (msg["OUTPUT"].isEmpty()) msg["OUTPUT"].append("");
+                        errorMessage = msg.value("OUTPUT").first();
                         // disconnect failed -- exit
                         result = processErrorMessage( errorMessage, commandType, resultEnum );
                         errorMessage = errorPrefix + errorMessage;
                         result = false;
                         exit = true;
-
-                    } else {
-
+                    }
+                    else {
                         // disconnect passed -- retry
+                        qFatal("reconnect after disconnect in %s broken", __FUNCTION__);
                         currentApplication.clear();
                         result = false;
                         exit = false;
-
                     }
                 }
-
             }
-
-        } else {
-
-            // qDebug( "MainWindow::execute_command passed: " + commandString.toLatin1() );
+        }
+        else {
+            qDebug() << FCFL << "success time" << float(t.elapsed())/1000.0 << "reply" << msg;
+            if (reply) {
+                *reply = msg;
+            }
             result = true;
             exit = true;
-
         }
 
         iteration++;
-
-    }
+    } while (!exit);
 
     if ( !result && !(resultEnum & SILENT) ) {
-
         QMessageBox msgBox( this );
         msgBox.setIcon( QMessageBox::Critical );
         msgBox.setWindowTitle( "Error" );
@@ -715,10 +641,9 @@ bool MainWindow::execute_command( ExecuteCommandType commandType, QString comman
 
         msgBox.setStandardButtons( QMessageBox::Ok );
         msgBox.exec();
-
     }
 
-    return result;
 
+    return result;
 }
 

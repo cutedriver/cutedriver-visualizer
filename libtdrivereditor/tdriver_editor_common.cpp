@@ -31,6 +31,8 @@
 #include <QApplication>
 #include <QTextCursor>
 
+#include <tdriver_debug_macros.h>
+
 /**************************************************************
   * Debug functions and globals
   **************************************************************/

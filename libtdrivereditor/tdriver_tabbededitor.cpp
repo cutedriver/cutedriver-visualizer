@@ -29,6 +29,7 @@
 #include "tdriver_editbar.h"
 
 #include <tdriver_util.h>
+#include <tdriver_debug_macros.h>
 
 #include <QApplication>
 #include <QSettings>
@@ -587,18 +588,18 @@ void TDriverTabbedEditor::newFile(QString fileName)
     connect(newEdit, SIGNAL(removedBreakpoint(int)),
             this, SIGNAL(removedBreakpoint(int)));
 
-    connect(newEdit, SIGNAL(requestInteractiveCompletion(QString)),
-            irConsole, SLOT(queryCompletions(QString)));
-    connect(irConsole, SIGNAL(completionResult(QObject*,QString,QStringList)),
-            newEdit, SLOT(popupInteractiveCompletion(QObject*,QString,QStringList)));
-    connect(irConsole, SIGNAL(scriptError(QObject*,QString,QStringList)),
-            newEdit, SLOT(errorInteractiveCompletion(QObject*,QString,QStringList)));
+    connect(newEdit, SIGNAL(requestInteractiveCompletion(QByteArray)),
+            irConsole, SLOT(queryCompletions(QByteArray)));
+    connect(irConsole, SIGNAL(completionResult(QObject*,QByteArray,QStringList)),
+            newEdit, SLOT(popupInteractiveCompletion(QObject*,QByteArray,QStringList)));
+    connect(irConsole, SIGNAL(completionError(QObject*,QByteArray,QStringList)),
+            newEdit, SLOT(errorInteractiveCompletion(QObject*,QByteArray,QStringList)));
 
-    connect(newEdit, SIGNAL(requestInteractiveEvaluation(QString)),
-            irConsole, SLOT(evalStatement(QString)));
-    connect(newEdit, SIGNAL(requestInteractiveEvaluation(QString)),
+    connect(newEdit, SIGNAL(requestInteractiveEvaluation(QByteArray)),
+            irConsole, SLOT(evalStatement(QByteArray)));
+    connect(newEdit, SIGNAL(requestInteractiveEvaluation(QByteArray)),
             this, SLOT(showIrConsole()));
-
+    // add when needed: connect(irConsole, SIGNAL(evaluationError(QObject*,QByteArray,QStringList)), newEdit, SLOT(errorInteractiveEvaluation(QObject*,QByteArray,QStringList)));
 
     if (runConsole) {
         connect(runConsole, SIGNAL(runningState(bool)), newEdit, SLOT(setRunning(bool)));
@@ -703,7 +704,6 @@ void TDriverTabbedEditor::connectConsoles(TDriverRunConsole *rConsole, QWidget *
 
     irConsole = iConsole;
     irConsoleContainer = iContainer;
-    connect(this, SIGNAL(documentNameChanged(QString)), irConsole, SLOT(setActiveDocumentName(QString)));
 
     connect(rConsole, SIGNAL(needDebugConsole(bool)), this, SLOT(setDebugConsoleVisible(bool)));
     connect(rConsole, SIGNAL(needDebugConsole(bool)), dConsole, SLOT(clear()));

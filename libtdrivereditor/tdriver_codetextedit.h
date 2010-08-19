@@ -85,8 +85,8 @@ signals:
     void modesChanged();
     void addedBreakpoint(struct MEC::Breakpoint);
     void removedBreakpoint(int rdebugInd);
-    void requestInteractiveCompletion(QString statement);
-    void requestInteractiveEvaluation(QString statement);
+    void requestInteractiveCompletion(QByteArray statement);
+    void requestInteractiveEvaluation(QByteArray statement);
 
 public slots:
     void setUsingTabulatorsMode(bool enabled);
@@ -112,8 +112,10 @@ public slots:
     bool autoInteractiveCompletion();
     void tryInteractiveCompletion(QKeyEvent *);
     bool doInteractiveCompletion(QKeyEvent *);
-    void popupInteractiveCompletion(QObject *client, QString statement=QString(), QStringList completions=QStringList());
-    void errorInteractiveCompletion(QObject *client, QString statement, QStringList completions);
+    void popupInteractiveCompletion(QObject *client, QByteArray statement=QByteArray(), QStringList completions=QStringList());
+    void errorInteractiveCompletion(QObject *client, QByteArray statement, QStringList completions);
+
+    //void errorInteractiveEvaluation() { implement when needed }
 
     bool doGenericCompletion(QKeyEvent *event, bool &handled);
 

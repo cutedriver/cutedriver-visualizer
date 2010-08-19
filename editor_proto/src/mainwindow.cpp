@@ -25,6 +25,7 @@
 #include "tdriver_rubyinteract.h"
 #include <tdriver_editbar.h>
 #include <tdriver_editor_common.h>
+#include <tdriver_rubyinterface.h>
 
 #include <QApplication>
 #include <QMainWindow>
@@ -38,15 +39,18 @@
 #include <QCloseEvent>
 #include <QStringList>
 
-
+#include <tdriver_debug_macros.h>
 
 MainWindow::MainWindow(QStringList filelist, QWidget *parent) :
-        QMainWindow(parent),
-        tabs(new TDriverTabbedEditor(this)),
-        runConsole(new TDriverRunConsole(this)),
-        debugConsole(new TDriverDebugConsole(this)),
-        irConsole(new TDriverRubyInteract(this))
+        QMainWindow(parent)
 {
+    TDriverRubyInterface::startGlobalInstance();
+
+    tabs = new TDriverTabbedEditor(this);
+    runConsole = new TDriverRunConsole(true, this);
+    debugConsole = new TDriverDebugConsole(this);
+    irConsole = new TDriverRubyInteract(this);
+
     tabs->setObjectName("editor");
     runConsole->setObjectName("run");
     debugConsole->setObjectName("debug");
@@ -150,13 +154,12 @@ void MainWindow::createMenu()
 
 void MainWindow::closeEvent(QCloseEvent *ev)
 {
-    qDebug() << FFL;
     if (!tabs->mainCloseEvent(ev)) {
-        qDebug() << FFL << "tabs rejected close, ignoring event";
+        //qDebug() << FFL << "tabs rejected close, ignoring event";
         ev->ignore();
     }
     else {
-        qDebug() << FFL << "doing saveGeometry and saveState";
+        //qDebug() << FFL << "doing saveGeometry and saveState";
         MEC::settings->setValue("editor/geometry", saveGeometry());
         MEC::settings->setValue("editor/windowstate", saveState());
         ev->accept();

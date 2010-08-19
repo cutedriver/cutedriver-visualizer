@@ -24,6 +24,7 @@
 #include "tdriver_editor_common.h"
 
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QAction>
 #include <QToolBar>
 #include <QProcess>
@@ -32,8 +33,10 @@
 #include <QMessageBox>
 #include <QFileInfo>
 #include <QCoreApplication>
+#include <QLabel>
 
 #include <tdriver_util.h>
+#include <tdriver_debug_macros.h>
 
 
 static quint16 remotePort = 47747; // note: ruby-debug 0.10.0 with ruby 1.8 default would be 8989
@@ -42,11 +45,12 @@ static quint16 controlPort = 47748; // note: ruby-debug 0.10.0 with ruby 1.8 def
 static const char TDRIVER_RUBY_INTERACTSCRIPT[] = "tdriver_rubyinteract.rb";
 
 
-TDriverRunConsole::TDriverRunConsole(QWidget *parent) :
+TDriverRunConsole::TDriverRunConsole(bool makeProc, QWidget *parent) :
         QWidget(parent),
-        proc(new QProcess(this)),
+        proc(makeProc ? new QProcess(this): NULL),
         toolbar(new QToolBar),
         layout(new QVBoxLayout),
+        commandLineLabel(new QLabel(tr("stdin:"))),
         console(new TDriverConsoleTextEdit),
         outputMode(NO_OUTPUT),
 #ifdef Q_WS_WIN
@@ -73,19 +77,27 @@ TDriverRunConsole::TDriverRunConsole(QWidget *parent) :
 
     layout->addWidget(toolbar);
     layout->addWidget(console);
-    layout->addWidget(console->commandLine());
+    {
+        QHBoxLayout *sublayout = new QHBoxLayout();
+        sublayout->addWidget(commandLineLabel);
+        sublayout->addWidget(console->commandLine());
+        layout->addLayout(sublayout);
+    }
 
     setLayout(layout);
 
-    proc->setProcessChannelMode(QProcess::MergedChannels);
+    if (proc) {
+        proc->setProcessChannelMode(QProcess::MergedChannels);
 
-    connect(proc, SIGNAL(error(QProcess::ProcessError)), this, SLOT(procError(QProcess::ProcessError)));
-    connect(proc, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(procFinished(int,QProcess::ExitStatus)));
-    connect(proc, SIGNAL(started()), this, SLOT(procStarted()));
+        connect(proc, SIGNAL(error(QProcess::ProcessError)), this, SLOT(procError(QProcess::ProcessError)));
+        connect(proc, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(procFinished(int,QProcess::ExitStatus)));
+        connect(proc, SIGNAL(started()), this, SLOT(procStarted()));
 
-    console->setIODevice(proc);
-    // note: readProcText below is virtual, and may connect to a derived class method
-    connect(proc, SIGNAL(readyRead()), this, SLOT(readProcText()));
+        console->setIODevice(proc);
+        // note: readProcText below is virtual, and may connect to a derived class method
+        connect(proc, SIGNAL(readyRead()), this, SLOT(readProcText()));
+    }
+    //else qDebug() << FCFL << "started without proc";
 }
 
 TDriverRunConsole::~TDriverRunConsole()
@@ -113,22 +125,34 @@ void TDriverRunConsole::createActions()
     terminateAct->setObjectName("terminate");
     terminateAct->setToolTip(tr("terminate current process"));
     addAction(terminateAct);
-    connect(terminateAct, SIGNAL(triggered()), proc, SLOT(terminate()));
+    if (proc) {
+        connect(terminateAct, SIGNAL(triggered()), proc, SLOT(terminate()));
 #ifdef Q_WS_WIN
-    // on Windows terminate means window close, and ruby scripts don't care about it
-    // TODO: add option to enable terminate for scripts with GUI.
-    terminateAct->setEnabled(false);
-    terminateAct->setVisible(false);
+        // on Windows terminate means window close, and ruby scripts don't care about it
+        // TODO: add option to enable terminate for scripts with GUI.
+        terminateAct->setEnabled(false);
+        terminateAct->setVisible(false);
 #else
-    connect(this, SIGNAL(runSignal(bool)), terminateAct, SLOT(setEnabled(bool)));
+        connect(this, SIGNAL(runSignal(bool)), terminateAct, SLOT(setEnabled(bool)));
 #endif
+    }
+    else {
+        terminateAct->setVisible(false);
+        terminateAct->setEnabled(false);
+    }
 
     killAct = new QAction(QIcon(":/images/kill.png"), tr("&Kill process"), this);
     killAct->setObjectName("kill");
     killAct->setToolTip(tr("Kill current process"));
     addAction(killAct);
-    connect(killAct, SIGNAL(triggered()), proc, SLOT(kill()));
-    connect(this, SIGNAL(runSignal(bool)), killAct, SLOT(setEnabled(bool)));
+    if (proc) {
+        connect(killAct, SIGNAL(triggered()), proc, SLOT(kill()));
+        connect(this, SIGNAL(runSignal(bool)), killAct, SLOT(setEnabled(bool)));
+    }
+    else {
+        killAct->setVisible(false);
+        killAct->setEnabled(false);
+    }
 }
 
 
@@ -140,11 +164,13 @@ void TDriverRunConsole::clear()
 
 bool TDriverRunConsole::runFile(QString fileName, TDriverRunConsole::RunRequestType type)
 {
-    Q_ASSERT(proc);
+    if (!proc) {
+        qWarning() << FCFL << "called when proc==NULL";
+        return false;
+    }
 
     if (proc->state() != QProcess::NotRunning) {
-        qDebug("%s:%s:%i process state %i -> can't start new process",
-               __FILE__, __FUNCTION__, __LINE__, proc->state());
+        qDebug() << FCFL << "can't start a new process in process state" << proc->state();
         // TODO: add error message box
         return false;
     }
@@ -256,15 +282,20 @@ void TDriverRunConsole::rdebugReady()
 
 void  TDriverRunConsole::procError(QProcess::ProcessError err)
 {
-    qDebug() << FFL << err << proc->errorString();
-    console->appendLine(QString("process error reported: %1, %2").arg(err).arg(proc->errorString()), console->notifyFormat);
-    emit runSignal(false);
+    if (proc) {
+        qDebug() << FCFL << err << proc->errorString();
+        console->appendLine(QString("process error reported: %1, %2").arg(err).arg(proc->errorString()), console->notifyFormat);
+        emit runSignal(false);
+    }
+    else {
+        qWarning() << FCFL << "called when proc==NULL!";
+    }
 }
 
 
 void  TDriverRunConsole::procFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
-    qDebug() << FFL << exitStatus;
+    qDebug() << FCFL << exitCode << exitStatus;
     QString msg;
     if (exitStatus==QProcess::NormalExit) {
         msg.setNum(exitCode);
@@ -292,6 +323,8 @@ void  TDriverRunConsole::procStarted(void)
 
 void TDriverRunConsole::endProcess(void)
 {
+    if (!proc) return;
+
 #ifdef Q_WS_WIN
     proc->kill();
 #else
@@ -315,6 +348,11 @@ void TDriverRunConsole::setStdStreamsVisible(bool state)
 
 void TDriverRunConsole::readProcText()
 {
+    if (!proc) {
+        qWarning() << FCFL << "called when proc==NULL!";
+        return;
+    }
+
     QByteArray rawData = proc->readAll();
     //    qDebug() << FCFL << "outputMode" << outputMode << "rawData:" << rawData;
     //    QString text(rawData);

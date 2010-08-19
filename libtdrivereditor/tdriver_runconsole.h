@@ -29,6 +29,7 @@ class QVBoxLayout;
 class QAction;
 class TDriverConsoleTextEdit;
 class QToolBar;
+class QLabel;
 
 #define TDRIVER_RUNCONSOLE_DEBUG1_ENABLED 0
 
@@ -39,11 +40,11 @@ public:
 
     enum RunRequestType { RunRequest=0, Debug1Request=1, Debug2Request=2, InteractRequest=3 };
 
-    explicit TDriverRunConsole(QWidget *parent = 0);
+    explicit TDriverRunConsole(bool makeProc=true, QWidget *parent = 0);
     ~TDriverRunConsole();
 
     QProcess &process() { return *proc; }
-    bool isRunning() { return (proc->state() == QProcess::Running); }
+    bool isRunning() { return (proc && (proc->state() == QProcess::Running)); }
 
 signals:
     void requestRemoteDebug(QString host, quint16 dport, quint16 cport, TDriverRunConsole *procConsoleOwner);
@@ -76,6 +77,7 @@ protected:
 
     QToolBar *toolbar;
     QVBoxLayout *layout;
+    QLabel *commandLineLabel;
     TDriverConsoleTextEdit *console;
 
     enum { NO_OUTPUT, PROCESS_OUTPUT, RDEBUG_OUTPUT } outputMode;

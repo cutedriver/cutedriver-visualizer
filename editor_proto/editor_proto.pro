@@ -30,14 +30,14 @@ CONFIG += link_prl
 INCLUDEPATH += $$EDITORLIBDIR
 LIBS += -L$$EDITORLIBDIR -l$$EDITOR_LIB
 QT += network
+
+INCLUDEPATH += $$UTILLIBDIR
 LIBS += -L$$UTILLIBDIR -l$$UTIL_LIB
 QT += sql
 
 SOURCES += src/main.cpp \
     src/mainwindow.cpp
 HEADERS += src/mainwindow.h
-FORMS +=
-OTHER_FILES +=
 
 unix: {
     target.path = /opt/tdriver_visualizer

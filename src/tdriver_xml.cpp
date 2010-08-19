@@ -1,42 +1,27 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 
 #include "tdriver_main_window.h"
 
-bool MainWindow::refreshUiXml() {
 
-    bool result = true;
-
-    QString errorMessage = "";
-
-    QString refreshCommand = activeDevice.value( "name" ) + " refresh";
-
-    // use target application if user has chosen one
-    if ( !currentApplication.value( "id" ).isEmpty() && applicationsHash.contains( currentApplication.value( "id" ) ) ) { refreshCommand += " " + currentApplication.value( "id" ); }
-
-    result = execute_command( commandRefreshUI, refreshCommand );
-
-    return result;
-
-}
 
 bool MainWindow::updateBehaviourXml()
 {
@@ -65,27 +50,21 @@ bool MainWindow::updateBehaviourXml()
 
     // build a string of object types
     for ( int index = 0; index < objectTypes.size(); index++ ) {
-
         if ( !objectTypesString.isEmpty() ) {
             objectTypesString += ",";
         }
-
         objectTypesString += "'" + objectTypes.at( index ) + "'";
-
     }
 
-    if ( execute_command( commandBehavioursXml, QString( activeDevice.value( "name" ) + " get_behaviours " + objectTypesString ) ) && objectTypes.size() > 0 ) {
-
+    if ( execute_command( commandBehavioursXml,
+                          activeDevice.value( "name" ) + " get_behaviours " + objectTypesString ) &&
+         objectTypes.size() > 0 ) {
         parseXml( outputPath + "/visualizer_behaviours_" + activeDevice.value( "name" ) + ".xml" , behaviorDomDocument );
-
         buildBehavioursMap();
-
     }
 
     propertyTabLastTimeUpdated.insert( "methods", 0 );
-
     return result;
-
 }
 
 void MainWindow::buildBehavioursMap() {

@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 #include <QPoint>
@@ -118,27 +118,20 @@ void MainWindow::imageTapFromId(int id)
 }
 
 
-void MainWindow::tapScreen( QString target ) {
-
+void MainWindow::tapScreen( QString target )
+{
     //qDebug() << "tapScreen";
-
     statusbar( "Tapping...", 0, 1 );
+    typedef QList<QByteArray> QByteArrayList;
 
-    if ( !execute_command( commandTapScreen, QString( activeDevice.value( "name" ) + " " + target ) ) ) {
-
+    if ( !execute_command( commandTapScreen, QString( activeDevice.value( "name" ) + " " + target ))) {
         statusbar( "Error: Failed to tap the screen", 1000 );
-        return;
-
-    } else {
-
-        statusbar( "Tapping...", 1, 1 );
-        // if refreshing fails, return immediately; error message from refresh data will be shown
-        if ( !refreshData( true ) ) { return; }
-
     }
 
-    statusbar( "Ready", 1500 );
-
+    else {
+        statusbar( "Tapping...", 1000 );
+        refreshData();
+    }
 }
 
 // Image has been clicked - fetch X, Y from imageWidget, and
@@ -149,22 +142,19 @@ void MainWindow::clickedImage()
     QPoint pos(imageWidget->getPressedPos());
 
     if ( activeDevice.value( "type" ).toLower() == "s60" ) {
-
         imageWidget->convertS60Pos(pos);
         tapScreen( "tap_screen " + QString::number( pos.x() ) + " " + QString::number( pos.y() ) );
+    }
 
-    } else {
-
+    else {
         if ( highlightAtCoords( pos, false ) && lastHighlightedObjectPtr != 0 ) {
-
             QHash<QString, QString> treeItemData = objectTreeData.value( lastHighlightedObjectPtr );
             tapScreen( "tap " + treeItemData.value( "type" ) + "(:id=>" + treeItemData.value( "id" ) + ") " + currentApplication.value("id") );
             highlightAtCoords( pos, true );
+        }
 
-        } else {
-
+        else {
             QMessageBox::critical( 0, "Tap to screen", "No object found at coordinates x: " + QString::number( pos.x() ) + ", y: " + QString::number( pos.y() ) );
-
         }
     }
 }
@@ -334,8 +324,8 @@ bool MainWindow::getSmallestObjectFromMatches( QList<int> *matchingObjects, int 
 }
 
 
-bool MainWindow::highlightById( int id, bool selectItem, QString insertMethodToEditor ) {
-
+bool MainWindow::highlightById( int id, bool selectItem, QString insertMethodToEditor )
+{
     QTreeWidgetItem *item = objectTreeMap.value( id );
     if (item == NULL) {
         return false;

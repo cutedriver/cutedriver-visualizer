@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 #include "tdriver_rubyinteract.h"
@@ -24,80 +24,87 @@
 #include <QAction>
 #include <QIcon>
 #include <QToolBar>
+#include <QLabel>
 
 #include "tdriver_editor_common.h"
 
-static const char delimChar = 032; // note: octal
+#include <tdriver_rubyinterface.h>
 
-static const char InteractDelimCstr[] = { delimChar, delimChar, 0 };
+#include <tdriver_debug_macros.h>
+
 
 
 TDriverRubyInteract::TDriverRubyInteract(QWidget *parent) :
-        TDriverRunConsole(parent),
-        isRestarting(false),
-        havePrompt(false),
-        waitingEnd(false),
-        //state(CLOSED),
-        delimStr(InteractDelimCstr),
-        promptId(delimStr + "PROMPT:"),
-        argsId(delimStr + "ARGPROMPT:"),
-        errorId(delimStr + "ERROR:"),
-        infoId(delimStr + "INFO:"),
-        evalId(delimStr + "EVAL:"),
-        endId(delimStr + "END:"),
-        //argStr(delimStr + "ARG:"),
-        outputFormat(new QTextCharFormat),
-        waitingEndOfRecord(false)
+        TDriverRunConsole(false, parent), // false means QProcess will not be created
+        stdoutFormat(new QTextCharFormat),
+        stderrFormat(new QTextCharFormat),
+        prevSeqNum(0)
 {
-    outputFormat->setForeground(QBrush(Qt::darkGray));
-    outputFormat->setFontFixedPitch(true);
+    commandLineLabel->setText(tr("Eval:"));
+
+    stdoutFormat->setForeground(QBrush(Qt::darkGray));
+    stdoutFormat->setFontFixedPitch(true);
+
+    stderrFormat->setForeground(QBrush(Qt::darkRed));
+    stderrFormat->setFontFixedPitch(true);
+
     layout->setObjectName("irconsole");
     console->setObjectName("irconsole");
 
     createActions();
 
-    //disconnect(proc, SIGNAL(readyRead()), 0, 0);
-    //console->setIODevice(proc, true);
-    connect(proc, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(checkRestart(int,QProcess::ExitStatus)));
-    //setStdStreamsHidden(false);
+    connect(TDriverRubyInterface::globalInstance(), SIGNAL(rubyProcessFinished()),
+            this, SLOT(resetQueryQueue()));
+
+    connect(TDriverRubyInterface::globalInstance(), SIGNAL(rubyOnline()), this, SLOT(rubyIsOnline()));
+
+    connect(TDriverRubyInterface::globalInstance(), SIGNAL(rubyOutput(int, quint32,QByteArray)),
+            this, SLOT(rbiText(int, quint32,QByteArray)));
+
+    connect(TDriverRubyInterface::globalInstance(), SIGNAL(messageReceived(quint32,QByteArray,BAListMap)),
+            this, SLOT(rbiMessage(quint32,QByteArray,BAListMap)));
+
+    // used for progressing in query queue after receiving a reply
+    connect(this, SIGNAL(requestNextQuery()), this, SLOT(sendNextQuery()), Qt::QueuedConnection);
 }
 
 
-void TDriverRubyInteract::restart()
+void TDriverRubyInteract::resetQueryQueue()
 {
-    restartWithQueue(false);
-}
+    while ( !queryQueue.empty() ) {
+        QueryQueueItem query = queryQueue.takeFirst();
 
-void TDriverRubyInteract::restartWithQueue(bool keepQueryQueue)
-{
-    if (isRunning()) {
-        if (keepQueryQueue) {
-            qWarning() << FCFL << "Warning: restarting running process, noClear ignored";
+        switch (query.type) {
+        case QueryQueueItem::COMPLETION:
+            qDebug() << FCFL << "completionError for statement:" << query.statement;
+            emit completionError(query.client, query.statement, QStringList());
+            break;
+        case QueryQueueItem::EVALUATION:
+            qDebug() << FCFL << "evaluationnError for statement:" << query.statement;
+            emit evaluationError(query.client, query.statement, QStringList());
+            break;
         }
-        endProcess();
-        isRestarting = true;
-        return;
-    }
-
-    if (!keepQueryQueue) {
-        queryQueue.clear();
-    }
-    runFile(activeDocName, TDriverRunConsole::InteractRequest);
-}
-
-
-void TDriverRubyInteract::checkRestart(int, QProcess::ExitStatus)
-{
-    if (isRestarting) {
-        isRestarting = false;
-        restart();
     }
 }
 
 
-void TDriverRubyInteract::setActiveDocumentName(QString name)
+void TDriverRubyInteract::resetScript()
 {
-    activeDocName = name;
+    qDebug() << FCFL;
+
+    resetQueryQueue();
+    prevSeqNum = 0;
+
+    BAListMap msg;
+    bool ok = TDriverRubyInterface::globalInstance()->executeCmd("interact reset", msg, 5000);
+
+    if (ok) {
+        if (msg.contains("error_message"))
+            qWarning() << FCFL << "ERROR FROM SCRIPT" << msg;
+        else
+            qDebug() << "success";
+    }
+    else qDebug() << "executeCmd failure";
 }
 
 
@@ -105,11 +112,11 @@ void TDriverRubyInteract::createActions()
 {
     QList <QAction*> acts;
 
-    restartAct = new QAction(QIcon(":/images/restart.png"), tr("&Restart"), this);
-    restartAct->setObjectName("restart");
-    restartAct->setToolTip(tr("Clear contents of buffer"));
-    acts.append(restartAct);
-    connect(restartAct, SIGNAL(triggered()), this, SLOT(restart()));
+    resetAct = new QAction(QIcon(":/images/reset.png"), tr("&Reset"), this);
+    resetAct->setObjectName("reset");
+    resetAct->setToolTip(tr("Clear contents of buffer"));
+    acts.append(resetAct);
+    connect(resetAct, SIGNAL(triggered()), this, SLOT(resetScript()));
 
     insertActions(actions().first(), acts);
     toolbar->insertActions(toolbar->actions().first(), acts);
@@ -123,52 +130,58 @@ void TDriverRubyInteract::createActions()
 
 void  TDriverRubyInteract::procStarted(void)
 {
-    havePrompt = waitingEnd = waitingEndOfRecord = false;
-    readBuffer.clear();
-    resultLines.clear();
-    TDriverRunConsole::procStarted();
+    qDebug() << FCFL;
+    console->appendLine("PROCESS STARTED", console->notifyFormat);
     //state = READ_PROMPT;
+}
+
+
+void TDriverRubyInteract::rubyIsOnline()
+{
+    qDebug() << FCFL;
 }
 
 
 bool TDriverRubyInteract::sendNextQuery()
 {
-    if (queryQueue.isEmpty()) return true; // TODO: or false? check if return value is actually used ever
-
-    if (!proc->isOpen()) {
-        qDebug() << FCFL "Script not running, doing restart";
-        restartWithQueue();
+    if (queryQueue.isEmpty()) {
         return true;
     }
 
-    else if (proc->isWritable() && havePrompt) {
-        struct QueryQueueItem query = queryQueue.first();
-
-        int lines = query.statement.isEmpty() ? 0
-            : query.statement.count('\n')+1;
-        QString cmd = QString("%1 %2\n").arg(query.command).arg(lines);
-
-        if (lines > 0)
-            cmd.append(query.statement+"\n");
-        proc->write(cmd.toLocal8Bit());
-        waitingEnd = true;
-        qDebug() << FCFL << "wrote" << cmd;
-        havePrompt = false;
-        return true;
+    else if (!TDriverRubyInterface::globalInstance()->goOnline()) {
+        return false;
     }
 
     else {
-        qDebug() << FCFL << "Unable to write at the moment (writable" << proc->isWritable() << ", prompt" << havePrompt << "waitingEndOfRecord" << waitingEndOfRecord << ")";
-        return false;
+        struct QueryQueueItem &query = queryQueue.first();
+
+        if (query.rbiSeqNum == 0) {
+            BAListMap msg;
+            msg["command"] << query.command << query.statement;
+            query.rbiSeqNum = TDriverRubyInterface::globalInstance()->sendCmd("ruby_interact.rb emulation", msg);
+            if (query.rbiSeqNum == 0) {
+                qDebug() <<FCFL << ">>>> sendCmd returned failure, command remains in queryQueue, size" << queryQueue.size();
+                return false;
+            }
+            else {
+                qDebug() <<FCFL << ">>>> sendCmd returned seqnum" << query.rbiSeqNum;
+                return true;
+            }
+        }
+        else {
+            qDebug() << FCFL << "Unable to send command at the moment, with queryQueue size"<< queryQueue.size();
+            return false;
+        }
     }
 }
 
 
-bool TDriverRubyInteract::queryCompletions(QString statement)
+bool TDriverRubyInteract::queryCompletions(QByteArray statement)
 {
     struct QueryQueueItem query;
     query.type = QueryQueueItem::COMPLETION,
     query.client = sender(),
+    query.rbiSeqNum = 0;
     query.command = "line_completion",
     query.statement = statement.trimmed();
 
@@ -177,11 +190,12 @@ bool TDriverRubyInteract::queryCompletions(QString statement)
 }
 
 
-bool TDriverRubyInteract::evalStatement(QString statement)
+bool TDriverRubyInteract::evalStatement(QByteArray statement)
 {
     struct QueryQueueItem query;
     query.type = QueryQueueItem::EVALUATION,
     query.client = sender(),
+    query.rbiSeqNum = 0;
     query.command = "line_execution",
     query.statement = statement.trimmed();
 
@@ -190,97 +204,72 @@ bool TDriverRubyInteract::evalStatement(QString statement)
 }
 
 
-void TDriverRubyInteract::readProcText()
+void TDriverRubyInteract::rbiMessage(quint32 seqNum, QByteArray name, BAListMap message)
 {
-    // note: this slot gets connected to in parent class constructor
+    qDebug() << FCFL << "<<<<<<<<<<" << seqNum << name;
+    if (queryQueue.isEmpty()) return; // no pending queries
 
-    QByteArray rawData = proc->readAll();
-    //qDebug() << FCFL << "outputMode" << outputMode << "rawData:" << rawData;
-    {
-        //QString text(rawData);
-        //qDebug() << FCFL << "Interact script output:" << text.replace('\n', ".§.").replace('\r', ".§.");
-    }
+    struct QueryQueueItem &query = queryQueue.first();
 
-    if (outputMode == PROCESS_OUTPUT) {
-        console->appendText(rawData, *outputFormat);
-    }
+    if (seqNum < query.rbiSeqNum) return; // ignore
 
-    readBuffer.append(rawData);
-    QStringList spl = readBuffer.split('\n', QString::KeepEmptyParts);
-    //qDebug() << FCFL << spl << spl.size();
-    readBuffer = spl.takeLast(); // next line, either empty or partial
+    // after this point, received message affects queryQueue even if it's not for us
 
-    foreach(QString line, spl) {
-        //qDebug() << FCFL << line;
-        line = line.trimmed();
+    if (seqNum == query.rbiSeqNum && name == "ruby_interact.rb emulation") {
+        // it's for us!
 
-        if (!waitingEndOfRecord) {
-            if (line.startsWith(delimStr)) {
+        switch (query.type) {
 
-                waitingEndOfRecord = true;
-                // TODO: these if's should just note start of status record, and handling should be in if(waintingEndOfRecord... below
-                if (line.startsWith(promptId)) {
-                    qDebug() << FCFL << "PROMPT line:" << line;
-                    havePrompt = true;
-                    resultLines.clear();
-                    sendNextQuery();
-                }
-
-                else if (line.startsWith(errorId)) {
-                    if (waitingEnd) {
-                        Q_ASSERT(!queryQueue.isEmpty());
-                        struct QueryQueueItem query = queryQueue.takeFirst();
-                        waitingEnd = false;
-
-                        emit scriptError(query.client, query.statement, resultLines);
+        case QueryQueueItem::COMPLETION:
+            {
+                QStringList completionLines;
+                foreach (QByteArray key, message["result_keys"]) {
+                    foreach(QByteArray line, message[key]) {
+                        completionLines << QString::fromLocal8Bit(line.constData(), line.size());
                     }
                 }
-
-                else if (line.startsWith(endId)) {
-                    if (waitingEnd) {
-                        Q_ASSERT(!queryQueue.isEmpty());
-                        struct QueryQueueItem query = queryQueue.takeFirst();
-                        waitingEnd = false;
-
-                        switch (query.type) {
-                        case QueryQueueItem::COMPLETION:
-                            emit completionResult(query.client, query.statement, resultLines);
-                            break;
-                        case QueryQueueItem::EVALUATION:
-                            emit evalutaionResult(query.client, query.statement, resultLines);
-                            break;
-                        }
-                    }
-                }
-
-                else if (line.startsWith(infoId)) {
-                    qDebug() << FCFL << "INFO line:" << line;
-                }
-
-                else if (line.startsWith(evalId)) {
-                    qDebug() << FCFL << "EVAL line:" << line;
-                }
-
-                else if (line.startsWith(argsId)) {
-                    qDebug() << FCFL << "ARGPROMPT line:" << line;
-                }
-
-                else {
-                    qDebug() << FCFL << "ignoring line" << line;
-                }
+                qDebug() << FCFL << completionLines;
+                emit completionResult(query.client, query.statement, completionLines);
             }
-            else {
-                // regular output
-                Q_ASSERT(!waitingEndOfRecord);
-                //qDebug() << FCFL << resultLines << "<<" << line;
-                resultLines.append(line);
-            }
-        }
+            break;
 
-        // code above may have set waitingEndOfRecord for current line
-        if (waitingEndOfRecord && line.endsWith(delimChar)) {
-            //if (!line.startsWith(delimStr)) qDebug() << FCFL << "\t" << line;
-            waitingEndOfRecord = false;
+        case QueryQueueItem::EVALUATION:
+            qDebug() << FCFL << "EVALUATION RESULT" << message;
+            //emit evaluationResult(query.client, query.statement, resultLines); // sent by rbiStdoutText/rbiStderrText
+            emit evaluationResult(query.client, query.statement, QStringList()); // sent by rbiStdoutText/rbiStderrText
+            break;
+
         }
     }
+    else {
+        qDebug() << FCFL << "name" << name << "with received seqNum" << seqNum << "vs. removed queue seqNum" << query.rbiSeqNum;
+        // NOTE: assert below assumes overlapping queries won't be send, so all except first item in queue have seqNum 0
+        Q_ASSERT(queryQueue.length() < 2 || queryQueue.at(1).rbiSeqNum == 0);
+    }
+    prevSeqNum = query.rbiSeqNum;
+    queryQueue.removeFirst();
+    if (!queryQueue.isEmpty()) emit requestNextQuery();
+}
+
+
+bool TDriverRubyInteract::checkOutputSeqNum(quint32 seqNum)
+{
+    if (seqNum == 0) return false;
+    else if (seqNum == prevSeqNum) return true;
+    else return ( !queryQueue.isEmpty() && seqNum == queryQueue.first().rbiSeqNum);
+}
+
+
+void TDriverRubyInteract::rbiText(int fnum, quint32 seqNum, QByteArray text)
+{
+    if ( checkOutputSeqNum(seqNum) ) {
+        if (fnum == 0)
+            console->appendText(QString::fromLocal8Bit(text.constData(), text.size()), *stdoutFormat);
+
+        else if (fnum == 1)
+            console->appendText(QString::fromLocal8Bit(text.constData(), text.size()), *stderrFormat);
+
+        else qDebug() << FCFL << "bad fnum" << fnum << seqNum << text;
+    }
+    // else not for us
 }

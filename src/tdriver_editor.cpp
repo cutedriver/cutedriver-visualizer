@@ -21,6 +21,8 @@
 
 #include "tdriver_main_window.h"
 
+#include <tdriver_util.h>
+
 QFile *out;
 
 void output(QtMsgType type, const char *msg)
@@ -70,9 +72,10 @@ int main(int argc, char *argv[])
     out->open( QIODevice::WriteOnly | QIODevice::Text );
     qInstallMsgHandler(output);
 
-    MainWindow* mainWindow = new MainWindow();
+    qRegisterMetaType<BAListMap>("BAList");
+    qRegisterMetaType<BAListMap>("BAListMap");
 
-    mainWindow->setApplicationPath();
+    MainWindow* mainWindow = new MainWindow();
 
     if ( mainWindow->setup() ){
 
