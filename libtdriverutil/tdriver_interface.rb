@@ -231,17 +231,17 @@ end
 ############################################################################
 
 
-class TDriver
-  class << self
-    alias __original_connect_sut__ connect_sut
-  end
-  def self.connect_sut( sut_attributes = {} )
-    STDERR.puts "Setting timeout to 0 for #{sut_attributes[ :Id ].to_sym}"
-    sut=self.__original_connect_sut__(sut_attributes)
-    sut.instance_eval{ @_testObjectFactory.timeout = 0 }
-    return sut
-  end
-end
+# class TDriver
+#   class << self
+#     alias __original_connect_sut__ connect_sut
+#   end
+#   def self.connect_sut( sut_attributes = {} )
+#     STDERR.puts "Setting timeout to 0 for #{sut_attributes[ :Id ].to_sym}"
+#     sut=self.__original_connect_sut__(sut_attributes)
+#     sut.instance_eval{ @_testObjectFactory.timeout = 0 }
+#     return sut
+#   end
+# end
 
 
 class Code_evaluation_sandbox
