@@ -79,6 +79,7 @@ class TDriverTabbedEditor;
 class TDriverRunConsole;
 class TDriverDebugConsole;
 class TDriverRubyInteract;
+class TDriverComboLineEdit;
 
 class MainWindow : public QMainWindow {
 
@@ -500,7 +501,7 @@ private:
     QCheckBox *findDialogAttributes;
     QCheckBox *findDialogSubtreeOnly;
 
-    QComboBox *findDialogText;
+    TDriverComboLineEdit *findDialogText;
 
     QDialog *findDialog;
     QPushButton *findDialogFindButton;

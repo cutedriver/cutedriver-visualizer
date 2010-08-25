@@ -18,7 +18,7 @@
 ****************************************************************************/
 
 
-
+#include <tdriver_combolineedit.h>
 #include "tdriver_main_window.h"
 
 bool MainWindow::containsWords( QHash<QString, QString> itemData, QString text, bool caseSensitive, bool entireWords ) {
@@ -88,12 +88,6 @@ void MainWindow::findNextTreeObject()
     bool entireWords = findDialogEntireWords->isChecked();
     bool searchWrapAround = findDialogWrapAround->isChecked();
     bool searchAttributes = findDialogAttributes->isChecked();
-
-
-    // add item to combobox
-    if ( findDialogText->findText( findString ) == -1 ) {
-        findDialogText->addItem( findString );
-    }
 
     QTreeWidgetItem *current = objectTree->currentItem();
 
@@ -322,10 +316,8 @@ void MainWindow::createFindDialog() {
     groupBoxLayout->setObjectName("main find group");
 
     // search text combobox
-    findDialogText = new QComboBox();
+    findDialogText = new TDriverComboLineEdit();
     findDialogText->setObjectName("main find text");
-    findDialogText->setEditable( true );
-    findDialogText->setDuplicatesEnabled( false );
 
     // buttons: find & close
     findDialogFindButton = new QPushButton( "&Find", this );
@@ -360,7 +352,8 @@ void MainWindow::createFindDialog() {
     findDialogSubtreeOnly->setTristate(false);
 
     // populate widgets
-    groupBoxLayout->addWidget( findDialogText, 0, 0, 1, 4 );
+    findDialogText->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    groupBoxLayout->addWidget( findDialogText, 0, 0, 1, -1 );
 
     groupBoxLayout->addWidget( findDialogMatchCase, 1, 0 );
     groupBoxLayout->addWidget( findDialogBackwards, 1, 1 );
@@ -379,13 +372,17 @@ void MainWindow::createFindDialog() {
              this, SLOT(findDialogSubtreeChanged(int)));
     connect( findDialogText, SIGNAL( editTextChanged( const QString & ) ),
              this, SLOT( findDialogTextChanged( const QString & ) ) );
+    connect( findDialogText, SIGNAL(triggered(QString)), this, SLOT(findNextTreeObject()));
+
+    connect( findDialogFindButton, SIGNAL( clicked() ), findDialogText, SLOT(externallyTriggered()));
+    connect( findDialogFindButton, SIGNAL( clicked() ), this, SLOT( findNextTreeObject() ) );
+
+    connect( findDialogCloseButton, SIGNAL( clicked() ), this, SLOT( closeFindDialog() ) );
 
     Q_ASSERT(objectTree);
     connect (objectTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
              this, SLOT(findDialogHandleTreeCurrentChange(QTreeWidgetItem*)));
 
-    connect( findDialogFindButton, SIGNAL( pressed() ), this, SLOT( findNextTreeObject() ) );
-    connect( findDialogCloseButton, SIGNAL( pressed() ), this, SLOT( closeFindDialog() ) );
 
 }
 
