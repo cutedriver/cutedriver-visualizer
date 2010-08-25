@@ -49,6 +49,7 @@
 #include <QPushButton>
 #include <QPalette>
 #include <QStackedWidget>
+#include <QShortcut>
 
 
 static inline QString strippedName(const QString &fullFileName) {
@@ -87,6 +88,12 @@ TDriverTabbedEditor::TDriverTabbedEditor(QWidget *parent) :
     connect(this, SIGNAL(currentChanged(int)), this, SLOT(currentChangeAction(int)));
     connect(this, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
     setTabsClosable(true);
+
+    QShortcut *nextSC = new QShortcut(QKeySequence("Ctrl+Tab"), this, 0, 0, Qt::WidgetWithChildrenShortcut );
+    connect(nextSC, SIGNAL(activated()), this, SLOT(nextTab()));
+
+    QShortcut *prevSC = new QShortcut(QKeySequence("Ctrl+Shift+Tab"), this, 0, 0, Qt::WidgetWithChildrenShortcut );
+    connect(prevSC, SIGNAL(activated()), this, SLOT(prevTab()));
 }
 
 
@@ -116,6 +123,7 @@ void TDriverTabbedEditor::disconnectTabSignals()
         disconnect(disablelist[ind], SLOT(setEnabled(bool)));
         disablelist[ind]->setEnabled(false);
     }
+
 }
 
 void TDriverTabbedEditor::connectTabSignals(TDriverCodeTextEdit *editor)
@@ -509,6 +517,28 @@ bool TDriverTabbedEditor::saveAll(void)
 bool TDriverTabbedEditor::closeCurrent(void)
 {
     return closeTab(currentIndex());
+}
+
+
+void TDriverTabbedEditor::nextTab()
+{
+    int index = currentIndex();
+    if (index >= 0) {
+        if (++index >= count()) index = 0;
+        setCurrentIndex(index);
+        currentWidget()->setFocus(Qt::OtherFocusReason);
+    }
+}
+
+
+void TDriverTabbedEditor::prevTab()
+{
+    int index = currentIndex();
+    if (index >= 0) {
+        if (--index < 0 ) index = count() - 1;
+        setCurrentIndex(index);
+        currentWidget()->setFocus(Qt::OtherFocusReason);
+    }
 }
 
 

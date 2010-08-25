@@ -1018,7 +1018,8 @@ void TDriverCodeTextEdit::keyPressEvent(QKeyEvent *event)
     }
 
     if (!textEmpty && !handled && !isUsingTabulatorsMode && !textCursor().hasSelection() &&
-        (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete) )  {
+        (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete) &&
+        (event->modifiers() & Qt::ControlModifier)==0 )  {
 
         if ( isReadOnly()) {
             // just ignore

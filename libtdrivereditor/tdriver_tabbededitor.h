@@ -115,6 +115,8 @@ public slots:
     bool saveCurrentAsTemplate(void);
     bool saveAll(void);
     bool closeCurrent(void);
+    void nextTab();
+    void prevTab();
     bool openRecentFile();
 
     void newFile(QString fileName = QString());
