@@ -1,23 +1,23 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
- 
- 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
+
+
 #include "tdriver_rubyhighlighter.h"
 #include <tdriver_util.h>
 
@@ -45,32 +45,29 @@ TDriverRubyHighlighter::TDriverRubyHighlighter(QTextDocument *parent) :
 
     rubySymbolFormat->setForeground(Qt::darkYellow);
 
-    rubyCommentFormat->setForeground(Qt::darkGreen);
+    rubyCommentFormat->setForeground(Qt::red);
 
-    // Note: order of highlight rules is arranged so that "area rules" like comments and quotes
-    // should be before smaller rules like keywords, for performance reasons, to avoid highlighting
-    // keywords etc twice when they're inside comments, quotes etc.
+    /*
+       Note: order of highlight rule list lists is:
+       - block rules that must start at start of line
+       - block rules with start and end (this is in the list already by parent class, and is appended to),
+       - comment rules that go until end of line,
+       - ruby symbols starting with :
+       - keywords and reserved words
+    */
 
-    // create a new list for until-end-of-line comments and put it even before superclass default rules
+    // ruby block/documentation comment
     {
-        HighlightingRule1 *rule1 = new HighlightingRule1(this);
-        rule1->matchPat = new QRegExp("#.*");
-        rule1->format = rubyCommentFormat;
-        rules.append(rule1);
+        HighlightingRule2 *rule2 = new HighlightingRule2(this);
+        // TODO: check if it's really true that these both must be at start of line
+        rule2->matchPat = new QRegExp("^=begin");
+        rule2->endPat = new QRegExp("^=end");
+        rule2->matchCaretMode = rule2->endCaretMode = QRegExp::CaretAtZero;
+        rule2->format = rubyCommentFormat;
+        rules.append(rule2);
     }
     ruleListList.prepend(rules);
-
-    // create ruby rules to go after the superclass default rules
     rules.clear();
-
-    // ruby symbols
-    // TODO: make it possible to have rule that highlights colon differently from symbol word
-    {
-        HighlightingRule1 *rule1 = new HighlightingRule1(this);
-        rule1->matchPat = new QRegExp(":\\w*");
-        rule1->format = rubySymbolFormat;
-        rules.append(rule1);
-    }
 
     // ruby %-expressions, partial and inefficient implementation,
     // TODO: matchPat should be something like %([qQwW])(.) and change endPat dynamically
@@ -114,30 +111,40 @@ TDriverRubyHighlighter::TDriverRubyHighlighter(QTextDocument *parent) :
         rule2->endPat = new QRegExp("(^'|[^\\\\](\\\\\\\\)*\\)");
         rules.append(rule2);
     }
+    // append to list that comes from parent class
+    ruleListList.last().append(rules);
+    rules.clear();
 
-    // ruby block/documentation comment
+    // until-end-of-line blocks, like #-comment blocks
     {
-        HighlightingRule2 *rule2 = new HighlightingRule2(this);
-        // TODO: check if it's really true that these both must be at start of line
-        rule2->matchPat = new QRegExp("^=begin");
-        rule2->endPat = new QRegExp("^=end");
-        rule2->matchCaretMode = rule2->endCaretMode = QRegExp::CaretAtZero;
-        rule2->format = rubyCommentFormat;
-        rules.append(rule2);
+        HighlightingRule1 *rule1 = new HighlightingRule1(this);
+        rule1->matchPat = new QRegExp("#.*");
+        rule1->format = rubyCommentFormat;
+        rule1->resetBlockState = true;
+        rules.append(rule1);
     }
-
-
-    QString dir = TDriverUtil::tdriverHelperFilePath("completions/");
-
-    // read highlight words from a few files
-    readPlainStrings(dir+"plain_ruby_keywords.txt", keywordFormat, rules);
-
-    //readPlainStrings(dir+"plain_ruby_methods.txt", rubyMethodFormat, rules);
-
-    readPlainStrings(dir+"plain_ruby_classes.txt", rubyClassFormat, rules);
-
-    // put these after default multiline quotes
     ruleListList.append(rules);
-    //rules.clear();
+    rules.clear();
+
+    // ruby symbols
+    // TODO: make it possible to have rule that highlights colon differently from symbol word
+    {
+        HighlightingRule1 *rule1 = new HighlightingRule1(this);
+        rule1->matchPat = new QRegExp(":\\w*");
+        rule1->format = rubySymbolFormat;
+        rules.append(rule1);
+    }
+    ruleListList.append(rules);
+    rules.clear();
+
+    // ruby keywords read form files
+    {
+        QString dir = TDriverUtil::tdriverHelperFilePath("completions/");
+        readPlainStrings(dir+"plain_ruby_keywords.txt", keywordFormat, rules);
+        //readPlainStrings(dir+"plain_ruby_methods.txt", rubyMethodFormat, rules);
+        readPlainStrings(dir+"plain_ruby_classes.txt", rubyClassFormat, rules);
+    }
+    ruleListList.append(rules);
+    rules.clear();
 }
 

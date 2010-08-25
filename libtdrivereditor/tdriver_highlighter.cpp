@@ -36,12 +36,8 @@ TDriverHighlighter::TDriverHighlighter(QTextDocument *parent) :
         QSyntaxHighlighter(parent),
         defaultFormat(new QTextCharFormat),
         keywordFormat(new QTextCharFormat),
-        classFormat(new QTextCharFormat),
-        singleLineCommentFormat(new QTextCharFormat),
-        multiLineCommentFormat(new QTextCharFormat),
         singleQuotationFormat(new QTextCharFormat),
         doubleQuotationFormat(new QTextCharFormat),
-        functionFormat(new QTextCharFormat),
         ruleListList()
 {
 
@@ -86,8 +82,11 @@ TDriverHighlighter::TDriverHighlighter(QTextDocument *parent) :
     rules.clear();
 }
 
-int TDriverHighlighter::readPlainStrings(const QString &fileName, const QTextCharFormat *format,
-                                              QList<const HighlightingRuleBase*> &rules)
+
+int TDriverHighlighter::readPlainStrings(
+        const QString &fileName,
+        const QTextCharFormat *format,
+        QList<const HighlightingRuleBase*> &rules)
 {
     QStringList keywords;
     MEC::DefinitionFileType type = MEC::getDefinitionFile(fileName, keywords);
@@ -111,8 +110,6 @@ int TDriverHighlighter::readPlainStrings(const QString &fileName, const QTextCha
 
 void TDriverHighlighter::highlightBlock(const QString &text)
 {
-    //qDebug() << FFL << "ENTRY with prev block state" << previousBlockState();
-
     int startIndex = 0;
     if (previousBlockState() >= 0) {
         const HighlightingRuleBase *rule = stateRulePtrs.value(previousBlockState());
@@ -139,22 +136,18 @@ void TDriverHighlighter::highlightBlock(const QString &text)
 
     QList<const HighlightingRuleBase*> ruleList;
     foreach (ruleList, ruleListList) {
-        const HighlightingRuleBase *ruleBase;
-        foreach (ruleBase, ruleList) {
-            Q_ASSERT(ruleBase);
-
-            //qDebug() << FFL << startIndex << ruleBase->type() << ruleBase->matchPat->pattern();
+        const HighlightingRuleBase *rule;
+        foreach (rule, ruleList) {
             int index = startIndex;
 
-            //
             forever {
-                index = ruleBase->matchPat->indexIn(text, index, ruleBase->matchCaretMode);
+                index = rule->matchPat->indexIn(text, index, rule->matchCaretMode);
 
                 // break if no match
                 if (index == -1) break; // continue inner foreach to next rule
 
                 // this length value applies if rule coveres all of text to be highlighted
-                int length = ruleBase->matchPat->matchedLength();
+                int length = rule->matchPat->matchedLength();
 
                 //qDebug() << FFL << index << length;
 
@@ -165,7 +158,10 @@ void TDriverHighlighter::highlightBlock(const QString &text)
                     continue;
                 }
 
-                ruleBase->postMatch(text, index, length);
+                // this is needed for cases like end-of-line comment overriding previous multiline-quote start
+                if (rule->resetBlockState) setCurrentBlockState(-1);
+
+                rule->postMatch(text, index, length);
 
                 // optimization: extend already known to be formatted part of line,
                 // and return if entire line highlighted (common case with #-style comment)
@@ -173,16 +169,12 @@ void TDriverHighlighter::highlightBlock(const QString &text)
                     startIndex += length;
                     if (startIndex >= text.length()) return;
                 }
+
                 index += length;
             }
         }
     }
-
-    //qDebug() << FFL  << "DONE with block state" << currentBlockState();
 }
-
-
-
 
 
 //
@@ -193,7 +185,8 @@ TDriverHighlighter::HighlightingRuleBase::HighlightingRuleBase(TDriverHighlighte
         matchCaretMode(QRegExp::CaretAtOffset),
         format(NULL),
         owner(owner_),
-        stateIndex(owner->stateRulePtrs.size())
+        stateIndex(owner->stateRulePtrs.size()),
+        resetBlockState(false)
 {
     TDriverHighlighter *castowner = const_cast<TDriverHighlighter *>(owner);
     castowner->stateRulePtrs.append(this);
@@ -219,11 +212,11 @@ TDriverHighlighter::HighlightingRule2::HighlightingRule2(TDriverHighlighter *own
 {
 }
 
+
 int TDriverHighlighter::HighlightingRule2::handlePreviousState(const QString &text) const
 {
     TDriverHighlighter *castowner = const_cast<TDriverHighlighter *>(owner);
-
-    int startIndex = endPat->indexIn(text, endCaretMode);
+    int startIndex = endPat->indexIn(text, 0, endCaretMode);
 
     if (startIndex == -1) {
         castowner->setFormat(0, text.length(), *format);
@@ -239,17 +232,14 @@ int TDriverHighlighter::HighlightingRule2::handlePreviousState(const QString &te
     return startIndex;
 }
 
+
 void TDriverHighlighter::HighlightingRule2::postMatch (
         const QString &text,
         int &startInd,
         int &formatLen ) const
 {
     TDriverHighlighter *castowner = const_cast<TDriverHighlighter *>(owner);
-
-    //qDebug() << FFL << "multiline" << startInd << matchPat->pattern() << endPat->pattern();
-
     int endIndex = endPat->indexIn(text, startInd+formatLen, endCaretMode);
-    //qDebug() << FFL << endIndex << endPat->pattern() << "<->" << text.mid(startInd+formatLen);
 
     if (endIndex == -1) {
         // rule continues to next line:
@@ -267,4 +257,3 @@ void TDriverHighlighter::HighlightingRule2::postMatch (
 
     castowner->setFormat(startInd, formatLen, *format);
 }
-

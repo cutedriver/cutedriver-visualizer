@@ -1,23 +1,23 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
- 
- 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
+
+
 #ifndef TDRIVER_HIGHLIGHTER_H
 #define TDRIVER_HIGHLIGHTER_H
 
@@ -41,12 +41,13 @@ protected:
     {
     public:
         virtual int type() const =0;
-        const QRegExp *matchPat;
+        QRegExp *matchPat;
         QRegExp::CaretMode matchCaretMode;
         const QTextCharFormat *format;
         // owner: will be modified by const methods
         const TDriverHighlighter *owner;
         const int stateIndex;
+        bool resetBlockState;
         // handlePreviousState: called when previous block state is index of this rule
         // returns length of text it highlighted at the start of text
         virtual int handlePreviousState(const QString &) const {
@@ -76,7 +77,7 @@ protected:
     {
     public:
         virtual int type() const { return 2; };
-        const QRegExp *endPat;
+        QRegExp *endPat;
         QRegExp::CaretMode endCaretMode;
         // handlePreviousState: overloaded
         virtual int handlePreviousState(const QString &text) const;
@@ -99,12 +100,8 @@ protected:
     // standard Formats, optionally modified in derived classes
     QTextCharFormat *defaultFormat; // has special meaning
     QTextCharFormat *keywordFormat;
-    QTextCharFormat *classFormat;
-    QTextCharFormat *singleLineCommentFormat;
-    QTextCharFormat *multiLineCommentFormat;
     QTextCharFormat *singleQuotationFormat;
     QTextCharFormat *doubleQuotationFormat;
-    QTextCharFormat *functionFormat;
 
     // fortdriverng stuff
 
