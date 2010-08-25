@@ -1018,9 +1018,9 @@ void TDriverCodeTextEdit::keyPressEvent(QKeyEvent *event)
     }
 
     if (!textEmpty && !handled && !isUsingTabulatorsMode && !textCursor().hasSelection() &&
-        (event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete) &&
-        (event->modifiers() & Qt::ControlModifier)==0 )  {
-
+        (event->key() == Qt::Key_Backtab || event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete) &&
+        (event->modifiers() & Qt::ControlModifier)==0 )
+    {
         if ( isReadOnly()) {
             // just ignore
             handled = true;
@@ -1028,45 +1028,44 @@ void TDriverCodeTextEdit::keyPressEvent(QKeyEvent *event)
         else {
             // perform special indentation handling
             QTextCursor tc(textCursor());
-            int pos = tc.columnNumber();
+            int column = tc.columnNumber();
             tc.select(QTextCursor::LineUnderCursor);
-            enum { doNothing, doTab, doBS, doDel } action = doNothing;
-
             int indLevel, indChars;
             countIndentation(tc.selectedText(), indLevel, indChars);
 
-            // TODO: shift-tab is not same as del, add separate case for shift-tab (and maybe ctrl-shift-tab)
+            // increase or decrease indentation depending on key
+            indLevel += ((event->key()==Qt::Key_Tab) ? +1 : -1);
 
-            if (event->key() == Qt::Key_Tab && !(event->modifiers() & Qt::ShiftModifier)) {
-                action = doTab;
-            }
-            else if (event->key() == Qt::Key_Backspace ) {
-                action = doBS;
-            }
-            else if (event->key() == Qt::Key_Delete
-                     || (event->key() == Qt::Key_Tab && (event->modifiers() & Qt::ShiftModifier))) {
-                action = doDel;
-            }
-
-            // qDebug() << FFL << action << (event->modifiers() & Qt::ShiftModifier);
-            // qDebug() << FFL << pos << indChars << indLevel;
-
-            if ((action==doTab && pos<=indChars) ||
-                (action==doBS && indLevel>0 && pos>0 && pos<=indChars)  ||
-                (action==doDel && indLevel>0 && pos<indChars)) {
-
-                // select current indentation (if any)
+            // check if indentation adjustment is valid
+            if ( column <= indChars && indLevel >= 0 &&
+                 !(event->key()==Qt::Key_Backspace && column <=0 ) &&
+                 !(event->key()==Qt::Key_Delete && column >= indChars))
+            {
+                // select current indentation (if any) and replace with correct number of spaces
                 tc.movePosition(QTextCursor::StartOfLine);
                 tc.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, indChars);
-                // adujst indentation level
-                indLevel += (action == doTab) ? +1 : -1;
                 setTextCursor(tc);
-                // replace selection with correct number of spaces
                 insertAtTextCursor(QString(indentSize * indLevel, ' '));
+
+                // set cursor column
+                tc = textCursor();
+                tc.movePosition(QTextCursor::StartOfLine);
+                if (event->key()==Qt::Key_Backspace)
+                    column = (indentSize<column) ? column-indentSize : 0;
+                else if (column > indentSize*indLevel || event->key()==Qt::Key_Tab || event->key()==Qt::Key_Backtab)
+                    column = indentSize*indLevel;
+                // else restore original column
+                tc.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, column);
+                setTextCursor(tc);
                 handled = true;
             }
+            else if (event->key()==Qt::Key_Backtab) {
+                 // avoid insertion of real tab by shift-tab
+                handled = true;
+            }
+            // else just let the default key action happen
         }
-    } // endif  of tab handling
+    } // endif of tab handling
 
     if (!handled) {
         //qDebug() << FCFL << "not handled" << event->modifiers() << event->text();
