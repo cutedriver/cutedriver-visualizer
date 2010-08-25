@@ -27,6 +27,7 @@
 #include "tdriver_rubyinteract.h"
 #include "tdriver_editor_common.h"
 #include "tdriver_editbar.h"
+#include "tdriver_combolineedit.h"
 
 #include <tdriver_util.h>
 #include <tdriver_debug_macros.h>
@@ -50,14 +51,14 @@
 #include <QPalette>
 #include <QStackedWidget>
 #include <QShortcut>
-
+#include <QLineEdit>
 
 static inline QString strippedName(const QString &fullFileName) {
     return QFileInfo(fullFileName).fileName();
 }
 
 
-TDriverTabbedEditor::TDriverTabbedEditor(QWidget *parent) :
+TDriverTabbedEditor::TDriverTabbedEditor(QWidget *shortcutParent, QWidget *parent) :
         QTabWidget(parent),
         editorFont(),
         proceedRunPending(false),
@@ -89,11 +90,29 @@ TDriverTabbedEditor::TDriverTabbedEditor(QWidget *parent) :
     connect(this, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
     setTabsClosable(true);
 
-    QShortcut *nextSC = new QShortcut(QKeySequence("Ctrl+Tab"), this, 0, 0, Qt::WidgetWithChildrenShortcut );
-    connect(nextSC, SIGNAL(activated()), this, SLOT(nextTab()));
+    // create some non-global shortcuts
+    {
+        if (!shortcutParent) shortcutParent = this;
+        QShortcut *shortcut;
 
-    QShortcut *prevSC = new QShortcut(QKeySequence("Ctrl+Shift+Tab"), this, 0, 0, Qt::WidgetWithChildrenShortcut );
-    connect(prevSC, SIGNAL(activated()), this, SLOT(prevTab()));
+        shortcut = new QShortcut(QKeySequence("Ctrl+Tab"), shortcutParent, 0, 0, Qt::WidgetWithChildrenShortcut );
+        connect(shortcut, SIGNAL(activated()), this, SLOT(nextTab()));
+
+        shortcut = new QShortcut(QKeySequence("Ctrl+Shift+Tab"), shortcutParent, 0, 0, Qt::WidgetWithChildrenShortcut );
+        connect(shortcut, SIGNAL(activated()), this, SLOT(prevTab()));
+
+        shortcut = new QShortcut(QKeySequence("Ctrl+F"), shortcutParent, 0, 0, Qt::WidgetWithChildrenShortcut );
+        connect(shortcut, SIGNAL(activated()), editBarP->findTextField(), SLOT(setFocus()));
+        connect(shortcut, SIGNAL(activated()), editBarP->findTextField()->lineEdit(), SLOT(selectAll()));
+
+        shortcut = new QShortcut(QKeySequence("F3"), shortcutParent, 0, 0, Qt::WidgetWithChildrenShortcut );
+        connect(shortcut, SIGNAL(activated()), editBarP, SLOT(findNext()));
+
+        shortcut = new QShortcut(QKeySequence("Shift+F3"), shortcutParent, 0, 0, Qt::WidgetWithChildrenShortcut );
+        connect(shortcut, SIGNAL(activated()), editBarP, SLOT(findPrev()));
+
+
+    }
 }
 
 

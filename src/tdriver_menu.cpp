@@ -18,6 +18,7 @@
 ****************************************************************************/
 
 
+#include <QShortCut>
 
 #include "tdriver_main_window.h"
 
@@ -140,8 +141,25 @@ void MainWindow::createSearchMenu() {
     findAction = new QAction( this );
     findAction->setObjectName("main find");
     findAction->setText( "&Find" );
-    findAction->setShortcut( QKeySequence(tr("Ctrl+F")));
+    //findAction->setShortcut( QKeySequence(tr("Ctrl+F")));
     searchMenu->addAction( findAction );
+
+    {
+        // create global shortcuts for object tree find
+        QShortcut *findSC;
+
+        findSC = new QShortcut(QKeySequence("Ctrl+F"), centralWidget(), 0, 0, Qt::WidgetWithChildrenShortcut);
+        connect(findSC, SIGNAL(activated()), findAction, SLOT(trigger()));
+
+        findSC = new QShortcut(QKeySequence("Ctrl+F"), imageViewDock, 0, 0, Qt::WidgetWithChildrenShortcut);
+        connect(findSC, SIGNAL(activated()), findAction, SLOT(trigger()));
+
+        findSC = new QShortcut(QKeySequence("Ctrl+F"), propertiesDock, 0, 0, Qt::WidgetWithChildrenShortcut);
+        connect(findSC, SIGNAL(activated()), findAction, SLOT(trigger()));
+
+        findSC = new QShortcut(QKeySequence("Ctrl+F"), shortcutsDock, 0, 0, Qt::WidgetWithChildrenShortcut);
+        connect(findSC, SIGNAL(activated()), findAction, SLOT(trigger()));
+    }
 
     menubar->addMenu( searchMenu );
     menubar->actions().last()->setObjectName("main search");

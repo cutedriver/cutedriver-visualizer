@@ -111,12 +111,12 @@ void MainWindow::createUi()
     createEditorDocks();
     createKeyboardCommands();
 
+    setCentralWidget( objectTree ); // must be before createTopMenuBar()
     createTopMenuBar();
 
     // layout of main window: add objecttree to central and set it, add menubar as menu
     gridLayout->addWidget( objectTree );
     statusBar()->setObjectName("main");
-    setCentralWidget( objectTree );
     setMenuBar( menubar );
     gridLayoutWidget->setLayout( gridLayout );
 

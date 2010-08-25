@@ -46,7 +46,7 @@ MainWindow::MainWindow(QStringList filelist, QWidget *parent) :
 {
     TDriverRubyInterface::startGlobalInstance();
 
-    tabs = new TDriverTabbedEditor(this);
+    tabs = new TDriverTabbedEditor(this, this);
     runConsole = new TDriverRunConsole(true, this);
     debugConsole = new TDriverDebugConsole(this);
     irConsole = new TDriverRubyInteract(this);

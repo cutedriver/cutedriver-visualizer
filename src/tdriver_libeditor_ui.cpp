@@ -36,7 +36,16 @@
 void MainWindow::createEditorDocks() {
     MEC::settings = applicationSettings;
 
-    tabEditor = new TDriverTabbedEditor(this);
+    editorDock = new QDockWidget(tr("Code Editor"));
+    editorDock->setObjectName("editor");
+    runDock = new QDockWidget(tr("Script Console"));
+    runDock->setObjectName("editor rundock");
+    debugDock = new QDockWidget(tr("Debugger Console"));
+    debugDock->setObjectName("editor debugdock");
+    irDock = new QDockWidget(tr("RubyInteract Console"));
+    irDock->setObjectName("editor irdock");
+
+    tabEditor = new TDriverTabbedEditor(editorDock, this);
     runConsole = new TDriverRunConsole(true, this);
     debugConsole = new TDriverDebugConsole(this);
     irConsole = new TDriverRubyInteract(this);
@@ -54,15 +63,6 @@ void MainWindow::createEditorDocks() {
     connect(imageWidget, SIGNAL(insertToCodeEditor(QString,bool,bool)), tabEditor, SLOT(smartInsert(QString,bool,bool)));
 
     //createMenu();
-
-    editorDock = new QDockWidget(tr("Code Editor"));
-    editorDock->setObjectName("editor");
-    runDock = new QDockWidget(tr("Script Console"));
-    runDock->setObjectName("editor rundock");
-    debugDock = new QDockWidget(tr("Debugger Console"));
-    debugDock->setObjectName("editor debugdock");
-    irDock = new QDockWidget(tr("RubyInteract Console"));
-    irDock->setObjectName("editor irdock");
 
     QVBoxLayout *editLayout = new QVBoxLayout();
     editLayout->setObjectName("editor");

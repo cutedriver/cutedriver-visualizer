@@ -53,7 +53,7 @@ class TDriverTabbedEditor : public QTabWidget
     Q_PROPERTY(QString appVariable READ appVariable)
 
 public:
-    explicit TDriverTabbedEditor(QWidget *parent = 0);
+    explicit TDriverTabbedEditor(QWidget *shortcutParent = 0, QWidget *parent = 0);
 
     TDriverEditBar *searchBar() { return editBarP; }
 
