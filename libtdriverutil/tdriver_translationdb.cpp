@@ -1,23 +1,23 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
- 
- 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
+
+
 #include <QtSql>
 #include "tdriver_translationdb.h"
 
@@ -33,10 +33,10 @@ TDriverTranslationDb::TDriverTranslationDb()
 
 TDriverTranslationDb::~TDriverTranslationDb()
 {
-    if (connected) disconnect();
+    if (connected) disconnectDB();
 }
 
-bool TDriverTranslationDb::connect(QString aHost, QString aName, QString aTable, QString aUser, QString aPassword)
+bool TDriverTranslationDb::connectDB(QString aHost, QString aName, QString aTable, QString aUser, QString aPassword)
 {
     QSqlDatabase db;
     dbType = MySQL;
@@ -50,7 +50,7 @@ bool TDriverTranslationDb::connect(QString aHost, QString aName, QString aTable,
     return connected =  db.open();
 }
 
-void TDriverTranslationDb::disconnect()
+void TDriverTranslationDb::disconnectDB()
 {
     dbType = Undefined;
     QSqlDatabase db =  QSqlDatabase::database();

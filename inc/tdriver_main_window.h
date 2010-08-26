@@ -163,6 +163,8 @@ private:
     QMap<QString, QString> activeDevice;
     //        QString activeApplication;
 
+    QMap<QString, QString> tdriverXmlParameters;
+
     QHash<QString, QString> applicationsHash;
     QMap<int, QString> applicationsProcessIdMap;
 
