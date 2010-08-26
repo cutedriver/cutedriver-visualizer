@@ -21,6 +21,8 @@
 #include <tdriver_combolineedit.h>
 #include "tdriver_main_window.h"
 
+#include <QShortcut>
+
 bool MainWindow::containsWords( QHash<QString, QString> itemData, QString text, bool caseSensitive, bool entireWords ) {
 
     bool result = false;
@@ -382,8 +384,23 @@ void MainWindow::createFindDialog() {
     Q_ASSERT(objectTree);
     connect (objectTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
              this, SLOT(findDialogHandleTreeCurrentChange(QTreeWidgetItem*)));
-
-
 }
 
 
+void MainWindow::createFindDialogShortcuts()
+{
+    // create global shortcuts for object tree find
+    QShortcut *findSC;
+
+    findSC = new QShortcut(QKeySequence("Ctrl+F"), centralWidget(), 0, 0, Qt::WidgetWithChildrenShortcut);
+    connect(findSC, SIGNAL(activated()), findAction, SLOT(trigger()));
+
+    findSC = new QShortcut(QKeySequence("Ctrl+F"), imageViewDock, 0, 0, Qt::WidgetWithChildrenShortcut);
+    connect(findSC, SIGNAL(activated()), findAction, SLOT(trigger()));
+
+    findSC = new QShortcut(QKeySequence("Ctrl+F"), propertiesDock, 0, 0, Qt::WidgetWithChildrenShortcut);
+    connect(findSC, SIGNAL(activated()), findAction, SLOT(trigger()));
+
+    findSC = new QShortcut(QKeySequence("Ctrl+F"), shortcutsDock, 0, 0, Qt::WidgetWithChildrenShortcut);
+    connect(findSC, SIGNAL(activated()), findAction, SLOT(trigger()));
+}

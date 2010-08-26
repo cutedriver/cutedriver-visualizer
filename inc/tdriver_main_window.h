@@ -492,6 +492,7 @@ private:
     // find dialog
 
     void createFindDialog();
+    void createFindDialogShortcuts();
     QPoint findDialogPos;
 
     QCheckBox *findDialogMatchCase;
