@@ -19,12 +19,14 @@
 
 
 #include "tdriver_main_window.h"
+#include "tdriver_recorder.h"
 
 #include <tdriver_tabbededitor.h>
 #include <tdriver_rubyinterface.h>
 #include "../common/version.h"
 
 #include <QApplication>
+#include <QCloseEvent>
 
 #include <tdriver_debug_macros.h>
 
@@ -153,22 +155,23 @@ bool MainWindow::setup()
 #endif
     }
 
-    // if ( !QDir( tdriverPath ).exists() ||
-    if ( !QFile( tdriverPath + "/tdriver_parameters.xml").exists() ) { //|| !QFile( tdriverPath + "/behaviours.xml").exists() ) {
+    // set current parameters xml file to be used
+    while ( !QFile((parametersFile = tdriverPath + "/tdriver_parameters.xml")).exists() ) {
 
-        QMessageBox::critical(
+        QMessageBox::StandardButton result = QMessageBox::critical(
                 0,
-                "Error",
-                "Could not locate TDriver parameters file (tdriver_parameters.xml) from folder: " + tdriverPath + "\n\n" +
-                "Please select folder where configuration files are located.\n"
-                );
+                tr("Missing file"),
+                tr("Could not locate TDriver parameters file:\n\n  %1\n\n").arg(parametersFile) +
+                tr("Please click Ok to select correct folder, or Cancel to quit.\n\nNote: Location will be saved to Visualizer configuration."),
+                QMessageBox::Ok | QMessageBox::Cancel);
+
+        if (result & QMessageBox::Cancel) {
+            return false; // exit
+        }
 
         tdriverPath = selectFolder( "Select TDriver configuration file folder", "Folder", QFileDialog::AcceptOpen ) + "/";
-
     }
-
-    // set current parameters xml file to be used
-    parametersFile = tdriverPath + "/tdriver_parameters.xml";
+    applicationSettings->setValue( "files/location", tdriverPath );
 
     // object tree
     collapsedObjectTreeItemPtr = 0;
@@ -205,9 +208,9 @@ bool MainWindow::setup()
 
     // parse parameters xml to retrieve all devices
     if ( !offlineMode ){
-        getDevicesList( parametersFile );
+        offlineMode = getXmlParameters( parametersFile );
 
-        if ( deviceList.count() > 0 ) {
+        if ( !offlineMode && deviceList.count() > 0 ) {
             deviceMenu->setEnabled( true );
             disconnectCurrentSUT->setEnabled( true );
             refreshAction->setEnabled( true );

@@ -21,6 +21,8 @@
 #include "tdriver_main_window.h"
 #include <tdriver_tabbededitor.h>
 
+#include <tdriver_debug_macros.h>
+
 void MainWindow::tabWidgetChanged( int currentTableWidget ) {
 
     Q_UNUSED( currentTableWidget );
@@ -551,7 +553,7 @@ void MainWindow::propertiesItemPressed ( QTableWidgetItem * item )
                 break;
 
             default:
-                qDebug() << __FILE__ << __FUNCTION__ << __LINE__ << "Unhandled context menu action" << action;
+                qDebug() << FCFL << "Unhandled context menu action" << action;
             }
         }
     }

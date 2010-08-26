@@ -1026,8 +1026,9 @@ void TDriverTabbedEditor::showEvent(QShowEvent *ev)
 void TDriverTabbedEditor::hideEvent(QHideEvent *ev)
 {
     QTabWidget::hideEvent(ev);
-    runConsoleContainer->setVisible(false);
-    debugConsoleContainer->setVisible(false);
+    if (runConsoleVisible) runConsoleContainer->hide();
+    if (debugConsoleVisible) debugConsoleContainer->hide();
+    if (irConsoleVisible) irConsoleContainer->hide();
 }
 
 

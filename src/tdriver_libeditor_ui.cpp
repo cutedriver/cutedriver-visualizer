@@ -19,6 +19,7 @@
 
 
 #include "tdriver_main_window.h"
+#include "tdriver_image_view.h"
 
 #include <tdriver_tabbededitor.h>
 #include <tdriver_runconsole.h>

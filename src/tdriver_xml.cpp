@@ -469,15 +469,12 @@ bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
 }
 
 
-void MainWindow::getDevicesList( QString filename ) {
-
+bool MainWindow::getXmlParameters( QString filename )
+{
     QDomDocument tmpDomTree;
     QDomNode node;
-
-    QHash<QString, QString> sut;
-
-    // reset devices list
-    deviceList.clear();
+    QMap<QString, QHash<QString, QString> > tmpDeviceList;
+    bool ok = false;
 
     if ( QFile::exists( filename ) ) {
 
@@ -498,16 +495,27 @@ void MainWindow::getDevicesList( QString filename ) {
                     sut.insert( "name", name);
                     sut.insert( "type", getDeviceType( name ) );
 
-                    deviceList.insert(name, sut);
+                    tmpDeviceList.insert(name, sut);
                 }
 
                 node = node.nextSibling();
             }
+
+            ok = true;
         }
     }
 
-    updateDevicesList();
+    if (ok) {
+        updateDevicesList(tmpDeviceList);
+    }
+    else {
+        QMessageBox::warning(
+                0,
+                tr("Loading XML Failed"),
+                tr("Failed to load and parse file:\n\n  %1").arg(filename));
+    }
 
+    return ok;
 }
 
 

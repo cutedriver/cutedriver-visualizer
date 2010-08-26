@@ -18,9 +18,11 @@
 ****************************************************************************/
 
 
-#include <QShortCut>
-
 #include "tdriver_main_window.h"
+#include "tdriver_image_view.h"
+#include "tdriver_recorder.h"
+
+#include <QShortCut>
 
 void MainWindow::createTopMenuBar() {
 
@@ -613,19 +615,20 @@ void MainWindow::getParameterXML() {
 
     QString fileName = QFileDialog::getOpenFileName( this, "Open tdriver_parameters.xml", "", "File: (tdriver_parameters.xml)" );
 
-    if ( fileName != NULL ) {
-        getDevicesList( fileName );
+    if (getXmlParameters( fileName )) {
+        // parametersFile changed
+        parametersFile = fileName;
         //parseBehavioursXml( fileName );
     }
-
 }
 
-void MainWindow::updateDevicesList() {
 
+void MainWindow::updateDevicesList(const QMap<QString, QHash<QString, QString> > &newDeviceList)
+{
     int count = 0;
-
     deviceMenu->clear();
 
+    deviceList = newDeviceList;
     QAction *deviceActionList[ deviceList.size() ];
 
     QMapIterator<QString, QHash<QString, QString> > iterator( deviceList );

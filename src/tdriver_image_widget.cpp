@@ -23,6 +23,7 @@
 #include <tdriver_tabbededitor.h>
 
 #include "tdriver_main_window.h"
+#include "tdriver_image_view.h"
 
 void MainWindow::connectImageWidgetSignals() {
 

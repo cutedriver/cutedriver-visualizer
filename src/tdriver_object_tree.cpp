@@ -20,8 +20,11 @@
 
 
 #include "tdriver_main_window.h"
+#include "tdriver_image_view.h"
 
 #include <tdriver_debug_macros.h>
+
+#include <QTimer>
 
 void MainWindow::collectGeometries( QTreeWidgetItem * item )
 {

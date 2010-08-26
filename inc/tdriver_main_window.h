@@ -21,14 +21,7 @@
 #ifndef TDRIVERMAINWINDOW_H
 #define TDRIVERMAINWINDOW_H
 
-#include <QtCore/QDebug>
-#include <QtCore/QFile>
-#include <QtCore/QFlags>
-#include <QtCore/QProcess>
-#include <QtCore/QRegExp>
 #include <QtCore/QSettings>
-#include <QtCore/QUrl>
-#include <QtCore/QVariant>
 
 #include <QPoint>
 #include <QtGui/QAction>
@@ -69,10 +62,12 @@
 #include <QtXml/QDomNode>
 #include <QtXml/QXmlStreamReader>
 
-#include "tdriver_image_view.h"
-#include "tdriver_recorder.h"
 #include "tdriver_behaviour.h"
-//#include "assistant.h"
+#include <tdriver_util.h>
+
+// visualizer UI classes
+class TDriverRecorder;
+class TDriverImageView;
 
 // libeditor classes
 class TDriverTabbedEditor;
@@ -321,8 +316,8 @@ private:
     QDomDocument behaviorDomDocument;
 
     // tdriver_parameters.xml
-    void getDevicesList( QString filename );
-    void updateDevicesList();
+    bool getXmlParameters( QString filename );
+    void updateDevicesList(const QMap<QString, QHash<QString, QString> > &newDeviceList);
 
     // visualizer_applications_sut_id.xml
     void parseApplicationsXml( QString filename );

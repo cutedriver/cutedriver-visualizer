@@ -20,6 +20,7 @@
 
 #include <tdriver_combolineedit.h>
 #include "tdriver_main_window.h"
+#include <tdriver_debug_macros.h>
 
 #include <QShortcut>
 
@@ -80,7 +81,7 @@ void MainWindow::findNextTreeObject()
 
     if ( objectTree->columnCount() < 1 || objectTree->invisibleRootItem()->childCount() < 1 ) {
 
-        qDebug() << "findFromObjectTree: no objects in tree";
+        qDebug() << FCFL << "findFromObjectTree: no objects in tree";
         QMessageBox::warning( 0, "Find", " No matches found with '" + findString + "' " );
         return;
     }
