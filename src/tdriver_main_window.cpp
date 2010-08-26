@@ -216,6 +216,7 @@ bool MainWindow::setup()
             refreshAction->setEnabled( true );
             parseSUT->setEnabled( true );
         }
+        tabEditor->setParamMap(tdriverXmlParameters);
     }
 
     // parse behaviours xml

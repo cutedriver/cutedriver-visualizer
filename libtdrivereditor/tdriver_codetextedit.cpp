@@ -45,13 +45,6 @@
 
 #define ALWAYS_USE_RUBY_SYMBOLS 1
 
-#define SK_HOST "translationdb/host"
-#define SK_NAME "translationdb/name"
-#define SK_TABLE "translationdb/table"
-#define SK_USER "translationdb/user"
-#define SK_PASSWORD "translationdb/password"
-#define SK_LANGUAGES "translationdb/languages"
-
 
 #define CURSEL(cur) #cur << (cur).selectionStart() << (cur).position() << (cur).selectionEnd()
 
@@ -71,30 +64,6 @@ TDriverCodeTextEdit::ConfigStruct::ConfigStruct(void) {
     // << Qt::Key_Tab << Qt::Key_Space;
 }
 
-static inline QStringList defaultLanguageList() { return QStringList() << "English-GB"; }
-// removed: << "English-GB/English-US" << "Finnish"; }
-
-static inline void verifySettings()
-{
-    if (! (MEC::settings->contains(SK_HOST) &&
-           MEC::settings->contains(SK_NAME) &&
-           MEC::settings->contains(SK_TABLE) &&
-           MEC::settings->contains(SK_USER) &&
-           MEC::settings->contains(SK_PASSWORD))) {
-        qWarning("TDriverCodeTextEdit creating default translation database settings");
-        MEC::settings->setValue(SK_HOST, "trtdriver1.nmp.nokia.com");
-        MEC::settings->setValue(SK_NAME, "tdriver_locale");
-        MEC::settings->setValue(SK_TABLE, "TB10_1_week16_loc");
-        MEC::settings->setValue(SK_USER,"locale");
-        MEC::settings->setValue(SK_PASSWORD, "password");
-    }
-
-    QVariant langvar = MEC::settings->value(SK_LANGUAGES);
-    if(langvar.isNull() || !langvar.isValid() || !langvar.canConvert(QVariant::StringList)) {
-        // settings contain something not understood, create default stringlist
-        MEC::settings->setValue(SK_LANGUAGES,  defaultLanguageList());
-    }
-}
 
 
 TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
@@ -107,6 +76,7 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
         complPopupShowingInfo(false),
         phraseModel(NULL),
         stackHighlightStart(-1),
+        translationDBconfigured(false),
         lastBlock(-1),
         lastBlockCount(document()->blockCount()),
         isRunning(false),
@@ -121,21 +91,18 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
         contextEval(new QAction(this)),
         ignoreCursorPosChanges(false)
 {
-    verifySettings();
-
-    {
-        QStringList phrases;
-        MEC::DefinitionFileType type = MEC::getDefinitionFile(
-                TDriverUtil::tdriverHelperFilePath("completions/completions_ruby_phrases.txt"), phrases);
-        if (type != MEC::InvalidDefinitionFile) {
-            //qDebug() << FCFL << "phrases" << phrases;
-            phraseModel = new QStandardItemModel(this);
-            foreach (QString phrase, phrases) {
-                QStandardItem *stdItem = new QStandardItem();
-                stdItem->setData(phrase, Qt::UserRole+1);
-                stdItem->setData(MEC::textShortened(phrase.simplified(), 30, 20), Qt::EditRole);
-                phraseModel->appendRow(stdItem);
-            }
+    // read ruby phrases from completions definition file
+    QStringList phrases;
+    MEC::DefinitionFileType type = MEC::getDefinitionFile(
+            TDriverUtil::tdriverHelperFilePath("completions/completions_ruby_phrases.txt"), phrases);
+    if (type != MEC::InvalidDefinitionFile) {
+        //qDebug() << FCFL << "phrases" << phrases;
+        phraseModel = new QStandardItemModel(this);
+        foreach (QString phrase, phrases) {
+            QStandardItem *stdItem = new QStandardItem();
+            stdItem->setData(phrase, Qt::UserRole+1);
+            stdItem->setData(MEC::textShortened(phrase.simplified(), 30, 20), Qt::EditRole);
+            phraseModel->appendRow(stdItem);
         }
     }
 
@@ -146,8 +113,6 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
     completer->popup()->setAlternatingRowColors(true);
     connect(completer, SIGNAL(activated(const QModelIndex &)), this, SLOT(completerActivated(const QModelIndex &)));
 
-
-    //setAcceptDrops(true);
     cursorLineColor = QColor(Qt::yellow).lighter(180);
     completionStackedColor = QColor(Qt::cyan);
     completionBaseColor = QColor(Qt::darkMagenta);
@@ -471,9 +436,76 @@ static inline void completerResize(QCompleter *completer)
 }
 
 
+bool TDriverCodeTextEdit::setTranslationDatabase(const QMap<QString,QString> &params, const QSettings *settings)
+{
+    // tdriver_parameters.xml parameter names
+    static const char *PK_HOST = "localisation_server_ip";
+    static const char *PK_NAME = "localisation_server_database_name";
+    static const char *PK_TABLE = "localisation_server_database_tablename";
+    static const char *PK_USER = "localisation_server_username";
+    static const char *PK_PASSWORD = "localisation_server_password";
+    static const char *PK_LANGUAGE = "language";
+
+    // QSettings configuration file parameter names
+    static const char *SK_HOST = "translationdb/host";
+    static const char *SK_NAME = "translationdb/name";
+    static const char *SK_TABLE = "translationdb/table";
+    static const char *SK_USER = "translationdb/user";
+    static const char *SK_PASSWORD = "translationdb/password";
+    static const char *SK_LANGUAGES = "translationdb/languages";
+
+    translationDBerrors.clear();
+
+    if (params.contains(PK_HOST)) translationDBHost = params.value(PK_HOST);
+    else if (settings && settings->contains(SK_HOST)) translationDBHost = settings->value(SK_HOST).toString();
+    else translationDBerrors << tr("database server not defined");
+
+    if (params.contains(PK_USER)) translationDBUser = params.value(PK_USER);
+    else if (settings && settings->contains(SK_USER)) translationDBUser = settings->value(SK_USER).toString();
+    else translationDBerrors << tr("username not defined");
+
+    if (params.contains(PK_PASSWORD)) translationDBPassword = params.value(PK_PASSWORD);
+    else if (settings && settings->contains(SK_PASSWORD)) translationDBPassword = settings->value(SK_PASSWORD).toString();
+    else translationDBerrors << tr("password not defined");
+
+    if (params.contains(PK_NAME)) translationDBName = params.value(PK_NAME);
+    else if (settings && settings->contains(SK_NAME)) translationDBName = settings->value(SK_NAME).toString();
+    else translationDBerrors << tr("database name not defined");
+
+    if (params.contains(PK_TABLE)) translationDBTable = params.value(PK_TABLE);
+    else if (settings && settings->contains(SK_TABLE)) translationDBTable = settings->value(SK_TABLE).toString();
+    else translationDBerrors << tr("database table not defined");
+
+    if (params.contains(PK_LANGUAGE)) {
+        translationDBLanguages.clear();
+        translationDBLanguages << params.value(PK_LANGUAGE);
+    }
+    else if (settings && settings->contains(SK_LANGUAGES)) {
+        translationDBLanguages = settings->value(SK_LANGUAGES).toStringList();
+    }
+    else {
+        translationDBerrors << "languages not defined";
+    }
+
+    translationDBconfigured = translationDBerrors.isEmpty();
+    if (!translationDBconfigured) {
+        qWarning() << "Localisation database configuration errors:" << translationDBerrors;
+    }
+
+    return translationDBconfigured;
+}
+
+
 void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
 {
     cancelCompletion();
+    if (!translationDBconfigured) {
+        QMessageBox::warning(
+                qobject_cast<QWidget*>(parent()),
+                tr("Database not configured"),
+                tr("Database configuration is missing or incomplete:\n* ") + translationDBerrors.join("\n* "));
+        return;
+    }
     if (isReadOnly()) return;
 
     complCur = textCursor();
@@ -497,15 +529,9 @@ void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
     popupCompleterInfo("Connecting to database...");
 
     qDebug() << FCFL << "Connecting to database";
-    if (translator->connect(
-            MEC::settings->value(SK_HOST).toString(),
-            MEC::settings->value(SK_NAME).toString(),
-            MEC::settings->value(SK_TABLE).toString(),
-            MEC::settings->value(SK_USER).toString(),
-            MEC::settings->value(SK_PASSWORD).toString()
-            )) {
-
-        QSet<QString> langSet(QSet<QString>::fromList(MEC::settings->value(SK_LANGUAGES).toStringList()));
+    if (translator->connectDB(translationDBHost, translationDBName, translationDBTable,
+                              translationDBUser, translationDBPassword)) {
+        QSet<QString> langSet(QSet<QString>::fromList(translationDBLanguages));
         QSet<QString> validLangSet(langSet);
         validLangSet.intersect(QSet<QString>::fromList(translator->getAvailableLanguages()));
         //qDebug() << FCFL << translator->availableLanguages;
@@ -526,10 +552,9 @@ void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
         if (validLangSet.isEmpty()) {
             static bool alreadyWarnedNoLangs = false;
             if(!alreadyWarnedNoLangs) {
-                langs = defaultLanguageList();
                 QMessageBox::warning( qobject_cast<QWidget*>(parent()),
                                       "Translation Lookup Configuraton Problem",
-                                      "No valid languages configured! Trying to use default list:\n\n" + langs.join(", "));
+                                      "No valid languages configured!");
                 alreadyWarnedNoLangs = true;
                 showListDialog = true;
             }
@@ -539,17 +564,22 @@ void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
         }
 
         if(showListDialog) {
-            langs = defaultLanguageList();
             QMessageBox::information(qobject_cast<QWidget*>(parent()),
                                      "Translation Lookup Configuraton Help",
                                      "Languages supported by current localization database:\n\n" + translator->availableLanguages.join(", "));
         }
 
-        translator->setLanguageFilter(langs);
+        if (!langs.isEmpty()) {
+            translator->setLanguageFilter(langs);
 
-        qDebug() << FCFL << "Getting translations";
-        translationStrings << translator->getTranslationsLike(withoutQuotes);
-        dbOk = true;
+            qDebug() << FCFL << "Getting translations";
+            translationStrings << translator->getTranslationsLike(withoutQuotes);
+            dbOk = true;
+        }
+        else {
+            qWarning("Translation database language list problem!");
+            dbOk = false;
+        }
     }
     else {
         qWarning("Translation database connection error!");
@@ -1060,7 +1090,7 @@ void TDriverCodeTextEdit::keyPressEvent(QKeyEvent *event)
                 handled = true;
             }
             else if (event->key()==Qt::Key_Backtab) {
-                 // avoid insertion of real tab by shift-tab
+                // avoid insertion of real tab by shift-tab
                 handled = true;
             }
             // else just let the default key action happen

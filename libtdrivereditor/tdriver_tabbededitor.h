@@ -55,6 +55,7 @@ class TDriverTabbedEditor : public QTabWidget
 public:
     explicit TDriverTabbedEditor(QWidget *shortcutParent = 0, QWidget *parent = 0);
 
+    void setParamMap(const QMap<QString, QString> &map);
     TDriverEditBar *searchBar() { return editBarP; }
 
     const QList<QAction *> &fileActions() const { return fileActs; }
@@ -159,6 +160,7 @@ private slots:
 
 
 private:
+    QMap<QString, QString> paramMap;
     QFont editorFont;
     QString proceedRunFilename;
     TDriverRunConsole::RunRequestType proceedRunType;

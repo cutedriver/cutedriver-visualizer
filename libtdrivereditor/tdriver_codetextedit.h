@@ -69,9 +69,6 @@ public:
 
     void setHighlighter(TDriverHighlighter *);
 
-    void setType(int type) { ftype = type; }
-    int type() { return ftype; }
-
     const QString &fileName() const { return fname; }
     void setFileName(QString fn, bool onlySetModes=false); // returns true if mode changes happend
 
@@ -104,6 +101,7 @@ public slots:
     void focusInEvent(QFocusEvent *);
     void doAutoIndent(QKeyEvent *); // helper for keyPressEvent
 
+    bool setTranslationDatabase(const QMap<QString,QString> &params, const QSettings *settings);
     void startTranslationCompletion(QKeyEvent *);
     bool doTranslationCompletion(QKeyEvent *);
 
@@ -157,8 +155,16 @@ private:
     QList<int> complStartStack;
     QList<char> complCharStack;
 
+    QString translationDBHost;
+    QString translationDBName;
+    QString translationDBTable;
+    QString translationDBUser;
+    QString translationDBPassword;
+    QStringList translationDBLanguages;
+    bool translationDBconfigured;
+    QStringList translationDBerrors;
+
     QString fname;
-    int ftype;
     int lastBlock; // used for avoiding unnecessary calls to updateHighlights
     int lastBlockCount;
     bool isRunning;

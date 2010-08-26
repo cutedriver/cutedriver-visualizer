@@ -474,28 +474,34 @@ bool MainWindow::getXmlParameters( QString filename )
     QDomDocument tmpDomTree;
     QDomNode node;
     QMap<QString, QHash<QString, QString> > tmpDeviceList;
+    QMap<QString, QString> tmpXmlParameters;
     bool ok = false;
 
     if ( QFile::exists( filename ) ) {
 
         // read parameters xml file
         if ( parseXml( filename, tmpDomTree ) ) {
-
             QDomElement root = tmpDomTree.documentElement();
             node = root.firstChild();
 
             while ( !node.isNull() )  {
 
-                if ( node.isElement() && node.nodeName() == "sut" ) {
+                if ( node.isElement() ) {
+                    if (node.nodeName() == "sut" ) {
+                        QString id = node.toElement().attribute("id");
+                        QHash<QString, QString> sut;
+                        sut.insert( "name", id);
+                        sut.insert( "type", getDeviceType( id ) );
+                        tmpDeviceList.insert(id, sut);
+                    }
 
-                    QString name = QString( node.toElement().attribute("id").toLatin1().data() );
-
-                    QHash<QString, QString> sut;
-
-                    sut.insert( "name", name);
-                    sut.insert( "type", getDeviceType( name ) );
-
-                    tmpDeviceList.insert(name, sut);
+                    else if (node.nodeName() == "parameter" ) {
+                        // top level parameters
+                        QString name = node.toElement().attribute("name");
+                        QString value = node.toElement().attribute("value");
+                        tmpXmlParameters.insert(name, value);
+                    }
+                    //else qDebug() << FCFL << "Skipping element node" << node.nodeName;
                 }
 
                 node = node.nextSibling();
@@ -507,6 +513,7 @@ bool MainWindow::getXmlParameters( QString filename )
 
     if (ok) {
         updateDevicesList(tmpDeviceList);
+        tdriverXmlParameters = tmpXmlParameters;
     }
     else {
         QMessageBox::warning(
