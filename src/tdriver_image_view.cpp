@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 
@@ -245,7 +245,6 @@ void TDriverImageView::forwardInspectById()
 void TDriverImageView::forwardInsertObjectById()
 {
     int id = idFromActionData(sender());
-    //qDebug() << __FUNCTION__ << id;
     if (id >= 0) emit imageInsertObjectById(id);
 }
 
@@ -253,8 +252,6 @@ void TDriverImageView::forwardInsertObjectById()
 void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
 {
     QMenu *menu = new QMenu("Image View Context Menu");
-
-    QAction *tmpAct;
 
     if (objTreeOwner) {
         QList<int> matchingObjects;
@@ -293,8 +290,6 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
                 if (sortKey.isEmpty())
                     sortKey = "3"+QString::number(id).rightJustified(11);
 
-                sortKeys[tmpAct] = sortKey;
-
                 QString typeText = treeData["type"];
                 if (typeText.isEmpty())
                     typeText = attrMap["objecttype"]["value"];
@@ -304,7 +299,7 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
                 // find position in menu
                 QAction *before = NULL;
                 foreach (QAction *act, menu->actions()) {
-                    qDebug() << "comparing" << sortKeys[act] << ">" <<sortKey;
+                    //qDebug() << FCFL << "comparing" << sortKeys[act] << ">" << sortKey;
                     QString key = sortKeys[act];
                     if ( !key.isEmpty() && key > sortKey) {
                         before = act;
@@ -339,8 +334,9 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
         menu->addSeparator();
     }
 
-    tmpAct = menu->addAction(tr("Refresh"));
-    connect(tmpAct, SIGNAL(triggered()), this, SIGNAL(forceRefresh()));
+    QAction *refreshAct = menu->addAction(tr("Refresh"));
+    connect(refreshAct, SIGNAL(triggered()), this, SIGNAL(forceRefresh()));
+
 #if 0
     tmpAct =
     tmpAct->setText(tr("Inspect testobject under cursor"));
