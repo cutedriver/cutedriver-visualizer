@@ -486,7 +486,7 @@ QString TDriverRubyInterface::getTDriverVersion()
 }
 
 
-TDriverRubyInterface::TDriverRubyInterface *TDriverRubyInterface::globalInstance()
+TDriverRubyInterface *TDriverRubyInterface::globalInstance()
 {
     //VALIDATE_THREAD_NOT;
     //Q_ASSERT(pGlobalInstance);
@@ -494,5 +494,5 @@ TDriverRubyInterface::TDriverRubyInterface *TDriverRubyInterface::globalInstance
 }
 
 
-TDriverRubyInterface::TDriverRubyInterface *TDriverRubyInterface::pGlobalInstance = NULL;
+TDriverRubyInterface *TDriverRubyInterface::pGlobalInstance = NULL;
 
