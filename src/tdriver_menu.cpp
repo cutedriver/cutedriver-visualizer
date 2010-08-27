@@ -18,7 +18,7 @@
 ****************************************************************************/
 
 
-#include <QShortCut>
+#include <QShortcut>
 
 #include "tdriver_main_window.h"
 
