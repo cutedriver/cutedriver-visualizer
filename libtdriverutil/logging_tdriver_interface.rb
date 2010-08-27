@@ -21,6 +21,22 @@
 # Initializations and requires
 ############################################################################
 
+# convenience debug methods (needed until Ruby 1.9)
+module Kernel
+private
+  def this_method
+    caller[0] =~ /`([^']*)'/ and $1
+  end
+  def calling_method
+    caller[1] =~ /`([^']*)'/ and $1
+  end
+end
+
+
+$lg = File.open("C:/temp/tdriver_interface.log", "a")
+$lg.sync = true
+$lg.puts Time.now.to_s + " OPEN"
+
 
 begin
   require 'tdriver'
@@ -69,7 +85,7 @@ else
   # unix/linux/other
   @working_directory = File.expand_path( '/tmp/' )
 end
-
+$lg.puts Time.now.to_s + " working directory: " + @working_directory
 
 ############################################################################
 # Ruby implementation of protocol used by C++ class TDriverRbcProtocol
@@ -100,11 +116,13 @@ def readWord(socket)
   begin
     while buf.length != 4
       data, =  socket.recvfrom(4 - buf.length)
+      $lg.puts Time.now.to_s + " " + this_method + " data.length: " + data.length.to_s
       raise "Connection closed" if data.length == 0 
       buf += data
     end
   rescue Errno::EAGAIN, Errno::EINTR
     #STDERR.puts "recvfrom reading len, recoverable exception"
+    $lg.puts Time.now.to_s + " " + this_method + " recoverable exception"
     IO.select([socket])
     retry
   end
@@ -126,11 +144,13 @@ def readBytes(socket)
   begin
     while buf.length < len
       data, = socket.recvfrom(len - buf.length)
+      $lg.puts Time.now.to_s + " " + this_method + " data.length: " + data.length.to_s
       raise "Connection closed" if data.length == 0 
       buf += data
     end
   rescue Errno::EAGAIN, Errno::EINTR
     #STDERR.puts "recvfrom reading data, recoverable exception"
+    $lg.puts Time.now.to_s + " " + this_method + " recoverable exception"
     IO.select([socket])
     retry
   end
@@ -481,6 +501,7 @@ end
 
 def @listener.get_behaviours_xml( sut, sut_id, object_types )
   _output_filename = File.join( @working_directory, "visualizer_behaviours_#{ sut_id }" )
+  $lg.puts Time.now.to_s + " " + this_method + " _output_filename: " + _output_filename
   # remove old file first
   File.delete( _output_filename ) if File.exist?( _output_filename )
   behaviour_attributes_hash = { :input_type => ['*', sut.input.to_s ], :sut_type => [ '*', sut.ui_type.upcase ], :version => [ '*', sut.ui_version ] }
@@ -503,7 +524,7 @@ end
 
 def @listener.get_fixture_xml( sut, sut_id, object_name )
   _output_filename = File.join( @working_directory, "visualizer_class_methods_#{ sut_id }" )
-  # remove old file first
+  $lg.puts Time.now.to_s + " " + this_method + " _output_filename: " + _output_filename
   File.delete( _output_filename ) if File.exist?( _output_filename )
   File.open( "#{ _output_filename }.xml", 'w') do | file |
     file << sut.application.fixture('tasqtapiaccessor', 'list_class_methods', { :class => object_name } )
@@ -513,7 +534,7 @@ end
 
 def @listener.get_signal_xml( sut, sut_id, app_name, object_id, object_type )
   _output_filename = File.join( @working_directory, "visualizer_class_signals_#{ sut_id }" )
-  # remove old file first
+  $lg.puts Time.now.to_s + " " + this_method + " _output_filename: " + _output_filename
   File.delete( _output_filename ) if File.exist?( _output_filename )
   app = sut.application(:name => app_name)
   File.open( "#{ _output_filename }.xml", 'w') do | file |
@@ -531,6 +552,7 @@ end
 def @listener.takeDebugDump( sut, sut_id, app_id = nil )
   MobyUtil::Parameter[ sut.id ][ :filter_type] = 'none'
   _output_filename = File.join( @working_directory, "visualizer_dump_#{ sut_id }" )
+  $lg.puts Time.now.to_s + " " + this_method + " _output_filename: " + _output_filename
   File.open( "#{ _output_filename }.xml", 'w') { | file |  file << sut.get_ui_dump( *[ ( { :id => app_id } unless app_id.nil? ) ].compact ) }
   begin
 
@@ -560,7 +582,7 @@ end
 
 def @listener.get_app_list( sut, sut_id )
   _output_filename = File.join( @working_directory, "visualizer_applications_#{ sut_id }.xml" )
-  # remove old file first
+  $lg.puts Time.now.to_s + " " + this_method + " _output_filename: " + _output_filename
   File.delete( _output_filename ) if File.exist?( _output_filename )
   # retrieve list of running applications
   output = sut.list_apps
@@ -577,6 +599,7 @@ end
 def @listener.get_recorded_script( sut, app_id )
   application = sut.application( :id => app_id )
   _output_filename = File.join( @working_directory, 'visualizer_rec_fragment.rb' )
+  $lg.puts Time.now.to_s + " " + this_method + " _output_filename: " + _output_filename
   script = MobyUtil::Recorder.print_script( sut, application )
   File.open( _output_filename, 'w') { | file | file << script }
 end
@@ -584,6 +607,7 @@ end
 
 def @listener.test_script( sut )
   _output_filename = File.join( @working_directory, 'visualizer_rec_fragment.rb' )
+  $lg.puts Time.now.to_s + " " + this_method + " _output_filename: " + _output_filename
   File.new( _output_filename ).each_line{ | line | eval( line ) }
 end
 
@@ -607,8 +631,11 @@ def @listener.main_loop (conn)
   while not conn.closed? do
     STDOUT.flush
     STDERR.flush
+    $lg.puts Time.now.to_s + " reading message"
     seqNumIn, nameIn, dataIn = readMessage(conn)
+    $lg.puts Time.now.to_s + " got message:"
     msgIn = parseArrayHash(dataIn)
+    $lg.puts Time.now.to_s + msgIn.inspect
     #STDERR.puts "RUBY RECEIVED #{seqNumIn} #{nameIn} #{parseArrayHash(dataIn)}"
 
     #listener.rb was old script, which had STDIN/STDOUT interface
@@ -760,8 +787,11 @@ end # def listener_main_loop
 # main program
 ############################################################################
 
+
 begin
+  $lg.puts Time.now.to_s + " accepting"
   @accepted_connection = @server.accept
+  $lg.puts Time.now.to_s + " accepted"
 rescue Errno::EAGAIN, Errno::ECONNABORTED, Errno::EPROTO, Errno::EINTR
   STDERR.puts "accept error"
   sleep 1
@@ -770,6 +800,7 @@ rescue Errno::EAGAIN, Errno::ECONNABORTED, Errno::EPROTO, Errno::EINTR
 end
 
 @server.close
+$lg.puts Time.now.to_s + " server closed"
 
 # send hello message with sequence number 0, and information about tdriver and ruby
 
@@ -780,11 +811,15 @@ end
 @hello_data['version'] = [ @tdriver_interface_rb_version ]
 
 begin
+  $lg.puts Time.now.to_s + " sending hello"
   writeRawData(@accepted_connection, makeMsg(0, "hello", @hello_data))
+  $lg.puts Time.now.to_s + " calling main loop"
   @listener.main_loop(@accepted_connection)
 rescue => ex
   STDERR.puts "main program caught an exception #{ex}"
+  $lg.puts Time.now.to_s + " main program caught an exception #{ex}"
 end
+$lg.puts Time.now.to_s + " OVER"
 
 @accepted_connection.close
 @accepted_connection = nil
