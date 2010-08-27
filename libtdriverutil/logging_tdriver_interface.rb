@@ -116,7 +116,6 @@ def readWord(socket)
   begin
     while buf.length != 4
       data, =  socket.recvfrom(4 - buf.length)
-      $lg.puts Time.now.to_s + " " + this_method + " data.length: " + data.length.to_s
       raise "Connection closed" if data.length == 0 
       buf += data
     end
@@ -144,7 +143,6 @@ def readBytes(socket)
   begin
     while buf.length < len
       data, = socket.recvfrom(len - buf.length)
-      $lg.puts Time.now.to_s + " " + this_method + " data.length: " + data.length.to_s
       raise "Connection closed" if data.length == 0 
       buf += data
     end
@@ -540,6 +538,7 @@ def @listener.get_signal_xml( sut, sut_id, app_name, object_id, object_type )
   File.open( "#{ _output_filename }.xml", 'w') do | file |
     begin
       cmd = "file << app."+object_type+"( :id => object_id ).fixture('signal', 'list_signals')"
+      $lg.puts Time.now.to_s + this_method + " eval '#{cmd}'"
       eval(cmd)
     rescue
       file.close
@@ -635,7 +634,7 @@ def @listener.main_loop (conn)
     seqNumIn, nameIn, dataIn = readMessage(conn)
     $lg.puts Time.now.to_s + " got message:"
     msgIn = parseArrayHash(dataIn)
-    $lg.puts Time.now.to_s + msgIn.inspect
+    $lg.puts Time.now.to_s + " #{seqNumIn} #{nameIn} " + msgIn.inspect
     #STDERR.puts "RUBY RECEIVED #{seqNumIn} #{nameIn} #{parseArrayHash(dataIn)}"
 
     #listener.rb was old script, which had STDIN/STDOUT interface
@@ -681,6 +680,7 @@ def @listener.main_loop (conn)
 
           when :refresh
             eval_cmd = "takeDebugDump( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[ 2 ] }'" : "nil" } )"
+            $lg.puts Time.now.to_s + this_method + " :refresh '#{eval_cmd}'"
 
           when :list_apps
             eval_cmd = "get_app_list( sut, '#{ sut_id }' )"
@@ -737,6 +737,7 @@ def @listener.main_loop (conn)
           if not eval_cmd.empty?
             begin
               MobyUtil::Retryable.while( :times => 10, :timeout => 1, :exception => Exception ) do
+                $lg.puts Time.now.to_s + this_method + " cmd #{cmd} => eval_cmd '#{eval_cmd}'"
                 eval( eval_cmd )
               end
             rescue => ex
@@ -753,6 +754,8 @@ def @listener.main_loop (conn)
         @listener_puts += 'Error: not enough parameters'
 
       end # if array_size >= 2
+
+      $lg.puts Time.now.to_s + " @listener_puts: " + @listener_puts
 
       # response to "listener.rb emulation" message
       msgOut = { 'OUTPUT' => [ @listener_puts ] }
