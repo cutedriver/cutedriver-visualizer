@@ -100,6 +100,7 @@ def readWord(socket)
   begin
     while buf.length != 4
       data, =  socket.recvfrom(4 - buf.length)
+      raise "Connection closed" if data.length == 0 
       buf += data
     end
   rescue Errno::EAGAIN, Errno::EINTR
@@ -125,6 +126,7 @@ def readBytes(socket)
   begin
     while buf.length < len
       data, = socket.recvfrom(len - buf.length)
+      raise "Connection closed" if data.length == 0 
       buf += data
     end
   rescue Errno::EAGAIN, Errno::EINTR
