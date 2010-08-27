@@ -426,7 +426,7 @@ bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
         QMessageBox::critical(
                 0,
                 tr( "Error" ),
-                tr( "File not found %1" ).arg( fileName )
+                tr( "File not found:\n\n  %1\n" ).arg( fileName )
                 );
 
     } else {
