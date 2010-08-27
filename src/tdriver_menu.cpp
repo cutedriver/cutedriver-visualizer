@@ -22,7 +22,7 @@
 #include "tdriver_image_view.h"
 #include "tdriver_recorder.h"
 
-#include <QShortCut>
+#include <QShortcut>
 
 void MainWindow::createTopMenuBar() {
 
