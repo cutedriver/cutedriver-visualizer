@@ -91,6 +91,13 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
         contextEval(new QAction(this)),
         ignoreCursorPosChanges(false)
 {
+    // fix selection color when not focused
+    {
+        QPalette pal = palette();
+        pal.setColor(QPalette::Inactive, QPalette::Highlight,
+                     pal.color(QPalette::Active, QPalette::Highlight).lighter(120));
+        setPalette(pal);
+    }
     // read ruby phrases from completions definition file
     QStringList phrases;
     MEC::DefinitionFileType type = MEC::getDefinitionFile(
