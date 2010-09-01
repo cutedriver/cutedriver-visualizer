@@ -27,8 +27,30 @@
 
 #include <QApplication>
 #include <QCloseEvent>
+#include <QDialog>
+#include <QErrorMessage>
 
 #include <tdriver_debug_macros.h>
+
+
+MainWindow::MainWindow() :
+        QMainWindow(),
+        tdriverMsgBox(new QErrorMessage(this))
+{
+    // ugly hack to disable the "don't show again" checkbox,
+    // may not work in future Qt versions, and may not work an all platforms
+    foreach(QObject *child, tdriverMsgBox->children()) {
+        QCheckBox *cb = qobject_cast<QCheckBox*>(child);
+        if (cb) {
+            cb->hide();
+            cb->setDisabled(true);
+            cb->setCheckState(Qt::Checked);
+        }
+    }
+    tdriverMsgBox->setWindowTitle("TDriver Notification");
+    tdriverMsgBox->resize(600, 400);
+    tdriverMsgBox->setSizeGripEnabled(true);
+}
 
 
 // Performs post-initialization checking.
@@ -208,7 +230,7 @@ bool MainWindow::setup()
 
     // parse parameters xml to retrieve all devices
     if ( !offlineMode ){
-        offlineMode = getXmlParameters( parametersFile );
+        offlineMode = !getXmlParameters( parametersFile );
 
         if ( !offlineMode && deviceList.count() > 0 ) {
             deviceMenu->setEnabled( true );
@@ -261,7 +283,7 @@ bool MainWindow::setup()
 #endif
 
     if ( !offlineMode &&
-         !execute_command( commandSetOutputPath, "listener set_output_path " + outputPath) ) {
+         !executeTDriverCommand( commandSetOutputPath, "listener set_output_path " + outputPath) ) {
         outputPath = QApplication::applicationDirPath();
     }
 
@@ -299,7 +321,7 @@ QString MainWindow::getDriverVersionNumber()
     QByteArray result = "Unknown";
     BAListMap reply;
 
-    if ( execute_command( commandGetVersionNumber, "listener check_version", "", &reply ) ) {
+    if ( executeTDriverCommand(commandGetVersionNumber, "listener check_version", "", &reply ) ) {
         result = cleanDoneResult(reply["OUTPUT"].first());
     }
 
@@ -322,14 +344,23 @@ QByteArray MainWindow::cleanDoneResult(QByteArray output)
 
 QString MainWindow::getDeviceType( QString deviceName )
 {
+    qDebug() << FCFL << deviceName;
     QByteArray result = "Unknown";
     BAListMap reply;
     QString command = deviceName + " get_parameter type";
 
-    if ( execute_command( commandGetDeviceType, command, deviceName, &reply ) ) {
-        result = cleanDoneResult(reply["OUTPUT"].first());
+    if ( executeTDriverCommand( commandGetDeviceType, command, deviceName, &reply ) ) {
+        if (reply.contains("parameter")) {
+            if (reply.value("parameter").size() == 2 && reply.value("parameter").at(0) == "type") {
+                result = reply.value("parameter").at(1);
+            }
+            else qDebug() << "BAD get_parameter VALUE" << reply.value("parameters");
+        }
+        else qDebug() << "BAD get_parameter REPLY" << reply;
     }
+    else qDebug() << "FAILED get_parameter";
 
+    qDebug() << FCFL << "got" << result;
     return QString(result);
 }
 
@@ -449,8 +480,8 @@ void MainWindow::noDeviceSelectedPopup()
 }
 
 
-QString MainWindow::selectFolder( QString title, QString filter, QFileDialog::AcceptMode mode ) {
-
+QString MainWindow::selectFolder( QString title, QString filter, QFileDialog::AcceptMode mode )
+{
     QFileDialog dialog( this );
 
     dialog.setAcceptMode( mode );
@@ -460,101 +491,122 @@ QString MainWindow::selectFolder( QString title, QString filter, QFileDialog::Ac
     dialog.setViewMode( QFileDialog::List );
 
     return ( dialog.exec() ? dialog.selectedFiles().at( 0 ) : "" );
-
 }
 
-void MainWindow::statusbar( QString text, int timeout ) {
 
+void MainWindow::statusbar( QString text, int timeout )
+{
     statusBar()->showMessage( text, timeout );
-
     statusBar()->update();
     statusBar()->repaint();
-
 }
 
-void MainWindow::statusbar( QString text, int currentProgressValue, int maxProgressValue, int timeout ) {
 
+void MainWindow::statusbar( QString text, int currentProgressValue, int maxProgressValue, int timeout )
+{
     int progress = int( (  float( currentProgressValue ) / float( maxProgressValue ) ) * float( 100 ) );
-
     statusBar()->showMessage( text + " " + QString::number( progress ) + "%", timeout );
-
-    statusBar()->update();
     statusBar()->repaint();
-
 }
 
-bool MainWindow::processErrorMessage( QString & resultMessage, ExecuteCommandType commandType, int & resultEnum ) {
 
-    QString errorMessage = resultMessage;
+void MainWindow::ProcessErrorMessage(ExecuteCommandType commandType, const BAListMap &msg, const QString &additionalInformation,
+                                     unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError )
+{
+    QStringList errList;
+    foreach(QByteArray ba, msg.value("error")) {
+        errList << QString(ba);
+    }
+    QString tdriverError = errList.join("\n");
 
-    resultEnum = FAIL;
-
-    bool result = false;
-
-    switch ( commandType ) {
-
-    case commandCheckApiFixture:
-
-        resultEnum = SILENT;
-        break;
-
-    default:
-
-        if ( errorMessage.contains( "No plugins and no ui for server" ) ) {
-
-            resultMessage = tr( "Failed to refresh application screen capture.\n\nLaunch some application with UI and try again." );
-            resultEnum = WARNING;
-
-        } else if( errorMessage.contains( "No connection could be made because the target machine actively refused it." ) ) {
-
-            resultMessage = tr( "Please start/restart QTTAS server." );
-            resultEnum = DISCONNECT + RETRY;
-
-        } else if( errorMessage.contains( "An existing connection was forcibly closed by the remote host." ) ) {
-
-            resultMessage = tr( "Please disconnect the SUT from file menu and try again.\n\nIf the problem persists, restart QTTAS server/device or contact support." );
-            resultEnum = DISCONNECT + RETRY;
-
-        } else if( errorMessage.contains( "Connection refused" ) ) {
-
-            resultMessage = tr( "Unable to connect to target. Please verify that required servers are running and target is connected properly.\n\nIf the problem persists, contact support." );
-            resultEnum = DISCONNECT + RETRY;
-
-        } else if( errorMessage.contains( "No data retrieved (IOError)" ) ) {
-
-            resultMessage = tr( "Unable to read data from target. Please verify that required servers are running and target is connected properly.\n\nIf the problem persists, contact support." );
-            resultEnum = DISCONNECT + RETRY;
-
-        } else if( errorMessage.contains( "Broken pipe (Errno::EPIPE)" ) ) {
-
-            resultMessage = tr( "Unable to connect to target due to broken pipe.\n\nPlease disconnect SUT, verify that required servers are running/target is connected properly and try again.\n\nIf the problem persists, contact support." );
-
-            resultEnum = DISCONNECT + RETRY;
-
-        } else {
-            // unknown error
-            resultMessage = tr( "Unexpected error, please see details." ); // tr( QString( errorMessage ).toLatin1() );
-
-        }
-
-        break;
-
+    QStringList exList;
+    foreach(QByteArray ba, msg.value("exception")) {
+        exList << QString(ba);
     }
 
-    return result;
+    // do clearError
+    {
+        switch ( commandType ) {
+        case MainWindow::commandListApps: clearError = tr("Error retrieving applications list."); break;
+        case MainWindow::commandClassMethods: clearError = tr("Error retrieving methods list for %1.").arg(additionalInformation); break;
+        case MainWindow::commandSignalList: clearError = tr("Error retrieving signal list for %1.").arg(additionalInformation); break;
+        case MainWindow::commandDisconnectSUT: clearError = tr("Error disconnecting SUT %1.").arg(additionalInformation); break;
+        case MainWindow::commandTapScreen: clearError = tr("Error performing tap to screen."); break;
+        case MainWindow::commandRefreshUI: clearError = tr("Failed to refresh application."); break;
+        case MainWindow::commandKeyPress: clearError = tr("Failed to press key %1.").arg(additionalInformation); break;
+        case MainWindow::commandSetAttribute: clearError = tr("Failed to set attribute %1.").arg(additionalInformation); break;
+        case MainWindow::commandGetDeviceType: clearError = tr("Failed to get device type for %1.").arg(additionalInformation); break;
+        case MainWindow::commandGetVersionNumber: clearError = tr("Failed to retrieve TDriver version number."); break;
+        default: clearError = tr("Error with unknown command");
+        }
+    }
+
+    // do shortError
+    {
+        if ( commandType == commandCheckApiFixture) {
+            resultEnum = SILENT;
+        }
+
+        else if ( tdriverError.contains( "No plugins and no ui for server" ) ) {
+            shortError = tr( "Failed to refresh application screen capture.\n\nLaunch some application with UI and try again." );
+            resultEnum = WARNING;
+        }
+
+        else if ( tdriverError.contains( "No connection could be made because the target machine actively refused it." ) ) {
+            shortError = tr( "Please start/restart QTTAS server." );
+            resultEnum = DISCONNECT | RETRY;
+        }
+
+        else if( tdriverError.contains( "An existing connection was forcibly closed by the remote host." ) ) {
+            shortError = tr( "Please disconnect the SUT from file menu and try again.\n\nIf the problem persists, restart QTTAS server/device or contact support." );
+            resultEnum = DISCONNECT | RETRY;
+        }
+
+        else if( tdriverError.contains( "Connection refused" ) ) {
+            shortError = tr( "Unable to connect to target. Please verify that required servers are running and target is connected properly.\n\nIf the problem persists, contact support." );
+            resultEnum = DISCONNECT | RETRY;
+        }
+
+        else if( tdriverError.contains( "No data retrieved (IOError)" ) ) {
+            shortError = tr( "Unable to read data from target. Please verify that required servers are running and target is connected properly.\n\nIf the problem persists, contact support." );
+            resultEnum = DISCONNECT | RETRY;
+        }
+
+        else if( tdriverError.contains( "Broken pipe (Errno::EPIPE)" ) ) {
+            shortError = tr( "Unable to connect to target due to broken pipe.\n\nPlease disconnect SUT, verify that required servers are running/target is connected properly and try again.\n\nIf the problem persists, contact support." );
+            resultEnum = DISCONNECT | RETRY;
+        }
+
+        else {
+            // unknown error
+            shortError = tdriverError;
+            resultEnum = FAIL;
+        }
+    }
+
+    // do fullError
+    {
+        fullError = tr("%1\n\n%2").arg(clearError).arg(shortError);
+        if (shortError != tdriverError) {
+            fullError += "\n(original: " + tdriverError + ")";
+        }
+        if (!exList.empty()) {
+            fullError += "\n\n" + exList.join("\n");
+        }
+    }
 
 }
 
 
-bool MainWindow::execute_command( ExecuteCommandType commandType, QString commandString, QString additionalInformation, BAListMap *reply )
+bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QString &commandString, const QString &additionalInformation, BAListMap *reply )
 {
-    QString errorPrefix;
-    QString errorMessage;
+    QString clearError;
+    QString shortError;
+    QString fullError;
     bool exit = false;
     bool result = true;
     int iteration = 0;
-    int resultEnum;
-    QString originalErrorMessage;
+    unsigned resultEnum = OK;
 
     do {
         BAListMap msg;
@@ -563,61 +615,40 @@ bool MainWindow::execute_command( ExecuteCommandType commandType, QString comman
         qDebug() << FCFL << "going to execute" << msg;
         QTime t;
         t.start();
-        if ( !TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 30000 )) {
+        /*bool response1 =*/
+        TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 30000 );
+        if (msg.contains("error")) {
             qDebug() << FCFL << "failure time" << float(t.elapsed())/1000.0 << "reply" << msg;
-            if (msg["OUTPUT"].isEmpty()) msg["OUTPUT"].append("");
-            errorMessage = msg.value("OUTPUT").first();
-
-            // store original error message for details box
-            originalErrorMessage = errorMessage;
 
             result = false;
             exit = true;
+            ProcessErrorMessage(commandType, msg, additionalInformation,
+                                resultEnum, clearError, shortError, fullError);
 
-            switch ( commandType ) {
-            case commandListApps: errorPrefix = "Error retrieving applications list:\n\n"; break;
-            case commandClassMethods: errorPrefix = "Error retrieving methods list for " + additionalInformation + ".\n\n"; break;
-            case commandSignalList: errorPrefix = "Error retrieving signal list for " + additionalInformation + ".\n\n"; break;
-            case commandDisconnectSUT: errorPrefix = "Error disconnecting SUT '" + additionalInformation + "'\n\n"; break;
-            case commandTapScreen: errorPrefix = "Error performing tap to screen\n\n"; break;
-            case commandRefreshUI: errorPrefix = "Failed to refresh application\n\n"; break;
-            case commandKeyPress: errorPrefix = "Failed to press key '" + additionalInformation + "'.\n\n"; break;
-            case commandSetAttribute: errorPrefix = "Failed to set attribute '" + additionalInformation + "'.\n\n"; break;
-            case commandGetDeviceType: errorPrefix = "Failed to get device type for " + additionalInformation + ".\n\n"; break;
-            case commandGetVersionNumber: errorPrefix = "Failed to retrieve TDriver version number.\n\n"; break;
-            default: errorPrefix = "Error: Failed to execute command \""+ commandString + "\".\n\n";
-            }
-
-            result = processErrorMessage( errorMessage, commandType, resultEnum );
-            errorMessage = errorPrefix + errorMessage;
-            qCritical( "MainWindow::execute_command failed. Error: %s", qPrintable(errorMessage) );
+            qWarning( "MainWindow::%s failed, message error: %s", __FUNCTION__, qPrintable(fullError));
 
             if ( resultEnum & FAIL || iteration > 0 ) {
                 // exit if failed again or no retries allowed..
                 exit = true;
             }
 
-            else {
-                if ( resultEnum & DISCONNECT ) {
-                    // disconnect
-                    msg.clear();
-                    msg["input"] << activeDevice.value( "name" ).toAscii() << "disconnect";
-                    if ( !TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 5000 ) ) {
-                        if (msg["OUTPUT"].isEmpty()) msg["OUTPUT"].append("");
-                        errorMessage = msg.value("OUTPUT").first();
-                        // disconnect failed -- exit
-                        result = processErrorMessage( errorMessage, commandType, resultEnum );
-                        errorMessage = errorPrefix + errorMessage;
-                        result = false;
-                        exit = true;
-                    }
-                    else {
-                        // disconnect passed -- retry
-                        qFatal("reconnect after disconnect in %s broken", __FUNCTION__);
-                        currentApplication.clear();
-                        result = false;
-                        exit = false;
-                    }
+            if ( resultEnum & DISCONNECT ) {
+                // disconnect
+                msg.clear();
+                msg["input"] << activeDevice.value( "name" ).toAscii() << "disconnect";
+                /*bool response2 =*/
+                TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 5000 );
+                if (msg.contains("error")) {
+                    fullError += "\n\nDisconnect after error failed!";
+                    result = false;
+                    exit = true;
+                }
+                else {
+                    fullError += "\n\nDisconnect after error succeeded.";
+                    // disconnect passed -- retry
+                    currentApplication.clear();
+                    result = false;
+                    if (!(resultEnum & FAIL)) exit = false;
                 }
             }
         }
@@ -634,19 +665,22 @@ bool MainWindow::execute_command( ExecuteCommandType commandType, QString comman
     } while (!exit);
 
     if ( !result && !(resultEnum & SILENT) ) {
-        QMessageBox msgBox( this );
+        fullError.replace('\n', QChar::ParagraphSeparator);
+        tdriverMsgBox->showMessage( fullError );
+        tdriverMsgBox->raise();
+        tdriverMsgBox->repaint();
+#if 0
+        QMessageBox msgBox(this);
+        msgBox.setSizeGripEnabled(true); // wont work...
+        msgBox.setWindowFlags(Qt::Window); // wont work...
         msgBox.setIcon( QMessageBox::Critical );
         msgBox.setWindowTitle( "Error" );
-        msgBox.setText( errorMessage );
-
-        if( originalErrorMessage.length() > 0 ){
-            msgBox.setDetailedText( originalErrorMessage );
-        }
-
+        msgBox.setText( clearError + "\n\n" + shortError );
+        if (!fullError.isEmpty()) msgBox.setDetailedText(fullError);
         msgBox.setStandardButtons( QMessageBox::Ok );
         msgBox.exec();
+#endif
     }
-
 
     return result;
 }

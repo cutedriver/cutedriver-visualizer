@@ -76,7 +76,7 @@ void MainWindow::deviceActionButtonPressed()
 #endif
         //bool cmd_result = false;
 
-        if ( execute_command( commandKeyPress,
+        if ( executeTDriverCommand( commandKeyPress,
                               QString( activeDevice.value("name") + " press_key :" + keyToPress ),
                               keyToPress) ) {
 #if 0

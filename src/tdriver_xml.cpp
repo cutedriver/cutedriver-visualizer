@@ -56,7 +56,7 @@ bool MainWindow::updateBehaviourXml()
         objectTypesString += "'" + objectTypes.at( index ) + "'";
     }
 
-    if ( execute_command( commandBehavioursXml,
+    if ( executeTDriverCommand( commandBehavioursXml,
                           activeDevice.value( "name" ) + " get_behaviours " + objectTypesString ) &&
          objectTypes.size() > 0 ) {
         parseXml( outputPath + "/visualizer_behaviours_" + activeDevice.value( "name" ) + ".xml" , behaviorDomDocument );

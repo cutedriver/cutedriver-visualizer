@@ -442,7 +442,7 @@ void MainWindow::refreshData()
         QString listCommand = QString( activeDevice.value( "name" ) + " list_apps" );
         statusbar( "Refreshing application list...", 0);
         qDebug() << FCFL << "app list refresh started at" << float(t.elapsed())/1000.0;
-        listAppsOk = execute_command( commandListApps, listCommand, "", &listAppsReply );
+        listAppsOk = executeTDriverCommand( commandListApps, listCommand, "", &listAppsReply );
     }
 
     // request ui xml file
@@ -454,7 +454,7 @@ void MainWindow::refreshData()
         }
         statusbar( "Refreshing UI XML data...", 0);
         qDebug() << FCFL << "xml refresh started at" << float(t.elapsed())/1000.0;
-        refreshOk = execute_command( commandRefreshUI, refreshCommand, "", &refreshReply );
+        refreshOk = executeTDriverCommand( commandRefreshUI, refreshCommand, "", &refreshReply );
     }
 
     statusbar( "Parsing refreshed data...", 0);

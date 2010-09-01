@@ -1,1 +1,0 @@
-ruby -cw libtdriverutil\logging_tdriver_interface.rb && copy /y libtdriverutil\logging_tdriver_interface.rb C:\tdriver\visualizer\tdriver_interface.rb

@@ -125,7 +125,7 @@ void MainWindow::tapScreen( QString target )
     statusbar( "Tapping...", 0, 1 );
     typedef QList<QByteArray> QByteArrayList;
 
-    if ( !execute_command( commandTapScreen, QString( activeDevice.value( "name" ) + " " + target ))) {
+    if ( !executeTDriverCommand( commandTapScreen, QString( activeDevice.value( "name" ) + " " + target ))) {
         statusbar( "Error: Failed to tap the screen", 1000 );
     }
 

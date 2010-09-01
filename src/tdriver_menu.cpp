@@ -365,7 +365,7 @@ bool MainWindow::disconnectSUT()
     bool result = true;
     QString status = "SUT disconnected";
 
-    if ( !execute_command( commandDisconnectSUT,
+    if ( !executeTDriverCommand( commandDisconnectSUT,
                            QString( activeDevice.value( "name" ) + " disconnect" ),
                            activeDevice.value( "name" )) ) {
         status = "SUT disconnecting failed";

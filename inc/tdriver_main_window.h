@@ -62,6 +62,9 @@
 #include <QtXml/QDomNode>
 #include <QtXml/QXmlStreamReader>
 
+class QErrorMessage;
+
+
 #include "tdriver_behaviour.h"
 #include <tdriver_util.h>
 
@@ -81,6 +84,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
+    MainWindow();
 
     QString tdriverPath;
 
@@ -122,8 +126,8 @@ public:
         commandSignalList
     };
 
-    enum commandResult {
-
+    enum ExecuteCommandResult {
+        OK = 0,
         WARNING = 0x1,
         FAIL = 0x2,
         RETRY = 0x4,
@@ -141,8 +145,9 @@ private:
 
     // command executing & error handling
 
-    bool processErrorMessage( QString & resultMessage, ExecuteCommandType commandType, int & resultEnum );
-    bool execute_command( ExecuteCommandType commandType, QString commandString, QString additionalInformation = QString(), BAListMap *reply = NULL);
+    void ProcessErrorMessage( ExecuteCommandType commandType, const BAListMap &msg, const QString &additionalInformation,
+                              unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError );
+    bool executeTDriverCommand( ExecuteCommandType commandType, const QString &commandString, const QString &additionalInformation = QString(), BAListMap *reply = NULL);
 
     // global data & caches
 
@@ -508,6 +513,8 @@ private:
 
     bool containsWords( QHash<QString, QString> itemData, QString text, bool caseSensitive, bool entireWords  );
     bool attributeContainsWords( int itemPtr, QString text, bool caseSensitive, bool entireWords );
+
+    QErrorMessage *tdriverMsgBox;
 
 signals:
     void defaultFontSet(QFont font);

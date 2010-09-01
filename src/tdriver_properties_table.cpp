@@ -81,13 +81,13 @@ void MainWindow::updatePropetriesTable()
 
 bool MainWindow::checkApiFixture()
 {
-    return execute_command( commandCheckApiFixture, activeDevice.value( "name" ) + " check_fixture");
+    return executeTDriverCommand( commandCheckApiFixture, activeDevice.value( "name" ) + " check_fixture");
 }
 
 
 void MainWindow::getClassMethods( QString objectType )
 {
-    if ( execute_command( commandClassMethods,
+    if ( executeTDriverCommand( commandClassMethods,
                           activeDevice.value( "name" ) + " fixture " + objectType,
                           objectType ) ) {
         parseApiMethodsXml( outputPath + "/visualizer_class_methods_" + activeDevice.value( "name" ) + ".xml" );
@@ -100,7 +100,7 @@ void MainWindow::getClassSignals(QString objectType, QString objectId)
     // list_signals
     if (activeDevice.value( "name" ).contains("qt")){
         if (!apiSignalsMap.contains(objectType)) {
-            if ( execute_command( commandSignalList,
+            if ( executeTDriverCommand( commandSignalList,
                                   activeDevice.value( "name" ) + " list_signals " + currentApplication.value( "name" ) + " " + objectId + " " + objectType )) {
                 apiSignalsMap.insert(objectType,
                                      parseSignalsXml( outputPath + "/visualizer_class_signals_" + activeDevice.value( "name" ) + ".xml" ));
@@ -453,7 +453,7 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
 
         } else {
             QString attributeNameAndValue = attributeName + " '" + item->text() + "'";
-            if ( execute_command( commandSetAttribute,
+            if ( executeTDriverCommand( commandSetAttribute,
                                   activeDevice.value( "name" ) + " set_attribute " + objIdentification + " " + targetDataType + " " + attributeNameAndValue ) ) {
                 refreshData();
             }
