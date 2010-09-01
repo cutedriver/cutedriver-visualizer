@@ -60,16 +60,6 @@ end
 
 STDOUT.flush
 
-# set directory where to save xml & png
-# TODO: remove when no files will be written by this script
-if /win/ =~ Config::CONFIG[ 'target_os' ] && /darwin/io !~ Config::CONFIG[ 'target_os' ]
-  # windows
-  @working_directory = File.expand_path( ENV[ 'TEMP' ] )
-else
-  # unix/linux/other
-  @working_directory = File.expand_path( '/tmp/' )
-end
-
 
 ############################################################################
 # Ruby implementation of protocol used by C++ class TDriverRbcProtocol
@@ -468,6 +458,21 @@ end # class Code_evaluation_sandbox
 ############################################################################
 
 @listener = Object.new
+
+def @listener.set_working_directory( dir )
+  @working_directory = dir
+end
+
+
+# set directory where to save xml & png
+if /win/ =~ Config::CONFIG[ 'target_os' ] && /darwin/io !~ Config::CONFIG[ 'target_os' ]
+  # windows
+  @listener.set_working_directory( File.expand_path( ENV[ 'TEMP' ] ) )
+else
+  # unix/linux/other
+  @listener.set_working_directory( File.expand_path( '/tmp/' ) )
+end
+
 
 def @listener.check_version
   @listener_puts += ENV['TDRIVER_VERSION']
