@@ -117,6 +117,7 @@ public:
         commandRecordingTest,
         commandTapScreen,
         commandRefreshUI,
+        commandRefreshImage,
         commandKeyPress,
         commandSetAttribute,
         commandGetDeviceType,
@@ -145,7 +146,7 @@ private:
 
     // command executing & error handling
 
-    void ProcessErrorMessage( ExecuteCommandType commandType, const BAListMap &msg, const QString &additionalInformation,
+    void processErrorMessage( ExecuteCommandType commandType, const BAListMap &msg, const QString &additionalInformation,
                               unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError );
     bool executeTDriverCommand( ExecuteCommandType commandType, const QString &commandString, const QString &additionalInformation = QString(), BAListMap *reply = NULL);
 
@@ -515,6 +516,8 @@ private:
     bool attributeContainsWords( int itemPtr, QString text, bool caseSensitive, bool entireWords );
 
     QErrorMessage *tdriverMsgBox;
+    int tdriverMsgTotal;
+    int tdriverMsgShown;
 
 signals:
     void defaultFontSet(QFont font);
@@ -524,6 +527,9 @@ signals:
 private slots:
 
     // global
+    void tdriverMsgSetTitleText();
+    void tdriverMsgOkClicked();
+    void tdriverMsgFinished();
 
     void collapseTreeWidgetItem( QTreeWidgetItem *item );
     void expandTreeWidgetItem( QTreeWidgetItem *item );
@@ -609,7 +615,6 @@ private slots:
     // menu: devices
 
     void deviceSelected();
-
 
     // menu: view
 

@@ -423,17 +423,21 @@ void MainWindow::forceRefreshData()
 
 void MainWindow::refreshData()
 {
-    bool listAppsOk = false;
+    bool giveup = false;
     bool isS60 = false;
-    bool refreshOk = false;
+    bool listAppsOk = false;
+    bool refreshUiOk = false;
+    bool refreshImageOk = false;
+    bool behavioursOk = false;
     BAListMap listAppsReply;
-    BAListMap refreshReply;
+    BAListMap dummyReply;
+    QString filenamePrefix = outputPath + "/visualizer_dump_" + activeDevice.value( "name" );
 
     QTime t;
     t.start();
 
     // request application list (unless s60)
-    if ( activeDevice.value( "type" ).toLower() == "s60" ) { // contains( "s60", Qt::CaseInsensitive ) ) {
+    if ( activeDevice.value( "type" ).toLower() == "s60" ) {
         resetApplicationsList();
         appsMenu->setDisabled( true );
         isS60 = true;
@@ -445,39 +449,59 @@ void MainWindow::refreshData()
         listAppsOk = executeTDriverCommand( commandListApps, listCommand, "", &listAppsReply );
     }
 
-    // request ui xml file
-    {
-        QString refreshCommand = activeDevice.value( "name" ) + " refresh";
-        // use target application if user has chosen one
-        if ( !currentApplication.value( "id" ).isEmpty() && applicationsHash.contains( currentApplication.value( "id" ) ) ) {
-            refreshCommand += " " + currentApplication.value( "id" );
-        }
-        statusbar( "Refreshing UI XML data...", 0);
-        qDebug() << FCFL << "xml refresh started at" << float(t.elapsed())/1000.0;
-        refreshOk = executeTDriverCommand( commandRefreshUI, refreshCommand, "", &refreshReply );
-    }
-
-    statusbar( "Parsing refreshed data...", 0);
-    qDebug() << FCFL << "parse started at" << float(t.elapsed())/1000.0;
-
     if (listAppsOk) {
+        qDebug() << FCFL << "app list parse started at" << float(t.elapsed())/1000.0;
+        statusbar( "Updating applications list...", 0);
         parseApplicationsXml( outputPath + "/visualizer_applications_" + activeDevice.value( "name" ) + ".xml" );
     }
+    else giveup = true;
 
-    if (refreshOk) {
-        QString filename = outputPath + "/visualizer_dump_" + activeDevice.value( "name" );
+    // use target application if user has chosen one
+    QString refreshCmdTemplate = activeDevice.value( "name" ) + " %1";
+    if ( !currentApplication.value( "id" ).isEmpty() && applicationsHash.contains( currentApplication.value( "id" ) ) ) {
+        refreshCmdTemplate += " " + currentApplication.value( "id" );
+    }
+
+    // request ui xml dump
+    if (!giveup) {
+        statusbar( "Getting UI XML data...", 0);
+        qDebug() << FCFL << "xml refresh started at" << float(t.elapsed())/1000.0;
+        refreshUiOk = executeTDriverCommand( commandRefreshUI, refreshCmdTemplate.arg("refresh_ui"), "", &dummyReply );
+        if (!refreshUiOk) giveup = true;
+    }
+
+    // request screen capture image
+    if (!giveup) {
+        statusbar( "Getting UI image data...", 0);
+        qDebug() << FCFL << "image refresh started at" << float(t.elapsed())/1000.0;
+        refreshImageOk = executeTDriverCommand( commandRefreshImage, refreshCmdTemplate.arg("refresh_image"), "", &dummyReply );
+    }
+
+    if (refreshImageOk) {
+        qDebug() << FCFL << "image load started at" << float(t.elapsed())/1000.0;
+        statusbar( "Loading screen capture image...", 0);
         imageWidget->disableDrawHighlight();
-        imageWidget->refreshImage( QString( filename + ".png"), false );
-        imageWidget->update();
-        updateObjectTree( filename + ".xml" );
-        updateBehaviourXml();
+        imageWidget->refreshImage( QString( filenamePrefix + ".png"), false );
+        imageWidget->repaint();
+    }
+
+    if (refreshUiOk) {
+        qDebug() << FCFL << "object tree update / ui xml parse started at" << float(t.elapsed())/1000.0;
+        statusbar( "Updating object tree...", 0);
+        updateObjectTree( filenamePrefix + ".xml" );
+        qDebug() << FCFL << "behaviour update started at" << float(t.elapsed())/1000.0;
+        statusbar( "Updating behaviours...", 0);
+        behavioursOk = updateBehaviourXml();
+        qDebug() << FCFL << "properties and title update started at" << float(t.elapsed())/1000.0;
+        statusbar( "Almost done...", 0);
         updatePropetriesTable();
         updateWindowTitle();
     }
-    qDebug() << FCFL << "done ("<< listAppsOk << refreshOk << ") at" << float(t.elapsed())/1000.0;
 
-    if ((listAppsOk || isS60) && refreshOk) statusbar( "Refresh done!", 1500 );
-    else if (refreshOk) statusbar( "Refreshed only UI XML data!", 1500 );
+    qDebug() << FCFL << "done (listAppsOk" << listAppsOk << "refreshUiOk" << refreshUiOk << "refreshImageOk" << refreshImageOk << "behavioursOk" << behavioursOk << ") at" << float(t.elapsed())/1000.0;
+
+    if ((listAppsOk || isS60) && refreshUiOk) statusbar( "Refresh done!", 1500 );
+    else if (refreshUiOk) statusbar( "Refreshed only UI XML data!", 1500 );
     else if (listAppsOk) statusbar( "Refreshed only Application List!", 1500 );
     else statusbar( "Refresh failed!", 1500 );
 }

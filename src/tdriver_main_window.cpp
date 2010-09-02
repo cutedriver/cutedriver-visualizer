@@ -35,22 +35,62 @@
 
 MainWindow::MainWindow() :
         QMainWindow(),
-        tdriverMsgBox(new QErrorMessage(this))
+        tdriverMsgBox(new QErrorMessage(this)),
+        tdriverMsgTotal(0),
+        tdriverMsgShown(1)
 {
     // ugly hack to disable the "don't show again" checkbox,
     // may not work in future Qt versions, and may not work an all platforms
     foreach(QObject *child, tdriverMsgBox->children()) {
         QCheckBox *cb = qobject_cast<QCheckBox*>(child);
         if (cb) {
+            qDebug() << FCFL << "hiding tdriverMsgBox QCheckBox" << cb->text();
             cb->hide();
             cb->setDisabled(true);
             cb->setCheckState(Qt::Checked);
         }
+        else {
+            QPushButton *pb = qobject_cast<QPushButton*>(child);
+            if (pb) {
+                qDebug() << FCFL << "connecting tdriverMsgBox QPushButton" << pb->text();
+                connect(pb, SIGNAL(clicked()), this, SLOT(tdriverMsgOkClicked()));
+            }
+        }
     }
-    tdriverMsgBox->setWindowTitle("TDriver Notification");
+
     tdriverMsgBox->resize(600, 400);
     tdriverMsgBox->setSizeGripEnabled(true);
+    tdriverMsgSetTitleText();
+    connect(tdriverMsgBox, SIGNAL(finished(int)), this, SLOT(tdriverMsgFinished()));
 }
+
+
+void MainWindow::tdriverMsgSetTitleText()
+{
+    tdriverMsgBox->setWindowTitle(tr("TDriver Notification %1/%2").
+                                  arg(qMin(tdriverMsgShown, tdriverMsgTotal)).
+                                  arg(tdriverMsgTotal));
+    qDebug() << FCFL << "set tdriverMsgBox title to" << tdriverMsgBox->windowTitle();
+}
+
+
+void MainWindow::tdriverMsgOkClicked()
+{
+    ++tdriverMsgShown;
+    tdriverMsgSetTitleText();
+    tdriverMsgBox->repaint();
+}
+
+
+void MainWindow::tdriverMsgFinished()
+{
+    // verify that tdriverMsgShown is not out of sync
+    if (tdriverMsgShown < tdriverMsgTotal) {
+        tdriverMsgShown = tdriverMsgTotal;
+        tdriverMsgSetTitleText();
+    }
+}
+
 
 
 // Performs post-initialization checking.
@@ -510,7 +550,7 @@ void MainWindow::statusbar( QString text, int currentProgressValue, int maxProgr
 }
 
 
-void MainWindow::ProcessErrorMessage(ExecuteCommandType commandType, const BAListMap &msg, const QString &additionalInformation,
+void MainWindow::processErrorMessage(ExecuteCommandType commandType, const BAListMap &msg, const QString &additionalInformation,
                                      unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError )
 {
     QStringList errList;
@@ -532,7 +572,8 @@ void MainWindow::ProcessErrorMessage(ExecuteCommandType commandType, const BALis
         case MainWindow::commandSignalList: clearError = tr("Error retrieving signal list for %1.").arg(additionalInformation); break;
         case MainWindow::commandDisconnectSUT: clearError = tr("Error disconnecting SUT %1.").arg(additionalInformation); break;
         case MainWindow::commandTapScreen: clearError = tr("Error performing tap to screen."); break;
-        case MainWindow::commandRefreshUI: clearError = tr("Failed to refresh application."); break;
+        case MainWindow::commandRefreshUI: clearError = tr("Failed to refresh UI data."); break;
+        case MainWindow::commandRefreshImage: clearError = tr("Failed to refresh screen capture image."); break;
         case MainWindow::commandKeyPress: clearError = tr("Failed to press key %1.").arg(additionalInformation); break;
         case MainWindow::commandSetAttribute: clearError = tr("Failed to set attribute %1.").arg(additionalInformation); break;
         case MainWindow::commandGetDeviceType: clearError = tr("Failed to get device type for %1.").arg(additionalInformation); break;
@@ -591,7 +632,11 @@ void MainWindow::ProcessErrorMessage(ExecuteCommandType commandType, const BALis
             fullError += "\n(original: " + tdriverError + ")";
         }
         if (!exList.empty()) {
-            fullError += "\n\n" + exList.join("\n");
+            while (exList.size() < 2) exList << QString();
+            fullError += tr("\n\nException '%1':\n%2\n\nBacktrace:\n%3").
+                         arg(exList.takeFirst()).
+                         arg(exList.takeFirst()).
+                         arg(exList.join("\n"));
         }
     }
 
@@ -616,13 +661,13 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
         QTime t;
         t.start();
         /*bool response1 =*/
-        TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 30000 );
+        TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 35000 );
         if (msg.contains("error")) {
             qDebug() << FCFL << "failure time" << float(t.elapsed())/1000.0 << "reply" << msg;
 
             result = false;
             exit = true;
-            ProcessErrorMessage(commandType, msg, additionalInformation,
+            processErrorMessage(commandType, msg, additionalInformation,
                                 resultEnum, clearError, shortError, fullError);
 
             qWarning( "MainWindow::%s failed, message error: %s", __FUNCTION__, qPrintable(fullError));
@@ -637,7 +682,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
                 msg.clear();
                 msg["input"] << activeDevice.value( "name" ).toAscii() << "disconnect";
                 /*bool response2 =*/
-                TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 5000 );
+                TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 35000 );
                 if (msg.contains("error")) {
                     fullError += "\n\nDisconnect after error failed!";
                     result = false;
@@ -666,6 +711,8 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
 
     if ( !result && !(resultEnum & SILENT) ) {
         fullError.replace('\n', QChar::ParagraphSeparator);
+        ++tdriverMsgTotal;
+        tdriverMsgSetTitleText();
         tdriverMsgBox->showMessage( fullError );
         tdriverMsgBox->raise();
         tdriverMsgBox->repaint();

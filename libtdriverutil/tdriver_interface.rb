@@ -52,7 +52,6 @@ begin
   require 'tdriver'
   @tdriver_require_error = "" # no error
 rescue LoadError => ex
-  # do not change the following string
   @tdriver_require_error = "LoadError: tdriver GEM\n#{ ex.message }"
 rescue => ex
   @tdriver_require_error = "#{ ex.class }: #{ ex.message }\n\nBacktrace: #{ ex.backtrace.join("_") }"
@@ -129,7 +128,6 @@ def readWord(socket)
       buf += data
     end
   rescue Errno::EAGAIN, Errno::EINTR
-    #STDERR.puts "recvfrom reading len, recoverable exception"
     $lg.debug this_method + " recoverable exception"
     IO.select([socket])
     retry
@@ -156,7 +154,6 @@ def readBytes(socket)
       buf += data
     end
   rescue Errno::EAGAIN, Errno::EINTR
-    #STDERR.puts "recvfrom reading data, recoverable exception"
     $lg.debug this_method + " recoverable exception"
     IO.select([socket])
     retry
@@ -181,7 +178,7 @@ def writeRawData(socket, buf)
     if written > 0 then
       len -= written
     else
-      STDERR.puts "bad write, returned #{written}, fatal!"
+      $lg.fatal this_method + " bad write, returned #{written}, fatal!"
       socket.close # causes the script to exit
     end
   end
@@ -200,7 +197,6 @@ def makeMsg(seqnum, name, map)
     mapdata += [ key_s.length, key_s].pack('NA*')+[itemdata.length, itemdata].pack('NA*')
   end
   data = [seqnum, name.length, name].pack('NNA*')+[mapdata.length, mapdata].pack('NA*')
-  #STDERR.puts "Creating message: #{seqnum} #{name.length} #{mapdata.length} -> #{4+(4+name.length)+(4+mapdata.length)} ?= #{data.length}"
   return data
 end
 
@@ -458,7 +454,6 @@ end
 
 def line_execution(code, seqNum)
   code = code.to_s.rstrip
-  #STDERR.puts "\032\032EVAL: " + code.dump + "\032"
   STDOUT.puts("\032\032START #{seqNum}\032")
   STDERR.puts("\032\032START #{seqNum}\032")
   ex = nil
@@ -574,48 +569,42 @@ end
 
 def @listener.get_ui_dump( sut, sut_id, app_id = nil )
   MobyUtil::Parameter[ sut.id ][ :filter_type] = 'none'
-  _output_filename_xml = File.join( @working_directory, "visualizer_dump_#{ sut_id }" )
-  _output_filename_png = _output_filename_xml + '.png'
-  _output_filename_xml += '.xml'
-  data = nil
-  benchtime = Benchmark.measure {
-    data = sut.get_ui_dump( *[ ( { :id => app_id } unless app_id.nil? ) ].compact )
-  }.real
-  $lg.debug this_method + " sut.get_ui_dump time: #{benchtime}"
+  _output_filename_xml = File.join( @working_directory, "visualizer_dump_#{ sut_id }.xml" )
+  File.delete( _output_filename_xml ) if File.exist?( _output_filename_xml )
+  data = sut.get_ui_dump( *[ ( { :id => app_id } unless app_id.nil? ) ].compact )
 
   File.open( _output_filename_xml, 'w') do | file |
     file << data
     file.close
     $lg.debug this_method + " wrote #{File.size?(_output_filename_xml)/1024.0} KiB to '#{_output_filename_xml}'"
   end
+end
 
+
+def @listener.capture_screen( sut, sut_id, app_id = nil )
+  _output_filename_png = File.join( @working_directory, "visualizer_dump_#{ sut_id }.png" )
+  File.delete( _output_filename_png ) if File.exist?( _output_filename_png )
   begin
+    source = 'nowhere!'
     if app_id.nil?
-      benchtime = Benchmark.measure {
-        sut.capture_screen( :Filename => _output_filename_png, :Redraw => true )
-      }.real
-      $lg.debug this_method + " sut.capture_screen time: #{benchtime}"
-
+      sut.capture_screen( :Filename => _output_filename_png, :Redraw => true )
+      source = 'sut'
     else
       begin
-        benchtime = Benchmark.measure {
-          sut.application( :id => app_id ).capture_screen( "PNG", _output_filename_png, true )
-        }.real
-        $lg.debug this_method + " app.capture_screen time: #{benchtime}"
+        sut.application( :id => app_id ).capture_screen( "PNG", _output_filename_png, true )
+        source = 'app'
       rescue
         app_id = nil
         sut.capture_screen( :Filename => _output_filename_png, :Redraw => true )
+        source = 'sut'
       end
-      $lg.debug this_method + " got #{File.size?(_output_filename_png)/1024.0} KiB in '#{_output_filename_png}'"
-
     end
+    $lg.debug this_method + " got #{File.size?(_output_filename_png)/1024.0} KiB to '#{_output_filename_png}' from #{source}"
 
   rescue => ex
     # screen capture failed
     File.delete(_output_filename_png) if File.exist?(_output_filename_png )
-    # raise exception
     raise ex unless ex.message == "QtTasserver does not support the given service: screenShot"
-
   end
 
 end
@@ -678,15 +667,14 @@ def @listener.main_loop (conn)
   while not conn.closed? do
     STDOUT.flush
     STDERR.flush
-    $lg.debug this_method + " reading message"
+    #$lg.debug this_method + " reading message"
     seqNumIn = nameIn = dataIn = nil
     benchtime = Benchmark.measure {
       seqNumIn, nameIn, dataIn = readMessage(conn)
     }.real
-    $lg.debug this_method + " got message after time: #{benchtime}"
+    $lg.debug this_method + " GOT message after time: #{benchtime}"
     msgIn = parseArrayHash(dataIn)
-    $lg.debug this_method + " #{seqNumIn} #{nameIn} " + msgIn.inspect
-    #STDERR.puts "RUBY RECEIVED #{seqNumIn} #{nameIn} #{parseArrayHash(dataIn)}"
+    $lg.debug this_method + " MSG #{seqNumIn} #{nameIn} : #{msgIn.inspect}"
 
     #listener.rb was old script, which had STDIN/STDOUT interface
     if (nameIn == 'listener.rb emulation' and msgIn.key?('input') and not (input_array = msgIn['input']).empty?)
@@ -702,6 +690,7 @@ def @listener.main_loop (conn)
         eval_cmd = ""
         error = false
 
+        sut = nil
         begin
           # connect to sut, unless command does not require it
           sut = TDriver.connect_sut( :Id => sut_id ) unless [ :get_parameter, :set_output_path, :check_version ].include?( cmd )
@@ -712,7 +701,8 @@ def @listener.main_loop (conn)
           end
 
         rescue => ex
-          @listener_reply['exception'] = [ ex.message.to_s, ex.class.to_s, ex.backtrace.join('\n') ]
+          $lg.error this_method + " sut connect exception #{ex.class}: #{ex.message}"
+          @listener_reply['exception'] = [ ex.class.to_s, ex.message.to_s, ex.backtrace.join('\n') ]
           @listener_reply['error'] = [ "Error: connection to sut (#{sut_id}) failed" ]
           error = true
         end
@@ -730,8 +720,11 @@ def @listener.main_loop (conn)
           when :get_behaviours
             eval_cmd = "get_behaviours_xml( sut, '#{ sut_id }', [#{  input_array[ 2 ] }] )"
 
-          when :refresh
+          when :refresh_ui
             eval_cmd = "get_ui_dump( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[ 2 ] }'" : "nil" } )"
+
+          when :refresh_image
+            eval_cmd = "capture_screen( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[ 2 ] }'" : "nil" } )"
 
           when :list_apps
             eval_cmd = "get_app_list( sut, '#{ sut_id }' )"
@@ -787,19 +780,18 @@ def @listener.main_loop (conn)
           end #case cmd
 
           if not error and not eval_cmd.empty?
-            benchtime = 'timing error'
-            begin
-              MobyUtil::Retryable.while( :times => 10, :timeout => 1, :exception => Exception ) do
+            benchtime = Benchmark.measure {
+              begin
+                #MobyUtil::Retryable.while( :times => 10, :timeout => 1, :exception => Exception ) do end
                 $lg.debug this_method + " cmd #{cmd} => eval_cmd '#{eval_cmd}'"
-                benchtime = Benchmark.measure {
-                  eval( eval_cmd )
-                }.real
+                eval( eval_cmd )
+              rescue => ex
+                @listener_reply['exception'] = [ ex.class.to_s, ex.message.to_s, ex.backtrace.join('\n') ]
+                @listener_reply['error'] = [ "Error: evaluating command (#{eval_cmd}) failed" ]
+                $lg.error this_method + " eval exception"
+                error = true
               end
-            rescue => ex
-              @listener_reply['exception'] = [ ex.message.to_s, ex.class.to_s, ex.backtrace.join('\n') ]
-              @listener_reply['error'] = [ "Error: evaluating command (#{eval_cmd}) failed" ]
-              error = true
-            end
+            }.real
             $lg.debug this_method + " eval time: #{benchtime}"
           end
 
@@ -815,9 +807,6 @@ def @listener.main_loop (conn)
 
       end # if array_size >= 2
 
-      $lg.debug " @listener_reply: #{@listener_reply.inspect}"
-
-      # response to "listener.rb emulation" message
       msgOut = @listener_reply
 
     #ruby_interact.rb was old script, which had STDIN/STDOUT interface
@@ -840,7 +829,9 @@ def @listener.main_loop (conn)
     end # if !input
 
     writeRawData(conn, makeMsg(seqNumIn, nameIn, msgOut))
-    STDERR.puts "sent reply #{seqNumIn}, #{nameIn}" #", #{msgOut}"
+    msgStr = msgOut.inspect.to_s
+    msgStr = msgStr[0,1020] + " ..." if msgStr.size > 1024
+    $lg.info this_method + " SNT #{seqNumIn} #{nameIn} : #{msgStr}"
   end # while
 
 end # def listener_main_loop
@@ -851,20 +842,27 @@ end # def listener_main_loop
 ############################################################################
 
 
-begin
-  $lg.debug "calling server accept"
-  benchtime = Benchmark.measure {
+benchtime = Benchmark.measure {
+  begin
+    $lg.debug "calling server accept"
     @accepted_connection = @server.accept
-  }.real
-  $lg.debug "got connection after time: #{benchtime}"
-rescue Errno::EAGAIN, Errno::ECONNABORTED, Errno::EPROTO, Errno::EINTR
-  STDERR.puts "accept error"
-  sleep 1
-  IO.select([@server])
-  retry
-end
+  rescue Errno::EAGAIN, Errno::EINTR #, Errno::ECONNABORTED, Errno::EPROTO
+    $lg.error "recoverable accept error, retry in 1 s"
+    sleep 1
+    IO.select([@server])
+    retry
+  rescue => ex
+    $lg.fatal "recoverable accept error #{ex.class}:#{ex.message}"
+    exit 1
+  end
+}.real
+$lg.debug "accept done after time: #{benchtime}"
 
-@server.close
+begin
+  @server.close
+rescue => ex
+  $lg.error "error closing server socket: #{ex.class}:#{ex.message}, ignored"
+end
 $lg.debug "server closed"
 
 # send hello message with sequence number 0, and information about tdriver and ruby
