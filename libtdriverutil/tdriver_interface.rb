@@ -559,19 +559,16 @@ end
 
 
 def @listener.get_signal_xml( sut, sut_id, app_name, object_id, object_type )
-  $lg.debug "#{this_method} ENTRY #{Time.now}"
   _output_filename_xml = File.join( @working_directory, "visualizer_class_signals_#{ sut_id }.xml" )
   File.delete( _output_filename_xml ) if File.exist?( _output_filename_xml )
   cmd = "sut.application(:name => app_name).#{object_type}( :id => object_id ).fixture('signal', 'list_signals')"
   $lg.debug this_method + " eval '#{cmd}'"
   data = eval(cmd)
-  $lg.debug "#{this_method} DATA #{Time.now}"
   File.open( _output_filename_xml, 'w') do | file |
     file << data
     file.close
     $lg.debug this_method + " wrote #{File.size?(_output_filename_xml)/1024.0} KiB to '#{_output_filename_xml}'"
   end
-  $lg.debug "#{this_method} EXIT #{Time.now}"
 end
 
 
