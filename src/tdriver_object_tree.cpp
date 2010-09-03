@@ -25,6 +25,7 @@
 #include <tdriver_debug_macros.h>
 
 #include <QTimer>
+#include <QProgressDialog>
 
 void MainWindow::collectGeometries( QTreeWidgetItem * item )
 {
@@ -421,22 +422,45 @@ void MainWindow::forceRefreshData()
 }
 
 
+static void doProgress(QProgressDialog &progress, const QString &prefix, const QString &arg, int value)
+{
+    if (!prefix.isNull()) {
+        progress.setLabelText(prefix.arg(arg));
+    }
+    progress.setValue(value);
+    progress.show();
+    progress.repaint();
+}
+
+
 void MainWindow::refreshData()
 {
+    bool canceled = false;
     bool giveup = false;
     bool isS60 = false;
     bool listAppsOk = false;
     bool refreshUiOk = false;
     bool refreshImageOk = false;
     bool behavioursOk = false;
-    BAListMap listAppsReply;
     BAListMap dummyReply;
+    QString progressTemplate = tr("Refreshing: %1...");
+    QString refreshCmdTemplate = activeDevice.value( "name" ) + " %1";
     QString filenamePrefix = outputPath + "/visualizer_dump_" + activeDevice.value( "name" );
+
+    QProgressDialog progress("Visualizer Progress Dialog", tr("Cancel"), 0, 100);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setAutoReset(false);
+    progress.setAutoClose(true);
+    progress.setMinimumDuration(0);
+    progress.setCancelButtonText(QString()); // hide cancle button here, because it seems to work badly
 
     QTime t;
     t.start();
 
-    // request application list (unless s60)
+    // purpose of the doProgress below is to force QProgress dialog window to be wide enough to not need resize
+    doProgress(progress, QString(100, '.'), QString(), 0);
+
+    // request application list (unless s60 AVKON)
     if ( activeDevice.value( "type" ).toLower() == "s60" ) {
         resetApplicationsList();
         appsMenu->setDisabled( true );
@@ -444,50 +468,60 @@ void MainWindow::refreshData()
     }
     else {
         QString listCommand = QString( activeDevice.value( "name" ) + " list_apps" );
+        doProgress(progress, progressTemplate, tr("requesting application list"), 1);
         statusbar( "Refreshing application list...", 0);
         qDebug() << FCFL << "app list refresh started at" << float(t.elapsed())/1000.0;
-        listAppsOk = executeTDriverCommand( commandListApps, listCommand, "", &listAppsReply );
+        listAppsOk = executeTDriverCommand( commandListApps, listCommand, "", &dummyReply );
+        if (!listAppsOk) giveup = true;
     }
+    //canceled = progress.wasCanceled();
 
-    if (listAppsOk) {
+    if (!giveup && !canceled && !isS60 && listAppsOk) {
         qDebug() << FCFL << "app list parse started at" << float(t.elapsed())/1000.0;
+        doProgress(progress, progressTemplate, tr("parsing application list"), 20);
         statusbar( "Updating applications list...", 0);
         parseApplicationsXml( outputPath + "/visualizer_applications_" + activeDevice.value( "name" ) + ".xml" );
     }
-    else giveup = true;
+    //canceled = progress.wasCanceled();
 
     // use target application if user has chosen one
-    QString refreshCmdTemplate = activeDevice.value( "name" ) + " %1";
     if ( !currentApplication.value( "id" ).isEmpty() && applicationsHash.contains( currentApplication.value( "id" ) ) ) {
         refreshCmdTemplate += " " + currentApplication.value( "id" );
     }
 
     // request ui xml dump
-    if (!giveup) {
+    if (!giveup && !canceled) {
+        doProgress(progress, progressTemplate, tr("requesting UI XML data"), 25);
         statusbar( "Getting UI XML data...", 0);
         qDebug() << FCFL << "xml refresh started at" << float(t.elapsed())/1000.0;
         refreshUiOk = executeTDriverCommand( commandRefreshUI, refreshCmdTemplate.arg("refresh_ui"), "", &dummyReply );
         if (!refreshUiOk) giveup = true;
     }
+    //canceled = progress.wasCanceled();
 
     // request screen capture image
-    if (!giveup) {
+    if (!giveup && !canceled) {
+        doProgress(progress, progressTemplate, tr("getting screen capture image"), 65);
         statusbar( "Getting UI image data...", 0);
         qDebug() << FCFL << "image refresh started at" << float(t.elapsed())/1000.0;
         refreshImageOk = executeTDriverCommand( commandRefreshImage, refreshCmdTemplate.arg("refresh_image"), "", &dummyReply );
     }
+    //progress.setCancelButtonText(QString()); // hide cancle button here
+    //canceled = progress.wasCanceled();
 
-    if (refreshImageOk) {
+    if (!giveup && !canceled && refreshImageOk) {
         qDebug() << FCFL << "image load started at" << float(t.elapsed())/1000.0;
+        doProgress(progress, progressTemplate, tr("loading screen capture image"), 90);
         statusbar( "Loading screen capture image...", 0);
         imageWidget->disableDrawHighlight();
         imageWidget->refreshImage( QString( filenamePrefix + ".png"), false );
         imageWidget->repaint();
     }
 
-    if (refreshUiOk) {
-        qDebug() << FCFL << "object tree update / ui xml parse started at" << float(t.elapsed())/1000.0;
+    if (!giveup && !canceled && refreshUiOk) {
+        doProgress(progress, progressTemplate, tr("parsing UI XML data"), 95);
         statusbar( "Updating object tree...", 0);
+        qDebug() << FCFL << "object tree update / ui xml parse started at" << float(t.elapsed())/1000.0;
         updateObjectTree( filenamePrefix + ".xml" );
         qDebug() << FCFL << "behaviour update started at" << float(t.elapsed())/1000.0;
         statusbar( "Updating behaviours...", 0);
@@ -499,8 +533,10 @@ void MainWindow::refreshData()
     }
 
     qDebug() << FCFL << "done (listAppsOk" << listAppsOk << "refreshUiOk" << refreshUiOk << "refreshImageOk" << refreshImageOk << "behavioursOk" << behavioursOk << ") at" << float(t.elapsed())/1000.0;
+    progress.reset();
 
-    if ((listAppsOk || isS60) && refreshUiOk) statusbar( "Refresh done!", 1500 );
+    /*if (canceled) statusbar( "Refresh canceled!", 1500 );
+    else*/ if ((listAppsOk || isS60) && refreshUiOk) statusbar( "Refresh done!", 1500 );
     else if (refreshUiOk) statusbar( "Refreshed only UI XML data!", 1500 );
     else if (listAppsOk) statusbar( "Refreshed only Application List!", 1500 );
     else statusbar( "Refresh failed!", 1500 );

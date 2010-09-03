@@ -96,9 +96,10 @@ void TDriverRubyInterface::requestClose()
 {
     VALIDATE_THREAD_NOT;
     qDebug() << FCFL;
-    initState = Closing;
+    initState = RequestingClose;
     emit requestCloseSignal();
 }
+
 
 void TDriverRubyInterface::run()
 {
@@ -119,6 +120,7 @@ void TDriverRubyInterface::run()
 bool TDriverRubyInterface::goOnline()
 {
     VALIDATE_THREAD_NOT;
+    qDebug() << FCFL << "entry in initstate" << initState;
     Q_ASSERT(isRunning()); // must only be called when thread is running
     QMutexLocker lock(syncMutex);
     if (initState == Closed) {
@@ -143,6 +145,7 @@ bool TDriverRubyInterface::goOnline()
         }
     }
 
+    qDebug() << FCFL << "return in initstate" << initState << "=" << (initState == Connected);
     return (initState == Connected);
 }
 
@@ -178,8 +181,7 @@ void TDriverRubyInterface::resetProcess()
     VALIDATE_THREAD;
     Q_ASSERT(process);
 
-    initState = Closed;
-
+    initState = Closing;
     if (process->state() != QProcess::NotRunning) {
         process->terminate();
         if (!process->waitForFinished(5000)) {
@@ -195,6 +197,7 @@ void TDriverRubyInterface::resetProcess()
     disconnect(); // disconnect any stray signals
     readProcessStdout();
     readProcessStderr();
+    initState = Closed;
 }
 
 void TDriverRubyInterface::recreateProcess()

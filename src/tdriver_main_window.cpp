@@ -29,6 +29,7 @@
 #include <QCloseEvent>
 #include <QDialog>
 #include <QErrorMessage>
+#include <QThread>
 
 #include <tdriver_debug_macros.h>
 
@@ -539,6 +540,7 @@ void MainWindow::statusbar( QString text, int timeout )
     statusBar()->showMessage( text, timeout );
     statusBar()->update();
     statusBar()->repaint();
+    QThread::currentThread()->yieldCurrentThread();
 }
 
 
@@ -637,6 +639,7 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const BALis
                          arg(exList.takeFirst()).
                          arg(exList.takeFirst()).
                          arg(exList.join("\n"));
+            fullError.replace(":in `", ":\n  in `");
         }
     }
 
@@ -669,8 +672,6 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
             exit = true;
             processErrorMessage(commandType, msg, additionalInformation,
                                 resultEnum, clearError, shortError, fullError);
-
-            qWarning( "MainWindow::%s failed, message error: %s", __FUNCTION__, qPrintable(fullError));
 
             if ( resultEnum & FAIL || iteration > 0 ) {
                 // exit if failed again or no retries allowed..

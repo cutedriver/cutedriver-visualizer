@@ -100,7 +100,7 @@ private:
 
     static TDriverRubyInterface *pGlobalInstance;
 
-    enum { Closed, Running, Connected, Closing } initState;
+    enum { Closed, Running, Connected, Closing, RequestingClose } initState;
     QString initErrorMsg;
 
 
