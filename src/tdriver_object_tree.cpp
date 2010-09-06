@@ -425,7 +425,12 @@ void MainWindow::forceRefreshData()
 static void doProgress(QProgressDialog &progress, const QString &prefix, const QString &arg, int value)
 {
     if (!prefix.isNull()) {
-        progress.setLabelText(prefix.arg(arg));
+        if (!arg.isNull()) {
+            progress.setLabelText(prefix.arg(arg));
+        }
+        else {
+            progress.setLabelText(prefix);
+        }
     }
     progress.setValue(value);
     progress.show();

@@ -34,6 +34,7 @@
 #include <QWaitCondition>
 #include <QMutex>
 
+
 #include "tdriver_debug_macros.h"
 
 
@@ -85,7 +86,7 @@ void TDriverRubyInterface::startGlobalInstance()
 
     pGlobalInstance = new TDriverRubyInterface();
     pGlobalInstance->moveToThread(pGlobalInstance);
-    connect(pGlobalInstance, SIGNAL(requestRubyConnection()), pGlobalInstance, SLOT(resetRubyConnection()), Qt::QueuedConnection);
+    connect(pGlobalInstance, SIGNAL(requestRubyConnection(int)), pGlobalInstance, SLOT(resetRubyConnection(int)), Qt::QueuedConnection);
     connect(pGlobalInstance, SIGNAL(requestCloseSignal()), pGlobalInstance, SLOT(close()), Qt::QueuedConnection);
 
     pGlobalInstance->start();
@@ -125,10 +126,12 @@ bool TDriverRubyInterface::goOnline()
     QMutexLocker lock(syncMutex);
     if (initState == Closed) {
         static int counter=0;
-        qDebug() << FCFL << "Waiting for Ruby start #" << ++counter;
-        emit requestRubyConnection();
-        msgCond->wait(syncMutex);
-        qDebug() << FCFL << "Ruby started" << counter;
+        ++counter;
+        qDebug() << FCFL << "Emitting requestrubyconnection #" << counter;
+        emit requestRubyConnection(counter);
+        if (!msgCond->wait(syncMutex, 80*1000)) {
+            qWarning() << "Request to starting ruby process failed unexpectedly!";
+        }
     }
 
     if (initState == Running && !handler->isHelloReceived()) {
@@ -194,7 +197,7 @@ void TDriverRubyInterface::resetProcess()
     // else aready not running
 
     qDebug() << FCFL << "reporting exitcode" << process->exitCode() << "exitstatus" << process->exitStatus();
-    disconnect(); // disconnect any stray signals
+    process->disconnect(); // disconnect any stray signals
     readProcessStdout();
     readProcessStderr();
     initState = Closed;
@@ -228,10 +231,10 @@ void TDriverRubyInterface::recreateProcess()
 }
 
 
-void TDriverRubyInterface::resetRubyConnection()
+void TDriverRubyInterface::resetRubyConnection(int counter)
 {
     VALIDATE_THREAD;
-    qDebug() << FCFL;
+    qDebug() << FCFL << "#" << counter;
     recreateConn();
     recreateProcess();
 
@@ -258,14 +261,14 @@ void TDriverRubyInterface::resetRubyConnection()
 
     if (ok) process->start( "ruby", QStringList() << scriptFile );
 
-    if ( ok && !process->waitForStarted( 30000 ) ) {
+    if ( ok && !process->waitForStarted( 20000 ) ) {
         initErrorMsg = tr("Could not start Ruby script '%1'" ).arg(scriptFile);
         qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
         emit error(errorTitle, initErrorMsg, "");
         ok = false;
     }
 
-    if ( ok && !process->waitForReadyRead(60000)) {
+    if ( ok && !process->waitForReadyRead(40000)) {
         initErrorMsg = tr("Could not read startup parameters." );
         qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
         emit error(errorTitle, initErrorMsg, "");
@@ -329,7 +332,7 @@ void TDriverRubyInterface::resetRubyConnection()
         connect(handler, SIGNAL(gotDisconnection()), this, SLOT(close()));
         qDebug() << FCFL << "Connecting localhost :" << rbiPort;
         conn->connectToHost(QHostAddress(QHostAddress::LocalHost), rbiPort);
-        if (!conn->waitForConnected()) {
+        if (!conn->waitForConnected(30000)) {
             initErrorMsg = tr("Failed to connect to Ruby process via TCP/IP!");
             qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
             emit error(errorTitle, initErrorMsg, "");
@@ -345,7 +348,10 @@ void TDriverRubyInterface::resetRubyConnection()
     // Notify the thread that called resetRubyConnection
     msgCond->wakeAll();
 
-    if (!ok) helloCond->wakeAll();
+
+    if (!ok) {
+        helloCond->wakeAll();
+    }
 
     syncMutex->unlock();
 }
@@ -357,19 +363,19 @@ void TDriverRubyInterface::close()
     QMutexLocker lock(syncMutex);
     if (initState == Closed || initState == Closing) {
         qDebug() << FCFL << "initState already" << initState;
-        return;
     }
+    else {
+        initState = Closing;
 
-    initState = Closing;
+        msgCond->wakeAll();
+        helloCond->wakeAll();
 
-    msgCond->wakeAll();
-    helloCond->wakeAll();
-
-    qDebug() << FCFL << "TDriverRubyInterface: Closing process, process state" << process->state() << ", conn state" << conn->state();
-    if (conn->isOpen()) {
-        conn->close();
+        qDebug() << FCFL << "TDriverRubyInterface: Closing process, process state" << process->state() << ", conn state" << conn->state();
+        if (conn->isOpen()) {
+            conn->close();
+        }
+        resetProcess();
     }
-    resetProcess();
 }
 
 void TDriverRubyInterface::readProcessHelper(int fnum, QByteArray &readBuffer, quint32 &seqNum, QByteArray &evalBuffer)
@@ -478,21 +484,21 @@ bool TDriverRubyInterface::executeCmd(const QByteArray &name, BAListMap &cmd_rep
 
 int TDriverRubyInterface::getPort()
 {
-    QMutexLocker mut(syncMutex);
+    QMutexLocker lock(syncMutex);
     return rbiPort;
 }
 
 
 int TDriverRubyInterface::getRbiVersion()
 {
-    QMutexLocker mut(syncMutex);
+    QMutexLocker lock(syncMutex);
     return rbiVersion;
 }
 
 
 QString TDriverRubyInterface::getTDriverVersion()
 {
-    QMutexLocker mut(syncMutex);
+    QMutexLocker lock(syncMutex);
     return rbiTDriverVersion;
 }
 

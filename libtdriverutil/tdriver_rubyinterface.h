@@ -58,7 +58,7 @@ protected:
 
 signals:
     void error(QString title, QString text, QString details);
-    void requestRubyConnection();
+    void requestRubyConnection(int counter);
     void requestCloseSignal();
     void rubyProcessFinished();
     void rubyOnline();
@@ -75,7 +75,7 @@ public slots:
 
 private slots:
     void close();
-    void resetRubyConnection();
+    void resetRubyConnection(int counter);
     void recreateConn();
     void resetProcess();
     void recreateProcess();

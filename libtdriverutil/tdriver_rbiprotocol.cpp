@@ -42,8 +42,8 @@ TDriverRbiProtocol::TDriverRbiProtocol(QAbstractSocket *connection, QMutex *cm, 
     QObject(parent),
     readState(ReadDisconnected),
     conn(connection),
-    condMutex(cm),
-    cond(mwc),
+    syncMutex(cm),
+    msgCond(mwc),
     nextSN(0),
     haveHello(false),
     helloCond(hwc),
@@ -299,8 +299,7 @@ void TDriverRbiProtocol::readyToRead()
         }
 
         if (messageOver) {
-            //qDebug() << FFL;
-            condMutex->lock();
+            syncMutex->lock();
 
             condSeqNum = receivedSN;
 
@@ -318,17 +317,17 @@ void TDriverRbiProtocol::readyToRead()
             }
             else {
                 //qDebug() << FCFL << "RECEIVED" << condSeqNum << condName << "\n<<<<<<" << condMsg;
-                cond->wakeAll();
+                msgCond->wakeAll();
                 emit messageReceived(condSeqNum, condName, condMsg);
             }
-            condMutex->unlock();
+            syncMutex->unlock();
+
             resetMessage(); // also clears readBuffer
         }
         else readBuffer.clear(); // readBuffer never contains more than one data element, so clear it after handling of each element
         // if readAmount was not read, 'continue' was used earlier, and readBuffer won't get cleared
 
     } while (conn->bytesAvailable() > 0);
-    //qDebug() << FCFL << "EXIT";
 }
 
 
@@ -353,26 +352,26 @@ void TDriverRbiProtocol::bytesWritten(qint64 written)
 bool TDriverRbiProtocol::waitHello(unsigned long timeout)
 {
     VALIDATE_THREAD_NOT;
-    if (haveHello) return true;
-
-    qDebug() << FFL << "WAITING HELLO";
-    bool result = helloCond->wait(condMutex, timeout);
-    qDebug() << FFL << "HELLO WAIT RESULT" << result;
-    return result;
+    return (haveHello)
+            ? true
+                : helloCond->wait(syncMutex, timeout);
 }
 
 bool TDriverRbiProtocol::waitSeqNum(quint32 seqNum, unsigned long timeout)
 {
-    qDebug() << FFL << "WAITING SEQNUM" << seqNum;
+    qDebug() << FFL << "for seqNum" << seqNum;
     VALIDATE_THREAD_NOT;
 
     // handler.condMutex must be locked when entering here!
-    if (!condMutex || !cond) return false;
+    if (!syncMutex || !msgCond) return false;
 
     forever {
         // test timeout
-        if (!cond->wait(condMutex, timeout)) return false;
 
+        if (!msgCond->wait(syncMutex, timeout)) {
+            qDebug() << FCFL << "TIMEOUT waiting for seqNum" << seqNum;
+            return false;
+        }
         // test for success (seqNum 0 accepts any sequence number)
         if (seqNum == 0 || condSeqNum == seqNum) return true;
 

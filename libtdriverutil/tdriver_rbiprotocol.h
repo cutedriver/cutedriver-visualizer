@@ -95,8 +95,8 @@ private:
     QAbstractSocket *conn;
     BAListMap helloMsg;
 
-    QMutex *condMutex;
-    QWaitCondition *cond;
+    QMutex *syncMutex;
+    QWaitCondition *msgCond;
 
     quint32 condSeqNum;
     BAListMap condMsg;
