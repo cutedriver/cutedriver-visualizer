@@ -548,7 +548,7 @@ void MainWindow::refreshData()
 }
 
 
-// Function to refresh visible data - creates path to xml file (located in same directory as tdriver_visualizer) and loads it.
+// Function to refresh visible data - creates path to xml file and loads it.
 void MainWindow::refreshDataDisplay()
 {
     // disable all current highlightings
