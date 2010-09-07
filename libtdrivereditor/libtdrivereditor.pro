@@ -19,6 +19,7 @@
 # -------------------------------------------------
 # Project created by QtCreator 2010-02-19T10:17:24
 # -------------------------------------------------
+include (../visualizer.pri)
 TARGET = tdrivereditor
 DESTDIR = ./
 win32:DLLDESTDIR = ../bin

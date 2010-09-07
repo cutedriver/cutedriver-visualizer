@@ -17,6 +17,7 @@
 ## 
 ############################################################################
 
+include (../visualizer.pri)
 
 TEMPLATE = lib
 TARGET = visualizeraccessor

@@ -17,6 +17,7 @@
 ##
 ############################################################################
 
+include (../visualizer.pri)
 
 TEMPLATE = lib
 HEADERS += version.h \

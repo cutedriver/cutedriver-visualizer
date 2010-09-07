@@ -16,6 +16,7 @@
 # # of this file.
 # #
 # ###########################################################################
+include (../visualizer.pri)
 TEMPLATE = app
 win32:TARGET = ../../bin/tdriver_visualizer
 unix:TARGET = tdriver_visualizer

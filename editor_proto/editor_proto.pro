@@ -21,6 +21,7 @@
 # -------------------------------------------------
 # Project created by QtCreator 2010-02-02T10:14:36
 # -------------------------------------------------
+include (../visualizer.pri)
 TEMPLATE = app
 win32: TARGET = ../../bin/editor_proto
 unix: TARGET = editor_proto

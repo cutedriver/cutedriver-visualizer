@@ -19,6 +19,7 @@
 # -------------------------------------------------
 # Project created by QtCreator 2010-04-16T14:55:40
 # -------------------------------------------------
+include (../visualizer.pri)
 QT += network \
     sql
 QT -= gui
