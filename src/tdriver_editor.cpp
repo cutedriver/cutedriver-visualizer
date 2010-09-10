@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     out->open( QIODevice::WriteOnly | QIODevice::Text );
     qInstallMsgHandler(output);
 
-    qRegisterMetaType<BAListMap>("BAList");
+    qRegisterMetaType<BAList>("BAList");
     qRegisterMetaType<BAListMap>("BAListMap");
 
     MainWindow* mainWindow = new MainWindow();

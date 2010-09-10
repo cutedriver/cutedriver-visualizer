@@ -426,9 +426,7 @@ void MainWindow::loadFileData() {
         fileName = fileName.section( '.', 0, -2 );
         fileName.append( ".png" );
 
-        imageWidget->refreshImage( fileName, false );
-        imageWidget->update();
-
+        imageWidget->refreshImage( fileName );
     }
 
 }

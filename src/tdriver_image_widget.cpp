@@ -57,7 +57,7 @@ void  MainWindow::resizeEvent( QResizeEvent *event ) {
  void MainWindow::imageInspectFindItem()
  {
     QRect area(0, 0, imageWidget->imageWidth()-1, imageWidget->imageHeight()-1);
-    QPoint pos(imageWidget->getPressedPos());
+    QPoint pos(imageWidget->getEventPosInImage());
 
     if (area.isValid() && area.contains(pos)) {
 
@@ -71,7 +71,7 @@ void  MainWindow::resizeEvent( QResizeEvent *event ) {
 void MainWindow::imageInsertFindItem()
 {
     QRect area(0, 0, imageWidget->imageWidth()-1, imageWidget->imageHeight()-1);
-    QPoint pos(imageWidget->getPressedPos());
+    QPoint pos(imageWidget->getEventPosInImage());
 
     if (area.isValid() && area.contains(pos)) {
 
@@ -84,7 +84,7 @@ void MainWindow::imageInsertFindItem()
 
 void MainWindow::imageInsertCoords()
 {
-    QPoint pos = imageWidget->getPressedPos();
+    QPoint pos = imageWidget->getEventPosInImage();
     //emit insertToCodeEditor(QString("@sut.tap_screen(%1, %2)\n").arg(pos.x()).arg(pos.y()), false, false);
     emit insertToCodeEditor(QString(" %1, %2 ").arg(pos.x()).arg(pos.y()), false, false);
 }
@@ -140,7 +140,7 @@ void MainWindow::tapScreen( QString target )
 // else try to tap object that was clicked
 void MainWindow::clickedImage()
 {
-    QPoint pos(imageWidget->getPressedPos());
+    QPoint pos(imageWidget->getEventPosInImage());
 
     if ( activeDevice.value( "type" ).toLower() == "s60" ) {
         imageWidget->convertS60Pos(pos);
