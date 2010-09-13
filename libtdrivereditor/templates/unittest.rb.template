@@ -21,7 +21,7 @@ class TC_ < Test::Unit::TestCase
     
     # get the calculator app running 
     @sut = TDriver.sut(:Id => "sut_qt")    
-    @app = @sut.run(:name => "")
+    @app = @sut.run( :name => "", :arguments => "-testability")
     
   end
   

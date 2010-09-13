@@ -7,7 +7,7 @@ include TDriverVerify
 # Note: change :name to be the application you want to run.
 # :name must contain full path unless application is in PATH.
 # :arguments needs to include testability plugin loading only if it's not compiled into application.
-@app = @sut.run( :name => "app_executable", :arguments => "-testability")
+@app = @sut.run( :name => "", :arguments => "-testability")
 
 # Add your interaction and verify code here...
 
