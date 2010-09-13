@@ -227,17 +227,19 @@ void TDriverDebugConsole::createActions()
 
     quitAct = new QAction(QIcon(":/images/quit.png"), tr("&Quit"), this);
     quitAct->setObjectName("debugconsole quit");
-    quitAct->setToolTip(tr("Step Into (rdebug 'step')"));
+    quitAct->setToolTip(tr("Interrupt and quit script"));
     connect(quitAct, SIGNAL(triggered()), this, SLOT(doQuit()));
 
     stepIntoAct = new QAction(QIcon(":/images/stepinto.png"), tr("Step &Into"), this);
     stepIntoAct->setObjectName("debugconsole step into");
-    stepIntoAct->setToolTip(tr("Interrupt and quit script"));
+    stepIntoAct->setToolTip(tr("Step Into, rdebug 'step' <F11>"));
+    stepIntoAct->setShortcut(QKeySequence(Qt::Key_F11));
     connect(stepIntoAct, SIGNAL(triggered()), this, SLOT(doStepInto()));
 
     stepOverAct = new QAction(QIcon(":/images/stepover.png"), tr("Step &Over"), this);
     stepOverAct->setObjectName("debugconsole step over");
-    stepOverAct->setToolTip(tr("Step Over (rdebug 'next')"));
+    stepOverAct->setToolTip(tr("Step Over, rdebug 'next' <F10>"));
+    stepOverAct->setShortcut(QKeySequence(Qt::Key_F10));
     connect(stepOverAct, SIGNAL(triggered()), this, SLOT(doStepOver()));
 
     // note: interrupt and continue button labels are updated elsewhere,
@@ -245,13 +247,17 @@ void TDriverDebugConsole::createActions()
 
     interruptAct = new QAction(QIcon(":/images/interrupt.png"), "(interrupt)", this);
     interruptAct->setObjectName("debugconsole interrupt");
-    interruptAct->setToolTip(tr("Interrupt script"));
+    interruptAct->setToolTip(tr("Interrupt script <Shift-F5>"));
+    interruptAct->setShortcut(QKeySequence(Qt::SHIFT | Qt::Key_F5));
     connect(interruptAct, SIGNAL(triggered()), this, SLOT(doInterrupt()));
 
+    // continueAct shortcut is also used for starting debugger, see doContinueOrDelegate()
     continueAct = new QAction(QIcon(":/images/continue.png"), "(continue)", this);
     continueAct->setObjectName("debugconsole continue");
-    continueAct->setToolTip(tr("Start/continue script"));
-    connect(continueAct, SIGNAL(triggered()), this, SLOT(doContinue()));
+    continueAct->setToolTip(tr("Continue script <F5>"));
+    continueAct->setShortcut(QKeySequence(Qt::Key_F5));
+    continueAct->setEnabled(false);;
+    connect(continueAct, SIGNAL(triggered()), this, SLOT(doContinueOrDelegate()));
 
     addAction(interruptAct);
     addAction(continueAct);
@@ -394,9 +400,16 @@ bool TDriverDebugConsole::sendControlCmd(QString cmd, bool allowQueuing)
 }
 
 
-void TDriverDebugConsole::doContinue(void)
+void TDriverDebugConsole::doContinueOrDelegate(void)
 {
-    sendRemoteCmd("continue");
+    if (isRunning) {
+        qDebug() << FCFL << "isRunning, doing continue";
+        sendRemoteCmd("continue");
+    }
+    else {
+        qDebug() << FCFL << "!isRunning, delegating action";
+        emit delegateContinueAction();
+    }
 }
 
 void TDriverDebugConsole::doStepInto(void)

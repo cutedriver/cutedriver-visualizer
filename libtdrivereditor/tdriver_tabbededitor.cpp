@@ -110,9 +110,8 @@ TDriverTabbedEditor::TDriverTabbedEditor(QWidget *shortcutParent, QWidget *paren
 
         shortcut = new QShortcut(QKeySequence("Shift+F3"), shortcutParent, 0, 0, Qt::WidgetWithChildrenShortcut );
         connect(shortcut, SIGNAL(activated()), editBarP, SLOT(findPrev()));
-
-
     }
+    connect(debugConsole, SIGNAL(delegateContinueAction()), debug2Act, SLOT(trigger()));
 }
 
 
@@ -393,11 +392,11 @@ void TDriverTabbedEditor::createActions()
 
     debug2Act = new QAction(QIcon(":/images/debug2.png"), tr("&Run with integrated debugger"), this);
     debug2Act->setObjectName("editor run integrated");
-    debug2Act->setShortcut(QKeySequence(Qt::Key_F10));
+    debug2Act->setShortcut(QKeySequence(Qt::Key_F5)); // see debugConsole continueAct
     debug2Act->setToolTip(tr("Save all and run current file with editor-integrated debugger"));
     runActs.append(debug2Act);
     connect(debug2Act, SIGNAL(triggered()), this, SLOT(debug2()));
-    //debug2Act->setEnabled(false);
+    debug2Act->setEnabled(true);
 
     // make actions() to return a flat list of all actions
     addActions(fileActs);
@@ -712,6 +711,7 @@ bool TDriverTabbedEditor::debug2()
 
     emit requestRun(editor->fileName(), TDriverRunConsole::Debug2Request);
     setRunConsoleVisible(true);
+    setDebugConsoleVisible(true);
     return true;
 }
 

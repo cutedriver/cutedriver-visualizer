@@ -1,21 +1,21 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
 
 
 #ifndef TDRIVER_DEBUGCONSOLE_H
@@ -52,6 +52,7 @@ signals:
     void gotRemotePrompt(QString fileName, int lineNum); // emitted when rdebug gives a position in a file
     void breakpoint(struct MEC::Breakpoint);
     void breakpoints(QList<struct MEC::Breakpoint>);
+    void delegateContinueAction();
 
 public slots:
     void clear();
@@ -69,7 +70,7 @@ public slots:
 
     void doQuit(void);
     void doInterrupt(void);
-    void doContinue(void);
+    void doContinueOrDelegate(void);
     void doStepInto(void);
     void doStepOver(void);
 
