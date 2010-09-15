@@ -144,7 +144,7 @@ private:
     const int noNameId;
     QWidget *sideArea;
     TDriverHighlighter *highlighter;
-    bool needReHighlight;
+    bool needSyntaxRehighlight;
     QCompleter *completer;
     bool complPopupShowingInfo;
     QStandardItemModel *phraseModel;
@@ -178,6 +178,8 @@ private:
     QSet<int> rdebugBpSet;
     QList <struct MEC::Breakpoint> bpList;
     QColor cursorLineColor;
+    QColor pairMatchColor;
+    QColor pairNoMatchBgColor;
     QColor completionStackedColor;
     QColor completionBaseColor;
     QColor completionSelectColor;
@@ -192,6 +194,7 @@ private:
 
     QAction *contextEval;
     bool ignoreCursorPosChanges;
+    bool needRehighlightAfterCursorPosChange;
 
 private slots:
     void doInteractiveEval();
@@ -204,6 +207,8 @@ private slots:
 
     // highlight slots are usually not connect, but called by handleCursorPositionChange
     void doSyntaxHighlight();
+    bool testBlockDelimiterHighlight();
+    void highlightBlockDelimiters(QList<QTextEdit::ExtraSelection> &extraSelections);
     void highlightCursorLine(QList<QTextEdit::ExtraSelection> &extraSelections);
     void highlightCompletionCursors(QList<QTextEdit::ExtraSelection> &extraSelections);
     void highlightRunningLine(QList<QTextEdit::ExtraSelection> &extraSelections);

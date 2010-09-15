@@ -67,29 +67,30 @@ TDriverCodeTextEdit::ConfigStruct::ConfigStruct(void) {
 
 
 TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
-        QPlainTextEdit(parent),
-        noNameId(++noNameIdCounter),
-        sideArea(new SideArea(this)),
-        highlighter(NULL),
-        needReHighlight(false),
-        completer(new QCompleter(this)),
-        complPopupShowingInfo(false),
-        phraseModel(NULL),
-        stackHighlightStart(-1),
-        translationDBconfigured(false),
-        lastBlock(-1),
-        lastBlockCount(document()->blockCount()),
-        isRunning(false),
-        isUsingTabulatorsMode(true),
-        isRubyMode(false),
-        isWrapMode(true),
-        runningLine(0),
-        //completionPopup(new QMenu(tr("Choose translation"), this)),
-        completionType(NO_COMPLETION),
-        popupFirstInsert(false),
-        popupWasTriggered(false),
-        contextEval(new QAction(this)),
-        ignoreCursorPosChanges(false)
+    QPlainTextEdit(parent),
+    noNameId(++noNameIdCounter),
+    sideArea(new SideArea(this)),
+    highlighter(NULL),
+    needSyntaxRehighlight(false),
+    completer(new QCompleter(this)),
+    complPopupShowingInfo(false),
+    phraseModel(NULL),
+    stackHighlightStart(-1),
+    translationDBconfigured(false),
+    lastBlock(-1),
+    lastBlockCount(document()->blockCount()),
+    isRunning(false),
+    isUsingTabulatorsMode(true),
+    isRubyMode(false),
+    isWrapMode(true),
+    runningLine(0),
+    //completionPopup(new QMenu(tr("Choose translation"), this)),
+    completionType(NO_COMPLETION),
+    popupFirstInsert(false),
+    popupWasTriggered(false),
+    contextEval(new QAction(this)),
+    ignoreCursorPosChanges(false),
+    needRehighlightAfterCursorPosChange(false)
 {
     // fix selection color when not focused
     {
@@ -101,7 +102,7 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
     // read ruby phrases from completions definition file
     QStringList phrases;
     MEC::DefinitionFileType type = MEC::getDefinitionFile(
-            TDriverUtil::tdriverHelperFilePath("completions/completions_ruby_phrases.txt"), phrases);
+                TDriverUtil::tdriverHelperFilePath("completions/completions_ruby_phrases.txt"), phrases);
     if (type != MEC::InvalidDefinitionFile) {
         //qDebug() << FCFL << "phrases" << phrases;
         phraseModel = new QStandardItemModel(this);
@@ -121,6 +122,8 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
     connect(completer, SIGNAL(activated(const QModelIndex &)), this, SLOT(completerActivated(const QModelIndex &)));
 
     cursorLineColor = QColor(Qt::yellow).lighter(180);
+    pairMatchColor = QColor(Qt::red);
+    pairNoMatchBgColor = QColor(Qt::yellow);
     completionStackedColor = QColor(Qt::cyan);
     completionBaseColor = QColor(Qt::darkMagenta);
     completionSelectColor = QColor(Qt::magenta);
@@ -438,8 +441,8 @@ static inline void completerResize(QCompleter *completer)
     int fontHeight = completer->popup()->fontMetrics().height();
 
     completer->popup()->resize(QSize(
-            completer->popup()->sizeHintForColumn(0) +  completer->popup()->verticalScrollBar()->sizeHint().width(),
-            limitedCount * fontHeight + completer->popup()->horizontalScrollBar()->sizeHint().height()));
+                                   completer->popup()->sizeHintForColumn(0) +  completer->popup()->verticalScrollBar()->sizeHint().width(),
+                                   limitedCount * fontHeight + completer->popup()->horizontalScrollBar()->sizeHint().height()));
 }
 
 
@@ -508,9 +511,9 @@ void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
     cancelCompletion();
     if (!translationDBconfigured) {
         QMessageBox::warning(
-                qobject_cast<QWidget*>(parent()),
-                tr("Database not configured"),
-                tr("Database configuration is missing or incomplete:\n* ") + translationDBerrors.join("\n* "));
+                    qobject_cast<QWidget*>(parent()),
+                    tr("Database not configured"),
+                    tr("Database configuration is missing or incomplete:\n* ") + translationDBerrors.join("\n* "));
         return;
     }
     if (isReadOnly()) return;
@@ -548,8 +551,8 @@ void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
             static bool alreadyWarnedInvalidLangs = false;
             if (!alreadyWarnedInvalidLangs) {
                 QMessageBox::warning( qobject_cast<QWidget*>(parent()),
-                                      "Translation Lookup Configuraton Problem",
-                                      "Invalid languages in configuration:\n\n" + QStringList(langSet.toList()).join(", "));
+                                     "Translation Lookup Configuraton Problem",
+                                     "Invalid languages in configuration:\n\n" + QStringList(langSet.toList()).join(", "));
                 alreadyWarnedInvalidLangs = true;
                 showListDialog = true;
             }
@@ -560,8 +563,8 @@ void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
             static bool alreadyWarnedNoLangs = false;
             if(!alreadyWarnedNoLangs) {
                 QMessageBox::warning( qobject_cast<QWidget*>(parent()),
-                                      "Translation Lookup Configuraton Problem",
-                                      "No valid languages configured!");
+                                     "Translation Lookup Configuraton Problem",
+                                     "No valid languages configured!");
                 alreadyWarnedNoLangs = true;
                 showListDialog = true;
             }
@@ -611,15 +614,15 @@ void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
         QStandardItemModel *model = new QStandardItemModel(completer);
         for(int ii = 0; ii<translationStrings.size(); ++ii)    {
             QString infoText(
-                    MEC::textShortened(translationStrings[ii][0], 40, 0) + " \""
-                    + MEC::textShortened(translationStrings[ii][1], 20, 10) +"\"");
+                        MEC::textShortened(translationStrings[ii][0], 40, 0) + " \""
+                        + MEC::textShortened(translationStrings[ii][1], 20, 10) +"\"");
             QString completionText(translationStrings[ii][0]);
             if (translationStrings[ii].size()>2) {
                 infoText.append( " (" + translationStrings[ii][2] + ")"); // add lang
             }
             if (ii>0 &&
-                (ALWAYS_USE_RUBY_SYMBOLS ||rubyMode()) &&
-                (completionText.length() > 0 && completionText.at(0).isLetter())) {
+                    (ALWAYS_USE_RUBY_SYMBOLS ||rubyMode()) &&
+                    (completionText.length() > 0 && completionText.at(0).isLetter())) {
                 completionText.prepend(":"); // create Ruby symbol by adding colon
             }
             QStandardItem *stdItem = new QStandardItem();
@@ -755,7 +758,7 @@ bool TDriverCodeTextEdit::autoInteractiveCompletion()
     else if (phraseModel) {
 
         if (!cur.movePosition(QTextCursor::PreviousCharacter, QTextCursor::KeepAnchor) ||
-            cur.selectedText().at(0).isSpace()) {
+                cur.selectedText().at(0).isSpace()) {
             // cursor is at beginning of document or after a whitespace (incl. line break),
             // show phrase completion popup immediately
             cur = textCursor();
@@ -1055,8 +1058,8 @@ void TDriverCodeTextEdit::keyPressEvent(QKeyEvent *event)
     }
 
     if (!textEmpty && !handled && !isUsingTabulatorsMode && !textCursor().hasSelection() &&
-        (event->key() == Qt::Key_Backtab || event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete) &&
-        (event->modifiers() & Qt::ControlModifier)==0 )
+            (event->key() == Qt::Key_Backtab || event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete) &&
+            (event->modifiers() & Qt::ControlModifier)==0 )
     {
         if ( isReadOnly()) {
             // just ignore
@@ -1075,8 +1078,8 @@ void TDriverCodeTextEdit::keyPressEvent(QKeyEvent *event)
 
             // check if indentation adjustment is valid
             if ( column <= indChars && indLevel >= 0 &&
-                 !(event->key()==Qt::Key_Backspace && column <=0 ) &&
-                 !(event->key()==Qt::Key_Delete && column >= indChars))
+                    !(event->key()==Qt::Key_Backspace && column <=0 ) &&
+                    !(event->key()==Qt::Key_Delete && column >= indChars))
             {
                 // select current indentation (if any) and replace with correct number of spaces
                 tc.movePosition(QTextCursor::StartOfLine);
@@ -1105,7 +1108,7 @@ void TDriverCodeTextEdit::keyPressEvent(QKeyEvent *event)
     } // endif of tab handling
 
     if (!handled) {
-        //qDebug() << FCFL << "not handled" << event->modifiers() << event->text();
+        //qDebug() << FCFL << "calling parent" << event->modifiers() << event->text();
         QPlainTextEdit::keyPressEvent(event);
         if (!textEmpty) doAutoIndent(event);
     }
@@ -1167,21 +1170,20 @@ void TDriverCodeTextEdit::contextMenuEvent(QContextMenuEvent *event)
 
 void TDriverCodeTextEdit::cursorPositionChange()
 {
-    if (ignoreCursorPosChanges) {
-        //qDebug() << FCFL << "ignored";
-        return;
-    }
+    if (ignoreCursorPosChanges) return;
 
-    //qDebug() << FCFL << textCursor().position() << completionType;
+    QTextCursor cur(textCursor());
+    bool hlUpdate = false;
+
+    //qDebug() << FCFL << cur.position() << completionType;
     if (completionType != NO_COMPLETION) {
         Q_ASSERT(!complCur.isNull());
 
-        QTextCursor cur(textCursor());
 
         if (cur.position() < complCur.selectionStart() || cur.position() > complCur.selectionEnd() ) {
-            qDebug() << FCFL << "cancelCompletion";
+            //qDebug() << FCFL << "cancelCompletion";
             cancelCompletion();
-            updateHighlights();
+            hlUpdate = true;
         }
         else {
             cur.setPosition(complCur.selectionEnd());
@@ -1190,12 +1192,21 @@ void TDriverCodeTextEdit::cursorPositionChange()
         }
     }
     else {
-        int block = textCursor().block().blockNumber();
+        int block = cur.block().blockNumber();
         if (block != lastBlock) {
-            updateHighlights();
+            hlUpdate = true;
             lastBlock = block;
         }
     }
+
+    if (needRehighlightAfterCursorPosChange) {
+        hlUpdate = true;
+        needRehighlightAfterCursorPosChange = false;
+    }
+
+    if (!hlUpdate) hlUpdate = testBlockDelimiterHighlight();
+
+    if (hlUpdate) updateHighlights();
 }
 
 void TDriverCodeTextEdit::madeCurrent()
@@ -1232,10 +1243,9 @@ bool TDriverCodeTextEdit::doFind(QString findText, QTextDocument::FindFlags opti
 bool TDriverCodeTextEdit::doReplaceFind(QString findText, QString replaceText, QTextDocument::FindFlags options)
 {
     if (!isReadOnly() &&
-        textCursor().hasSelection() &&
-        0 == QString::compare(textCursor().selectedText(),
-                              findText,
-                              (options & QTextDocument::FindCaseSensitively) ? Qt::CaseSensitive : Qt::CaseInsensitive)) {
+            textCursor().hasSelection() &&
+            0 == QString::compare(textCursor().selectedText(), findText,
+                                  (options & QTextDocument::FindCaseSensitively) ? Qt::CaseSensitive : Qt::CaseInsensitive)) {
         insertAtTextCursor(replaceText);
     }
     return doFind(findText, options);
@@ -1370,7 +1380,7 @@ void TDriverCodeTextEdit::updateHighlights()
 {
     update(sideArea->rect());
 
-    if (needReHighlight) doSyntaxHighlight();
+    if (needSyntaxRehighlight) doSyntaxHighlight();
 
     QList<QTextEdit::ExtraSelection> extraSelections;
 
@@ -1383,7 +1393,13 @@ void TDriverCodeTextEdit::updateHighlights()
 
     highlightCompletionCursors(extraSelections);
 
+    highlightBlockDelimiters(extraSelections);
+
     setExtraSelections(extraSelections);
+
+    QTextCursor cur(textCursor());
+    cur.setCharFormat(QTextCharFormat());
+    setTextCursor(cur);
 }
 
 
@@ -1393,7 +1409,85 @@ void TDriverCodeTextEdit::doSyntaxHighlight()
         highlighter->rehighlight();
         // TODO: if completion selection becomes sluggish, do highlight only to visible blocks,
         // see sideAreaPaintEvent for example
-        needReHighlight = false;
+        needSyntaxRehighlight = false;
+    }
+}
+
+
+bool TDriverCodeTextEdit::testBlockDelimiterHighlight()
+{
+    QTextCursor cur(textCursor());
+    bool ok = MEC::blockDelimiterOrWordUnderCursor(cur);
+    if(!ok) return false;
+
+    QString delimStr = cur.selectedText();
+
+    if (delimStr.size() == 1) {
+        static const QString delimCharStr(")(}{][");
+        return delimCharStr.contains(delimStr.at(0));
+    }
+#if 0
+    // totally incomplete code
+    else return (delimStr == "end");
+    static const QStringList delimWords(
+                QStringList()
+                << "end" << "do"
+                << "begin" << "rescue"
+                << "if" << "then" << "else" << "unless"
+                << "while" << "until");
+    return delimWords.contains(delimStr);
+#else
+    // keyword pair matching not implemented
+    return false;
+#endif
+}
+
+void TDriverCodeTextEdit::highlightBlockDelimiters(QList<QTextEdit::ExtraSelection> &extraSelections)
+{
+    QTextCursor cur(textCursor());
+    if(MEC::blockDelimiterOrWordUnderCursor(cur)) {
+
+        QString delimStr = cur.selectedText();
+        Q_ASSERT(!delimStr.isEmpty());
+
+        if (delimStr.size() == 1) {
+            static const QString delimCharStr("([{}])");
+            QChar delimCh = delimStr.at(0).toAscii();
+
+            if (delimCharStr.contains(delimCh)) {
+                QTextEdit::ExtraSelection selection;
+                selection.cursor = cur;
+                selection.format.setForeground(pairMatchColor);
+
+                if (MEC::findNestedPair(delimCh.toAscii(), cur)) {
+                    // highlight both members of brace char pair with same color
+                    QTextEdit::ExtraSelection selection2;
+                    selection2.format.setForeground(pairMatchColor);
+                    selection2.cursor = cur;
+                    extraSelections.append(selection2);
+                }
+                else {
+                    // highlight pairless brace char background to indicate possible error
+                    selection.format.setBackground(pairNoMatchBgColor);
+                }
+                extraSelections.append(selection);
+
+                // Setting flag below is needed, because inserted characters will copy char format
+                // from previous character, resulting in pair matching color extending to newly
+                // typed text until next highlight is done.
+                needRehighlightAfterCursorPosChange = true;
+            }
+        }
+#if 0
+        else if (delimStr == "end") {
+            QTextEdit::ExtraSelection selection;
+            selection.cursor = cur;
+            selection.format.setForeground(pairMatchColor);
+            extraSelections.append(selection);
+        }
+#else
+        // keyword pair matching not implemented
+#endif
     }
 }
 

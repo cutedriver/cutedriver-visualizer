@@ -108,6 +108,30 @@ namespace MEC {
 
     char getPair(char ch);
     // returns: pair of ch, or ch itself for pairless characters. paired: (){}[]<>
+
+    bool findNestedPairForward(char start, QTextCursor &cursor);
+    // finds and selectes pair of delimiter char for other, going forward from position of cur
+    // pair: character for which the pair is to be found
+    // cur: on success will contain the found pair as selection
+    // returns: true on success (cur modified), false on failure (cur unmodified)
+
+    bool findNestedPairBack(char end, QTextCursor &cursor);
+    // finds and selectes pair of delimiter char for other, going back from position of cur
+    // pair: character for which the pair is to be found
+    // cur: on success will contain the found pair as selection
+    // returns: true on success (cur modified), false on failure (cur unmodified)
+
+    bool findNestedPair(char pair, QTextCursor &cursor);
+    // finds and selectes pair of delimiter char for other, going back or forward depending on char
+    // pair: character for which the pair is to be found
+    // cur: on success will contain the found pair as selection
+    // returns: true on success (cur modified), false on failure (cur unmodified)
+
+    bool blockDelimiterOrWordUnderCursor(QTextCursor &cursor);
+    // finds and selects block keyword or block delimiter char under or before cursor
+    // cur: starting point, on success returns with delimiter selected
+    // returns: true on success (cur modified), false on failure (cur unmodified)
+
 }
 
 

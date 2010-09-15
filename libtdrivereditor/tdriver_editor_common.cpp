@@ -30,6 +30,7 @@
 #include <QSettings>
 #include <QApplication>
 #include <QTextCursor>
+#include <QSet>
 
 #include <tdriver_debug_macros.h>
 
@@ -98,7 +99,7 @@ MEC::DefinitionFileType MEC::getDefinitionFile(const QString &fileName, QStringL
 
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     if (!file.isReadable() ||
-        (type = MEC::getDefinitionFile(file, contents, defsPtr)) == InvalidDefinitionFile) {
+            (type = MEC::getDefinitionFile(file, contents, defsPtr)) == InvalidDefinitionFile) {
         qWarning() << "Failed to read from file " << file.fileName();
     }
     //else qDebug() << FFL << "got file type" << type << "completion count" << contents.size();
@@ -358,8 +359,8 @@ bool MEC::autoSelectExpression(QTextCursor &cur, const QString &lang)
         }
 
         else if ((lastMode == QUOT || lastMode == PAREQUOT) &&
-               mode != lastMode &&
-               (ch == '\\' && lastCh == quotStarter)) {
+                 mode != lastMode &&
+                 (ch == '\\' && lastCh == quotStarter)) {
             // escaped quote char, restore previous mode
             mode = lastMode;
         }
@@ -514,4 +515,136 @@ char MEC::getPair(char ch)
 
     default: return ch;
     }
+}
+
+
+bool MEC::findNestedPairForward(char startCh, QTextCursor &cursor)
+{
+    int depth = 0;
+    char endCh = getPair(startCh);
+
+    QTextCursor cur(cursor);
+    if (cur.hasSelection()) {
+        cur.setPosition(cur.selectionEnd());
+    }
+
+    while(cur.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor)) {
+
+        char ch = cur.selectedText().at(0).toAscii();
+        if (ch == startCh) {
+            ++depth;
+        }
+        else if (ch == endCh) {
+            if (depth > 0) {
+                --depth;
+            }
+            else {
+                cursor = cur;
+                return true;
+            }
+        }
+        cur.clearSelection();
+    }
+    return false;
+}
+
+
+bool MEC::findNestedPairBack(char endCh, QTextCursor &cursor)
+{
+    int depth = 0;
+    char startCh = getPair(endCh);
+
+    QTextCursor cur(cursor);
+    if (cur.hasSelection()) {
+        cur.setPosition(cur.selectionStart());
+    }
+
+    while(cur.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor)) {
+
+        char ch = cur.selectedText().at(0).toAscii();
+        if (ch == endCh) {
+            ++depth;
+        }
+        else if (ch == startCh) {
+            if (depth > 0) {
+                --depth;
+            }
+            else {
+                cursor = cur;
+                return true;
+            }
+        }
+        cur.clearSelection();
+    }
+    return false;
+}
+
+
+bool MEC::findNestedPair(char pair, QTextCursor &cursor)
+{
+    char other = getPair(pair);
+    if (other < pair)
+        return findNestedPairBack(pair, cursor);
+    if (other > pair)
+        return findNestedPairForward(pair, cursor);
+    else
+        return false;
+}
+
+
+bool MEC::blockDelimiterOrWordUnderCursor(QTextCursor &cursor)
+{
+    {
+        QTextCursor cur(cursor);
+
+        // don't highlight pairs if there's an active selection
+        if (cur.hasSelection()) return false;
+
+        // don't highlight pairs if moving to left fails (at start of document)
+        if (!cur.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor)) return false;
+
+        QChar selChar = cur.selectedText().at(0);
+        if (!selChar.isLetter()) {
+            static const QSet<QChar> blockChars(QSet<QChar>() << '{' << '[' << '(' << '}' << ']' << ')');
+            if(blockChars.contains(selChar)) {
+                cursor = cur;
+                return true;
+            }
+            else {
+                // non-letter, non-brace character, no need to highlight
+                return false;
+            }
+        }
+        // else was letter, see if there will be a word to highlight
+        Q_ASSERT(selChar.isLetter());
+    }
+
+#if 1
+    // handle words, UNTESTED CODE
+
+    QTextCursor cur(cursor);
+    int startPos = cur.position();
+    cur.movePosition(QTextCursor::WordLeft);
+    while(cur.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor)) {
+        QChar selChar = cur.selectedText().right(1).at(0);
+
+        if (selChar.isLetter()) continue; // ok, keep going
+        else if (selChar.isNumber()) return false; // block keywords can't have numbers
+        else if (cur.position() <= startPos) return false; // didn't select up to original pos
+        else {
+            // unselect last selected and break for success
+            cur.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
+            break;
+        }
+    }
+    if (cur.selectedText().size() >= 2) {
+        // assume shortest block keyword is 2 chars
+        cursor = cur;
+        return true;
+    }
+#else
+    // word highlight not implemented
+#endif
+    return false;
+
 }
