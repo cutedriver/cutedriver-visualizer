@@ -106,7 +106,7 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
     if (type != MEC::InvalidDefinitionFile) {
         //qDebug() << FCFL << "phrases" << phrases;
         phraseModel = new QStandardItemModel(this);
-        foreach (QString phrase, phrases) {
+        foreach (const QString &phrase, phrases) {
             QStandardItem *stdItem = new QStandardItem();
             stdItem->setData(phrase, Qt::UserRole+1);
             stdItem->setData(MEC::textShortened(phrase.simplified(), 30, 20), Qt::EditRole);
@@ -1273,7 +1273,7 @@ void TDriverCodeTextEdit::commentCode()
     QString text = cur.selectedText();
     MEC::replaceUnicodeSeparators(text);
     QStringList lines = text.split("\n", QString::KeepEmptyParts);
-    foreach (QString line, lines) {
+    foreach (const QString &line, lines) {
         int spcInd;
         bool blankLine = MEC::isBlankLine(line);
         if (!doCommenting && !blankLine) {

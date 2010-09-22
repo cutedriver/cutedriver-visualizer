@@ -76,11 +76,10 @@ TDriverRbiProtocol::~TDriverRbiProtocol()
 
 
 
-void TDriverRbiProtocol::resetMessage()
+void TDriverRbiProtocol::startNewMessage()
 {
     readState = ReadSeqNum;
     readAmount = sizeof(quint32);
-    readBuffer.clear();
 }
 
 void TDriverRbiProtocol::connected()
@@ -92,7 +91,8 @@ void TDriverRbiProtocol::connected()
     condName.clear();
     condMsg.clear();
 
-    resetMessage();
+    startNewMessage();
+    readBuffer.clear();
     writeBuffer.clear();
     haveHello = false;
 }
@@ -235,7 +235,7 @@ void TDriverRbiProtocol::readyToRead()
             readBuffer += conn->read(readAmount - readBuffer.size());
         }
 
-        if (readBuffer.size() < readAmount) continue; // avoids readBuffer being cleared
+        if (readBuffer.size() < readAmount) continue; // readBuffer will be preserved
         Q_ASSERT(readAmount == readBuffer.size());
 
         bool messageOver = false;
@@ -291,15 +291,17 @@ void TDriverRbiProtocol::readyToRead()
             currentData = readBuffer;
             //qDebug() << FFL << "got data bytes" << currentData.size();
             messageOver = true;
+            startNewMessage();
             break;
 
         case ReadDisconnected:
             conn->disconnectFromHost();
             break;
         }
+        readBuffer.clear(); // element handled, clear readBuffer
 
         if (messageOver) {
-            syncMutex->lock();
+            QMutexLocker lock(syncMutex);
 
             condSeqNum = receivedSN;
 
@@ -320,12 +322,7 @@ void TDriverRbiProtocol::readyToRead()
                 msgCond->wakeAll();
                 emit messageReceived(condSeqNum, condName, condMsg);
             }
-            syncMutex->unlock();
-
-            resetMessage(); // also clears readBuffer
         }
-        else readBuffer.clear(); // readBuffer never contains more than one data element, so clear it after handling of each element
-        // if readAmount was not read, 'continue' was used earlier, and readBuffer won't get cleared
 
     } while (conn->bytesAvailable() > 0);
 }
@@ -362,9 +359,10 @@ bool TDriverRbiProtocol::waitSeqNum(quint32 seqNum, unsigned long timeout)
     qDebug() << FFL << "for seqNum" << seqNum;
     VALIDATE_THREAD_NOT;
 
-    // handler.condMutex must be locked when entering here!
-    if (!syncMutex || !msgCond) return false;
+    Q_ASSERT(syncMutex);
+    Q_ASSERT(msgCond);
 
+    // handler.condMutex must be locked when entering here!
     forever {
         // test timeout
 

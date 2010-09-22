@@ -91,6 +91,7 @@ private:
 
     // these are created by this class, but deleted by other
     QMutex *syncMutex;
+
     QWaitCondition *msgCond;
     QWaitCondition *helloCond;
 
@@ -100,7 +101,7 @@ private:
 
     static TDriverRubyInterface *pGlobalInstance;
 
-    enum { Closed, Running, Connected, Closing, RequestingClose } initState;
+    enum { Closed, Running, Connected, Closing } initState;
     QString initErrorMsg;
 
 

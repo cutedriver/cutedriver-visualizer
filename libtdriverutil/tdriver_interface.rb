@@ -398,6 +398,8 @@ Regexp
 # the '?' in (.*?) makes '*' non-greedy above
 
   @implicit_filter_re = /^([^a-zA-Z_]|__wrap)/
+  @ok_print_classes = [ Fixnum, Bignum, Float, String, Date, DateTime, Regexp, Symbol ]
+  @quotable_print_classes = [ String ]
 
 end # Code_evaluation_sandbox#initialize
 
@@ -451,27 +453,32 @@ def line_completion(code, seqNum)
   end
 end
 
-
 def line_execution(code, seqNum)
   code = code.to_s.rstrip
+  STDOUT.sync = true
+  STDERR.sync = true
   STDOUT.puts("\032\032START #{seqNum}\032")
   STDERR.puts("\032\032START #{seqNum}\032")
   ex = nil
   begin
-    STDERR.puts "Evaluating: #{code.dump}"
+    STDERR.puts "Evaluate: #{code.dump}"
     result = instance_eval { | | @ruby_interact_binding.eval(code) }
+    rstring = (@ok_print_classes.member?(result.class) ? result.to_s : "<value hidden>")
+    rstirng = ':' + rstring if result.class == Symbol
+    rstring = '"' + rstring + '"' if @quotable_print_classes.member?(result.class)
+    STDERR.puts "..return: #{result.class}: #{rstring}"
   rescue => ex
-    STDERR.puts("Exception: #{ex}")
+    STDERR.puts("..raised: #{ex}")
   end
   STDERR.puts("\032\032END #{seqNum}\032")
-  STDERR.flush
   STDOUT.puts("\032\032END #{seqNum}\032")
-  STDOUT.flush
+  STDOUT.sync = false
+  STDERR.sync = false
 
   if ex != nil then
     return { 'error_rubycode' => [ code ],
              'error_message' => [ 'Exception:', ex.to_s ],
-             'help_message' => ['The evaluated code should not raise exceptions.'] }
+             'help_message' => ['The evaluated code raised an exception.'] }
   else
     return { 'code' => [ code ], 'result class' => [ result.class ] }
              #'result inspect' => [ result.inspect ]

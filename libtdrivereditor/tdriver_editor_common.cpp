@@ -315,11 +315,11 @@ struct AutoSelectLists {
         ParePairs['}'] = '{';
         ParePairs[']'] = '[';
 
-        foreach (QChar ch, ParePairs.keys()) {
+        foreach (const QChar ch, ParePairs.keys()) {
             NormEnd << ch;
             PareRight << ch;
         }
-        foreach (QChar ch, ParePairs.values()) {
+        foreach (const QChar ch, ParePairs.values()) {
             NormEnd << ch;
             PareLeft << ch;
         }

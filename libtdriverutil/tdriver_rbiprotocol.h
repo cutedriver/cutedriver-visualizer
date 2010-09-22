@@ -79,7 +79,7 @@ public slots:
 #endif
 
 private slots:
-    void resetMessage();
+    void startNewMessage();
     void addWriteData(QByteArray data);
 
 private:

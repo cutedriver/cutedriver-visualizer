@@ -43,7 +43,7 @@ static const char InteractDelimCstr[] = { delimChar, delimChar, 0 };
 
 
 // debug macros
-#define VALIDATE_THREAD (Q_ASSERT(validThread == NULL || validThread == QThread::currentThread()))
+#define VALIDATE_THREAD (Q_ASSERT(validThread == QThread::currentThread()))
 #define VALIDATE_THREAD_NOT (Q_ASSERT(validThread != QThread::currentThread()))
 
 
@@ -52,7 +52,7 @@ TDriverRubyInterface::TDriverRubyInterface() :
         rbiPort(0),
         rbiVersion(0),
         rbiTDriverVersion(),
-        syncMutex(new QMutex(/*QMutex::Recursive*/)),
+        syncMutex(new QMutex()),
         msgCond(new QWaitCondition()),
         helloCond(new QWaitCondition()),
         process(NULL),
@@ -86,6 +86,7 @@ void TDriverRubyInterface::startGlobalInstance()
 
     pGlobalInstance = new TDriverRubyInterface();
     pGlobalInstance->moveToThread(pGlobalInstance);
+    pGlobalInstance->setValidThread(pGlobalInstance->thread());
     connect(pGlobalInstance, SIGNAL(requestRubyConnection(int)), pGlobalInstance, SLOT(resetRubyConnection(int)), Qt::QueuedConnection);
     connect(pGlobalInstance, SIGNAL(requestCloseSignal()), pGlobalInstance, SLOT(close()), Qt::QueuedConnection);
 
@@ -97,13 +98,16 @@ void TDriverRubyInterface::requestClose()
 {
     VALIDATE_THREAD_NOT;
     qDebug() << FCFL;
-    initState = RequestingClose;
     emit requestCloseSignal();
 }
 
 
 void TDriverRubyInterface::run()
 {
+    // TODO: change TDriverRubyInterface to inherit from QObject,
+    // override moveToThread and move setValidThread there,
+    // and use plain QThread object as the thread,
+    // and maybe have startGlobalInstance(QThread *thread)
     qDebug() << FCFL << "THREAD START";
     setValidThread(currentThread());
 
@@ -134,16 +138,23 @@ bool TDriverRubyInterface::goOnline()
         }
     }
 
-    if (initState == Running && !handler->isHelloReceived()) {
-        // now there should be a TCP connection, but no messages received yet
-        qDebug() << FCFL << "Waiting for HELLO";
-        bool ok = handler->waitHello(5000);
-        qDebug() << FCFL << "after waitHello:" << ok << handler->isHelloReceived();
+    if (initState == Running) {
         if (!handler->isHelloReceived()) {
-            qWarning() << "Ruby script tdriver_interface.rb did not say hello to us (initState" << initState << "), closing.";
-            requestClose();
+            // now there should be a TCP connection, but no messages received yet
+            qDebug() << FCFL << "Waiting for HELLO";
+            bool ok = handler->waitHello(5000);
+            qDebug() << FCFL << "after waitHello:" << ok << handler->isHelloReceived();
+            if (!handler->isHelloReceived()) {
+                qWarning() << "Ruby script tdriver_interface.rb did not say hello to us (initState" << initState << "), closing.";
+                requestClose();
+            }
+            else {
+                qDebug() << FCFL << "Running -> Connected after hello wait";
+                initState = Connected;
+            }
         }
         else {
+            qDebug() << FCFL << "Running -> Connected as hello already received";
             initState = Connected;
         }
     }
@@ -183,8 +194,8 @@ void TDriverRubyInterface::resetProcess()
 {
     VALIDATE_THREAD;
     Q_ASSERT(process);
+    Q_ASSERT(initState == Closing);
 
-    initState = Closing;
     if (process->state() != QProcess::NotRunning) {
         process->terminate();
         if (!process->waitForFinished(5000)) {
@@ -209,7 +220,9 @@ void TDriverRubyInterface::recreateProcess()
     qDebug() << FCFL;
     // reset or create QProcess instance
     if (process) {
+        initState = Closing;
         resetProcess();
+        Q_ASSERT(initState == Closed);
     }
     else {
         qDebug() << FCFL;
@@ -235,10 +248,10 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
 {
     VALIDATE_THREAD;
     qDebug() << FCFL << "#" << counter;
+
+    QMutexLocker lock(syncMutex);
     recreateConn();
     recreateProcess();
-
-    syncMutex->lock();
 
     bool ok = true;
     initErrorMsg.clear();
@@ -352,15 +365,24 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
     if (!ok) {
         helloCond->wakeAll();
     }
-
-    syncMutex->unlock();
 }
 
 
 void TDriverRubyInterface::close()
 {
     VALIDATE_THREAD;
-    QMutexLocker lock(syncMutex);
+
+    // This method will be called from just one thread,
+    // which is guaranteed by VALIDATE_THREAD above.
+    // Therefore it's ok to have alreadyClosing flag without mutex
+
+    static bool alreadyClosing = false;
+    if (alreadyClosing) return;
+    alreadyClosing = true;
+
+    syncMutex->lock();
+
+
     if (initState == Closed || initState == Closing) {
         qDebug() << FCFL << "initState already" << initState;
     }
@@ -375,8 +397,13 @@ void TDriverRubyInterface::close()
             conn->close();
         }
         resetProcess();
+        Q_ASSERT(initState == Closed);
     }
+    syncMutex->unlock();
+    alreadyClosing = false;
+
 }
+
 
 void TDriverRubyInterface::readProcessHelper(int fnum, QByteArray &readBuffer, quint32 &seqNum, QByteArray &evalBuffer)
 {
@@ -484,6 +511,7 @@ bool TDriverRubyInterface::executeCmd(const QByteArray &name, BAListMap &cmd_rep
 
 int TDriverRubyInterface::getPort()
 {
+    VALIDATE_THREAD_NOT;
     QMutexLocker lock(syncMutex);
     return rbiPort;
 }
@@ -491,6 +519,7 @@ int TDriverRubyInterface::getPort()
 
 int TDriverRubyInterface::getRbiVersion()
 {
+    VALIDATE_THREAD_NOT;
     QMutexLocker lock(syncMutex);
     return rbiVersion;
 }
@@ -498,6 +527,7 @@ int TDriverRubyInterface::getRbiVersion()
 
 QString TDriverRubyInterface::getTDriverVersion()
 {
+    VALIDATE_THREAD_NOT;
     QMutexLocker lock(syncMutex);
     return rbiTDriverVersion;
 }

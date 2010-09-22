@@ -25,13 +25,14 @@
 #include <QIcon>
 #include <QToolBar>
 #include <QLabel>
+#include <QMessageBox>
 
 #include "tdriver_editor_common.h"
 
 #include <tdriver_rubyinterface.h>
 
 #include <tdriver_debug_macros.h>
-
+#include <tdriver_util.h>
 
 
 TDriverRubyInteract::TDriverRubyInteract(QWidget *parent) :
@@ -88,6 +89,24 @@ void TDriverRubyInteract::resetQueryQueue()
 }
 
 
+static QString joinLines(const BAList &lines)
+{
+    QString ret;
+#if 0
+    int reserve = 1;
+    for (int ii=0; ii<lines.count(); ++ii) {
+        reserve += lines.at(ii).size()+1;
+    }
+    ret.reserve(reserve);
+#endif
+    for (int ii=0; ii<lines.count(); ++ii) {
+        ret.append(lines.at(ii));
+        if (ii) ret.append('\n');
+    }
+    return ret;
+}
+
+
 void TDriverRubyInteract::resetScript()
 {
     qDebug() << FCFL;
@@ -99,12 +118,25 @@ void TDriverRubyInteract::resetScript()
     bool ok = TDriverRubyInterface::globalInstance()->executeCmd("interact reset", msg, 5000);
 
     if (ok) {
-        if (msg.contains("error_message"))
+        if (msg.contains("error_message")) {
             qWarning() << FCFL << "ERROR FROM SCRIPT" << msg;
-        else
-            qDebug() << "success";
+            QMessageBox::warning(this, tr("Ryby Reset error"),
+                                 tr("Sent command 'interact reset'.\nGot error:\n%1")
+                                 .arg(joinLines(msg.value("error_message"))));
+
+        }
+        else {
+            qDebug() << FCFL << "success";
+            QMessageBox::information(this, tr("Ruby instance reseted"),
+                                 tr("Successfully created a new instance for interactive Ruby evaluation."));
+        }
     }
-    else qDebug() << "executeCmd failure";
+    else {
+        qDebug() << FCFL << "executeCmd returned false";
+        TDriverRubyInterface::globalInstance()->requestClose();
+        QMessageBox::warning(this, tr("Ruby reset time-out"),
+                             tr("Reset command time-out,\nrequested closing Ruby process."));
+    }
 }
 
 

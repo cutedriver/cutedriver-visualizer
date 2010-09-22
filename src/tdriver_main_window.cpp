@@ -556,13 +556,13 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const BALis
                                      unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError )
 {
     QStringList errList;
-    foreach(QByteArray ba, msg.value("error")) {
+    foreach(const QByteArray &ba, msg.value("error")) {
         errList << QString(ba);
     }
     QString tdriverError = errList.join("\n");
 
     QStringList exList;
-    foreach(QByteArray ba, msg.value("exception")) {
+    foreach(const QByteArray &ba, msg.value("exception")) {
         exList << QString(ba);
     }
 
