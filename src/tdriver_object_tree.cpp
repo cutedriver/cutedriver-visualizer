@@ -21,6 +21,7 @@
 
 #include "tdriver_main_window.h"
 #include "tdriver_image_view.h"
+#include <tdriver_util.h>
 
 #include <tdriver_debug_macros.h>
 
@@ -94,9 +95,9 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, QStringList & geomet
 
                     // create geometry for object
                     geometry = QString(
-                            QString::number( geometryList[ 0 ].toFloat() + x ) + "," + QString::number( geometryList[ 1 ].toFloat() + y ) + "," +
-                            QString::number( geometryList[ 2 ].toFloat() )+ "," + QString::number( geometryList[ 3 ].toFloat() )
-                            );
+                                QString::number( geometryList[ 0 ].toFloat() + x ) + "," + QString::number( geometryList[ 1 ].toFloat() + y ) + "," +
+                                QString::number( geometryList[ 2 ].toFloat() )+ "," + QString::number( geometryList[ 3 ].toFloat() )
+                                );
                     geometriesMap.insert( itemPtr, QStringList( geometry ) );
                 }
             }
@@ -249,8 +250,8 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
                 attributeContainer = attributesMap.value( childPtr );
 
                 if ( attributeContainer.value( "visible" ).value( "value" ).toLower() == "true"  ||
-                     attributeContainer.value( "isvisible" ).value( "value" ).toLower() == "true" ||
-                     attributeContainer.value( "iswindow" ).value( "value" ).toLower() == "true" )
+                        attributeContainer.value( "isvisible" ).value( "value" ).toLower() == "true" ||
+                        attributeContainer.value( "iswindow" ).value( "value" ).toLower() == "true" )
                 {
                     // sometimes object has visible and visibleOnScreen attribute, make sure that object is really visible also on screen
                     if ( attributeContainer.value("visibleonscreen").value("value").toLower() != "false" ) {
@@ -463,7 +464,7 @@ void MainWindow::refreshData()
     t.start();
 
     // purpose of the doProgress below is to force QProgress dialog window to be wide enough to not need resize
-    doProgress(progress, QString(100, '.'), QString(), 0);
+    doProgress(progress, QString(50, '_'), QString(), 0);
 
     // request application list (unless s60 AVKON)
     if ( activeDevice.value( "type" ).toLower() == "s60" ) {
@@ -592,21 +593,26 @@ void MainWindow::objectViewCurrentItemChanged ( QTreeWidgetItem * itemCurrent, Q
 }
 
 
-QString MainWindow::treeObjectIdentification(int treeItemPtr, int sutItemPtr)
+QString MainWindow::treeObjectRubyId(int treeItemPtr, int sutItemPtr)
 {
     QHash<QString, QString> treeItemData = objectTreeData.value( treeItemPtr );
-    QString objIdentification = treeItemData.value("type");
+    QString objRubyId = treeItemData.value("type");
     QString objName = treeItemData.value("name");
     QString objText = attributesMap.value( treeItemPtr ).value("text").value("value");
 
-    if ( sutItemPtr == treeItemPtr && objIdentification == "sut" ) {
-        objIdentification = tr( "TDriver.sut( :Id => '" ) + activeDevice.value( "name" ) + tr( "' )" );
-    } else if ( objName != "NoName" && !objName.isEmpty() ) {
-        objIdentification.append("( :name => '" + objName + "' )");
-    } else if(objText != "" && !objText.isEmpty()) {
-        objIdentification.append("( :text => '" + attributesMap.value( treeItemPtr ).value("text").value("value") + "' )");
+    if ( sutItemPtr == treeItemPtr && objRubyId == "sut" ) {
+        objRubyId = tr( "TDriver.sut( :Id => '" ) + activeDevice.value( "name" ) + tr( "' )" );
     }
-    return objIdentification;
+    else if ( objName != "NoName" && !objName.isEmpty() ) {
+        objRubyId.append("( :name => '" + objName + "' )");
+    }
+    else if(objText != "" && !objText.isEmpty()) {
+        objRubyId.append("( :text => '" + attributesMap.value( treeItemPtr ).value("text").value("value") + "' )");
+    }
+    else {
+        objRubyId.append("( :name => '' )");
+    }
+    return objRubyId;
 }
 
 
@@ -623,8 +629,8 @@ void MainWindow::objectViewItemAction( QTreeWidgetItem * item, int column, Conte
         QString result;
 
         do {
-            if (!result.isEmpty()) result.prepend('.');
-            result.prepend( treeObjectIdentification((int)item, sutItemPtr) );
+            result = TDriverUtil::smartJoin(
+                        treeObjectRubyId((int)item, sutItemPtr), '.', result);
         } while (fullPath && (int)item != sutItemPtr && (item = item->parent()));
 
         switch (action) {
@@ -639,9 +645,10 @@ void MainWindow::objectViewItemAction( QTreeWidgetItem * item, int column, Conte
         case insertAction:
         case insertPathAction:
             if (!method.isEmpty()) {
-                result = result + '.' + method + '\n';
+                result = TDriverUtil::smartJoin( result, '.', method) + '\n';
+                emit insertToCodeEditor(result, !fullPath, !fullPath);
             }
-            emit insertToCodeEditor(result, !fullPath, !fullPath);
+            // else pop up a warnig dialog?
             break;
 
         default:

@@ -658,7 +658,7 @@ private slots:
     void closeFindDialog();
 
 private:
-    QString treeObjectIdentification(int treeItemPtr, int sutItemPtr);
+    QString treeObjectRubyId(int treeItemPtr, int sutItemPtr);
     QTreeWidgetItem *findDialogSubtreeNext(QTreeWidgetItem *current, QTreeWidgetItem *root, bool wrap=false);
     QTreeWidgetItem *findDialogSubtreePrev(QTreeWidgetItem *current, QTreeWidgetItem *root, bool wrap=false);
     bool compareTreeItem(QTreeWidgetItem *item, const QString &findString, bool matchCase, bool entireWords, bool searchAttributes);

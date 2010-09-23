@@ -88,8 +88,8 @@ bool MainWindow::checkApiFixture()
 void MainWindow::getClassMethods( QString objectType )
 {
     if ( executeTDriverCommand( commandClassMethods,
-                          activeDevice.value( "name" ) + " fixture " + objectType,
-                          objectType ) ) {
+                               activeDevice.value( "name" ) + " fixture " + objectType,
+                               objectType ) ) {
         parseApiMethodsXml( outputPath + "/visualizer_class_methods_" + activeDevice.value( "name" ) + ".xml" );
     }
 }
@@ -100,10 +100,15 @@ void MainWindow::getClassSignals(QString objectType, QString objectId)
     // list_signals
     if (activeDevice.value( "name" ).contains("qt")){
         if (!apiSignalsMap.contains(objectType)) {
-            if ( executeTDriverCommand( commandSignalList,
-                                  activeDevice.value( "name" ) + " list_signals " + currentApplication.value( "name" ) + " " + objectId + " " + objectType )) {
+            if ( executeTDriverCommand(commandSignalList,
+                                       activeDevice.value( "name" )
+                                       + " list_signals " + currentApplication.value("name")
+                                       + " " + objectId
+                                       + " " + objectType )) {
                 apiSignalsMap.insert(objectType,
-                                     parseSignalsXml( outputPath + "/visualizer_class_signals_" + activeDevice.value( "name" ) + ".xml" ));
+                                     parseSignalsXml( outputPath
+                                                     + "/visualizer_class_signals_"
+                                                     + activeDevice.value( "name" ) + ".xml" ));
             }
         }
     }
@@ -130,7 +135,9 @@ void MainWindow::updateApiTableContent() {
                 if ( !checkApiFixture() ) {
 
                     // fixture not found
-                    QMessageBox::critical( 0, tr( "Error" ), "API fixture is not installed, unable to retrieve class methods.\n\nDisabling API tab from Properties table." );
+                    QMessageBox::critical(0,
+                                          tr( "Error" ),
+                                          "API fixture is not installed, unable to retrieve class methods.\n\nDisabling API tab from Properties table.");
                     tabWidget->setTabEnabled( tabWidget->indexOf( apiTab ), false );
                     apiFixtureEnabled = false;
                     apiFixtureChecked = true;
@@ -175,7 +182,9 @@ void MainWindow::updateApiTableContent() {
                 QTableWidgetItem *methodReturnValue = new QTableWidgetItem( returnValueType );
                 methodReturnValue->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEnabled );
                 methodReturnValue->setFont( *defaultFont );
-                if ( returnValueType.isEmpty() || returnValueType == "void" ) { methodReturnValue->setBackground( QBrush( Qt::lightGray ) ); }
+                if ( returnValueType.isEmpty() || returnValueType == "void" ) {
+                    methodReturnValue->setBackground( QBrush( Qt::lightGray ) );
+                }
                 apiTable->setItem( rowNumber, 0, methodReturnValue );
 
                 // add method name
@@ -339,7 +348,8 @@ void MainWindow::updateAttributesTableContent() {
     // qDebug() << "updateAttributesTableContent()";
 
     // disconnect itemChanged signal listening, reconnect after table is updated
-    QObject::disconnect( propertiesTable, SIGNAL( itemChanged( QTableWidgetItem * ) ), this, SLOT( changePropertiesTableValue( QTableWidgetItem* ) ) );
+    QObject::disconnect(propertiesTable, SIGNAL( itemChanged( QTableWidgetItem * ) ),
+                        this, SLOT( changePropertiesTableValue( QTableWidgetItem* ) ) );
 
     // retrieve pointer of currently selected objectTree item
     int currentItemPtr = ( int )( objectTree->currentItem() );
@@ -398,7 +408,8 @@ void MainWindow::updateAttributesTableContent() {
 
         }
 
-        QObject::connect( propertiesTable, SIGNAL( itemChanged( QTableWidgetItem * ) ), this, SLOT( changePropertiesTableValue( QTableWidgetItem* ) ) );
+        QObject::connect(propertiesTable, SIGNAL( itemChanged( QTableWidgetItem * ) ),
+                         this, SLOT( changePropertiesTableValue( QTableWidgetItem* ) ) );
 
         propertiesTable->update();
 
@@ -412,11 +423,14 @@ void MainWindow::updateAttributesTableContent() {
 void MainWindow::connectTabWidgetSignals()
 {
 
-    QObject::connect( tabWidget, SIGNAL( currentChanged( int ) ), this, SLOT( tabWidgetChanged( int ) ) );
+    QObject::connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT( tabWidgetChanged(int)));
 
-    QObject::connect( methodsTable, SIGNAL( itemPressed( QTableWidgetItem* ) ), this, SLOT( methodItemPressed( QTableWidgetItem* ) ) );
-    QObject::connect( propertiesTable, SIGNAL( itemPressed( QTableWidgetItem * ) ), this, SLOT( propertiesItemPressed( QTableWidgetItem* ) ) );
-    QObject::connect( apiTable, SIGNAL( itemPressed( QTableWidgetItem * ) ), this, SLOT( apiItemPressed( QTableWidgetItem* ) ) );
+    QObject::connect(methodsTable, SIGNAL( itemPressed( QTableWidgetItem* ) ),
+                     this, SLOT( methodItemPressed( QTableWidgetItem* ) ) );
+    QObject::connect(propertiesTable, SIGNAL( itemPressed( QTableWidgetItem * ) ),
+                     this, SLOT( propertiesItemPressed( QTableWidgetItem* ) ) );
+    QObject::connect(apiTable, SIGNAL( itemPressed( QTableWidgetItem * ) ),
+                     this, SLOT( apiItemPressed( QTableWidgetItem* ) ) );
 
 }
 
@@ -437,24 +451,27 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
         QString objName = treeItemData.value( "name" );
         QString objId   = treeItemData.value( "id"   );
 
-        QString objIdentification = objType;
+        QString objRubyId = objType;
 
         if ( objName != "application" ) {
-            objIdentification.append("(:name=>'" + objName + "',:id=>'" + objId + "')");
-
-        } else {
-            objIdentification.append("(:id=>'" + objId + "')");
+            objRubyId.append("(:name=>'" + objName + "',:id=>'" + objId + "')");
+        }
+        else {
+            objRubyId.append("(:id=>'" + objId + "')");
         }
 
-        QString targetDataType = attributesMap.value( currentItemPtr ).value( attributeName ).value( "datatype" );
+        QString targetDataType = attributesMap.value(currentItemPtr).value(attributeName).value("datatype");
 
         if (targetDataType.size() == 0) {
             QMessageBox::critical( 0, "Error", "No data type found for attribute " + attributeName );
 
         } else {
             QString attributeNameAndValue = attributeName + " '" + item->text() + "'";
-            if ( executeTDriverCommand( commandSetAttribute,
-                                  activeDevice.value( "name" ) + " set_attribute " + objIdentification + " " + targetDataType + " " + attributeNameAndValue ) ) {
+            if ( executeTDriverCommand(commandSetAttribute,
+                                       activeDevice.value( "name" )
+                                       + " set_attribute " + objRubyId
+                                       + " " + targetDataType
+                                       + " " + attributeNameAndValue )) {
                 refreshData();
             }
         }
@@ -476,7 +493,8 @@ void MainWindow::methodItemPressed( QTableWidgetItem * item ) {
                 QTreeWidgetItem * treeItem = objectTree->currentItem();
                 int sutItemPtr = ( int )objectTree->topLevelItem(0);
                 do {
-                    text.prepend( treeObjectIdentification((int)treeItem, sutItemPtr) + '.');
+                    text = TDriverUtil::smartJoin(
+                                treeObjectRubyId((int)treeItem, sutItemPtr), '.', text);
                 } while ((int)treeItem != sutItemPtr && (treeItem = treeItem->parent()));
             }
 
@@ -522,19 +540,27 @@ void MainWindow::propertiesItemPressed ( QTableWidgetItem * item )
             selectedItems = item->tableWidget()->selectedItems();
 
             // combine object type and selected attribute rows into a TDriver ruby test object selection script
-            QString objectIdentification = objectType + "(";
-
+            QString objRubyId = objectType + "(";
             for ( int i = 0; i < selectedItems.size(); i++ ) {
-                if (i > 0) { objectIdentification += ", "; }
-                objectIdentification += ":" + propertiesTable->item( selectedItems[ i ]->row(), 0 )->text() + " => '" + propertiesTable->item( selectedItems[ i ]->row(), 1 )->text() + "'";
+                if (i > 0) {
+                    objRubyId += ", ";
+                }
+
+                objRubyId += ":"
+                        + propertiesTable->item( selectedItems[ i ]->row(), 0 )->text()
+                        + " => '"
+                        + propertiesTable->item( selectedItems[ i ]->row(), 1 )->text()
+                        + "'";
+                qDebug() << FCFL << objRubyId;
             }
 
-            objectIdentification += ")";
+            objRubyId += ")";
 
             if (fullPath) {
                 int sutItemPtr = ( int )objectTree->topLevelItem(0);
                 while ((int)treeItem != sutItemPtr && (treeItem = treeItem->parent())) {
-                    objectIdentification.prepend( treeObjectIdentification((int)treeItem, sutItemPtr) + '.');
+                    objRubyId = TDriverUtil::smartJoin(
+                                treeObjectRubyId((int)treeItem, sutItemPtr), '.', objRubyId);
                 }
             }
 
@@ -544,12 +570,12 @@ void MainWindow::propertiesItemPressed ( QTableWidgetItem * item )
             case copyAction:
             case appendPathAction:
             case copyPathAction:
-                updateClipboardText( objectIdentification, action == appendAction );
+                updateClipboardText( objRubyId, action == appendAction );
                 break;
 
             case insertAction:
             case insertPathAction:
-                emit insertToCodeEditor(objectIdentification, !fullPath, !fullPath);
+                emit insertToCodeEditor(objRubyId, !fullPath, !fullPath);
                 break;
 
             default:

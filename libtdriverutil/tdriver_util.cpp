@@ -25,7 +25,7 @@
 #include <cstdlib>
 
 TDriverUtil::TDriverUtil(QObject *parent) :
-        QObject(parent)
+    QObject(parent)
 {
 }
 
@@ -47,4 +47,26 @@ QString TDriverUtil::tdriverHelperFilePath(const QString &filename, const QStrin
     }
 
     return fullpath;
+}
+
+
+QString TDriverUtil::smartJoin(const QString &str1, QChar sep, const QString &str2)
+{
+    int ii;
+
+    for(ii = str1.size(); ii > 0 && str1.at(ii-1)==sep; --ii) {}
+
+    QString result;
+    result.reserve(ii + 1 + str2.size() + 1);
+    result = str1.left(ii);
+
+    if (!str2.isEmpty()) {
+        result = str1.left(ii);
+        result += sep;
+
+        for(ii = 0; ii < str2.size() && str2.at(ii)==sep; ++ii) {}
+        result += str2.mid(ii);
+    }
+
+    return result;
 }

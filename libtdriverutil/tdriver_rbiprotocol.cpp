@@ -291,7 +291,6 @@ void TDriverRbiProtocol::readyToRead()
             currentData = readBuffer;
             //qDebug() << FFL << "got data bytes" << currentData.size();
             messageOver = true;
-            startNewMessage();
             break;
 
         case ReadDisconnected:
@@ -301,6 +300,8 @@ void TDriverRbiProtocol::readyToRead()
         readBuffer.clear(); // element handled, clear readBuffer
 
         if (messageOver) {
+            startNewMessage(); // reset state for reading next message
+
             QMutexLocker lock(syncMutex);
 
             condSeqNum = receivedSN;
@@ -318,7 +319,7 @@ void TDriverRbiProtocol::readyToRead()
                 emit helloReceived();
             }
             else {
-                //qDebug() << FCFL << "RECEIVED" << condSeqNum << condName << "\n<<<<<<" << condMsg;
+                //qDebug() << FCFL << "RECEIVED" << condSeqNum << condName << "=>" << condMsg;
                 msgCond->wakeAll();
                 emit messageReceived(condSeqNum, condName, condMsg);
             }
@@ -356,7 +357,7 @@ bool TDriverRbiProtocol::waitHello(unsigned long timeout)
 
 bool TDriverRbiProtocol::waitSeqNum(quint32 seqNum, unsigned long timeout)
 {
-    qDebug() << FFL << "for seqNum" << seqNum;
+    qDebug() << FCFL << "seqNum" << seqNum;
     VALIDATE_THREAD_NOT;
 
     Q_ASSERT(syncMutex);
@@ -367,14 +368,22 @@ bool TDriverRbiProtocol::waitSeqNum(quint32 seqNum, unsigned long timeout)
         // test timeout
 
         if (!msgCond->wait(syncMutex, timeout)) {
-            qDebug() << FCFL << "TIMEOUT waiting for seqNum" << seqNum;
+            qDebug() << FCFL << "returning false for seqNum" << seqNum << "wait timeout";
             return false;
         }
         // test for success (seqNum 0 accepts any sequence number)
-        if (seqNum == 0 || condSeqNum == seqNum) return true;
+        else if (seqNum == 0 || condSeqNum == seqNum) {
+            qDebug() << FCFL << "returning true for condSeqNum" << condSeqNum << "vs seqNum" << seqNum;
+            return true;
+        }
 
         // test missed seqNum
-        if (condSeqNum == 0 || condSeqNum > seqNum) return false;
+        else if (condSeqNum == 0 || condSeqNum > seqNum) {
+            qDebug() << FCFL << "returning false for condSeqNum" << condSeqNum << "vs seqNum" << seqNum;
+            return false;
+        }
+
+        //else qDebug() << FCFL << "ignoring condSeqNum" << condSeqNum << "vs seqNum" << seqNum;
     }
 }
 

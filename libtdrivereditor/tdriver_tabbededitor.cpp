@@ -1176,12 +1176,18 @@ bool TDriverTabbedEditor::smartInsert(QString text, bool prependParent, bool pre
     tc.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
 
     QChar charBefore;
+    bool dotPrepended = false;
     if ( !wordBefore.isEmpty()) charBefore = wordBefore.at(wordBefore.size()-1);
 
-    if ( prependDot && (prependParent || !NoDotAfter.contains(charBefore))) {
-        text.prepend(".");
+    if ( prependDot && !NoDotAfter.contains(charBefore)) {
+        text.prepend('.');
+        dotPrepended = true;
     }
-    if (prependParent && (charBefore.isNull() || charBefore.isSpace() || !wordBefore.contains(NoAppEx))) {
+    if ( prependParent && (charBefore.isNull() || charBefore.isSpace() || !wordBefore.contains(NoAppEx))) {
+        if (!dotPrepended) {
+            text.prepend('.');
+            dotPrepended = true;
+        }
         text.prepend(appVariable());
     }
 

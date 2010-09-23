@@ -159,7 +159,7 @@ bool TDriverRubyInterface::goOnline()
         }
     }
 
-    qDebug() << FCFL << "return in initstate" << initState << "=" << (initState == Connected);
+    qDebug() << FCFL << "return in initstate" << initState << ", connected" << (initState == Connected);
     return (initState == Connected);
 }
 
