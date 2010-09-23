@@ -55,9 +55,15 @@ public:
     int imageWidth() { return image->width(); }
     int imageHeight() { return image->height(); }
 
+    QPoint getPosInImage(const QPoint &pos) {
+        return QPoint(float(pos.x()) / zoomFactor, float(pos.y()) / zoomFactor);
+    }
+
     QPoint getEventPosInImage() {
         return QPoint(float(mousePos.x()) / zoomFactor, float(mousePos.y()) / zoomFactor);
     }
+
+
 
     QPoint &convertS60Pos(QPoint &pos) {
         // rotate when in portrait mode
@@ -85,6 +91,8 @@ signals:
     void imageInsertObjectById(int id);
 
     void insertToCodeEditor(QString text, bool prependParent, bool prependDot);
+
+    void statusBarMessage(QString text, int timeout);
 
 protected:
     virtual void paintEvent( QPaintEvent *event );

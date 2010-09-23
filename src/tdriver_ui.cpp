@@ -433,7 +433,7 @@ void MainWindow::createImageViewDockWidget()
     // Image view
     imageWidget = new TDriverImageView( this, this );
     imageWidget->setObjectName("imageview");
-
+    connect(imageWidget, SIGNAL(statusBarMessage(QString,int)), this, SLOT(statusbar(QString,int)));
     imageWidget->show();
 
     //    imageScrollArea = new QScrollArea;

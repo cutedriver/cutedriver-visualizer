@@ -142,6 +142,10 @@ public:    // methods to access test object data by object id
     const QTreeWidgetItem *testobjTreeWidget(int id) { return objectTreeMap[id]; }
     const QHash<QString, QString> &testobjTreeData(int id) { return objectTreeData[id]; }
 
+public slots:
+    void statusbar( QString text, int currentProgressValue, int maxProgressValue, int timeout = 0 );
+    void statusbar( QString text, int timeout = 0 );
+
 private:
 
     // command executing & error handling
@@ -218,9 +222,6 @@ private:
     QString selectFolder( QString title, QString filter, QFileDialog::AcceptMode mode );
 
     bool createStateArchive( QString target );
-
-    void statusbar( QString text, int currentProgressValue, int maxProgressValue, int timeout = 0 );
-    void statusbar( QString text, int timeout = 0 );
 
     // properties widget
 

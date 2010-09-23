@@ -60,10 +60,16 @@ void  MainWindow::resizeEvent( QResizeEvent *event ) {
     QPoint pos(imageWidget->getEventPosInImage());
 
     if (area.isValid() && area.contains(pos)) {
-
         highlightAtCoords( pos, true );
-        if ( activeDevice.value( "type" ).toLower() == "s60" ) imageWidget->convertS60Pos(pos);
-        statusbar( "x: " + QString::number(pos.x()) + ", y: " + QString::number(pos.y()), 2000 );
+        // convert to S60 coordinates
+        if ( activeDevice.value( "type" ).toLower() == "s60" ) {
+            QPoint s60Pos(pos);
+            imageWidget->convertS60Pos(s60Pos);
+            statusbar( tr("Inspect: image coordinates (%1, %2) = S60 coordinates (%3, %4)")
+                      .arg(pos.x()).arg(pos.y()).arg(s60Pos.x()).arg(s60Pos.y()),
+                      2000 );
+        }
+        else statusbar( tr("inspect: (%1, %2)").arg(pos.x()).arg(pos.y()), 2000 );
     }
 }
 
@@ -76,8 +82,15 @@ void MainWindow::imageInsertFindItem()
     if (area.isValid() && area.contains(pos)) {
 
         highlightAtCoords( pos, true, "tap" );
-        if ( activeDevice.value( "type" ).toLower() == "s60" ) imageWidget->convertS60Pos(pos);
-        statusbar( "x: " + QString::number(pos.x()) + ", y: " + QString::number(pos.y()), 2000 );
+
+        if ( activeDevice.value( "type" ).toLower() == "s60" ) {
+            QPoint s60Pos(pos);
+            imageWidget->convertS60Pos(s60Pos);
+            statusbar( tr("Inserted: image coordinates (%1, %2) = S60 coordinates (%3, %4)")
+                      .arg(pos.x()).arg(pos.y()).arg(s60Pos.x()).arg(s60Pos.y()),
+                      2000 );
+        }
+        else statusbar( tr("Inserted: (%1, %2)").arg(pos.x()).arg(pos.y()), 2000 );
     }
 }
 
