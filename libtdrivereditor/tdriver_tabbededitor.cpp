@@ -1192,6 +1192,7 @@ bool TDriverTabbedEditor::smartInsert(QString text, bool prependParent, bool pre
     }
 
     editor->textCursor().insertText(text);
+    editor->setFocus();
     return true;
 }
 

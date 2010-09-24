@@ -646,8 +646,8 @@ void MainWindow::objectViewItemAction( QTreeWidgetItem * item, int column, Conte
         case insertPathAction:
             if (!method.isEmpty()) {
                 result = TDriverUtil::smartJoin( result, '.', method) + '\n';
-                emit insertToCodeEditor(result, !fullPath, !fullPath);
             }
+            emit insertToCodeEditor(result, !fullPath, !fullPath);
             // else pop up a warnig dialog?
             break;
 
