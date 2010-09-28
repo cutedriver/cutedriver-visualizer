@@ -317,11 +317,8 @@ bool MainWindow::setup()
     connectSignals();
 
     // xml/screen capture output path depending on OS
-#if (defined(Q_OS_WIN32))
-    outputPath = QString( getenv( "TEMP" ) ) + "/";
-#else
-    outputPath = "/tmp/";
-#endif
+    outputPath = QDir::tempPath();
+    qDebug() << "output path set to" << outputPath;
 
     if ( !offlineMode &&
          !executeTDriverCommand( commandSetOutputPath, "listener set_output_path " + outputPath) ) {
