@@ -34,6 +34,7 @@
 #include <QFileInfo>
 #include <QCoreApplication>
 #include <QLabel>
+#include <QDir>
 
 #include <tdriver_util.h>
 #include <tdriver_debug_macros.h>
@@ -192,12 +193,9 @@ bool TDriverRunConsole::runFile(QString fileName, TDriverRunConsole::RunRequestT
         proc->setWorkingDirectory(fi.absolutePath()); // script directory
     }
     else {
-#ifdef Q_WS_WIN
-        proc->setWorkingDirectory("C:/temp/.");
-#else
-        proc->setWorkingDirectory("/tmp/.");
-#endif
+        proc->setWorkingDirectory(QDir::tempPath());
     }
+    console->appendText(tr("Working directory: %1").arg(proc->workingDirectory()), console->notifyFormat);
     //static const QString RubyAutoflushPrefix("STDOUT.sync=true;");
 
     switch(type) {

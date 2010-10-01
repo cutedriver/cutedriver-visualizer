@@ -34,13 +34,19 @@ end
 
 require 'logger'
 
-if /win/ =~ RUBY_PLATFORM
-  $lg = Logger.new('C:/temp/visualizer_tdriver_interface.log', 'daily')
-else
-  $lg = Logger.new('/tmp/visualizer_tdriver_interface.log', 'daily')
+
+begin
+  if /win/ =~ RUBY_PLATFORM
+    $lg = Logger.new(ENV['TEMP']+'/visualizer_tdriver_interface.log', 'daily')
+  else
+    $lg = Logger.new('/tmp/visualizer_tdriver_interface.log', 'daily')
+  end
+  $lg.level = Logger::DEBUG
+rescue
+  $lg = Logger.new(STDERR)
+  $lg.level = Logger::FATAL
 end
 
-$lg.level = Logger::DEBUG
 $lg.debug " ==================================== OPEN"
 
 
