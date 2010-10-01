@@ -111,7 +111,6 @@ TDriverTabbedEditor::TDriverTabbedEditor(QWidget *shortcutParent, QWidget *paren
         shortcut = new QShortcut(QKeySequence("Shift+F3"), shortcutParent, 0, 0, Qt::WidgetWithChildrenShortcut );
         connect(shortcut, SIGNAL(activated()), editBarP, SLOT(findPrev()));
     }
-    connect(debugConsole, SIGNAL(delegateContinueAction()), debug2Act, SLOT(trigger()));
 }
 
 
@@ -776,6 +775,7 @@ void TDriverTabbedEditor::connectConsoles(TDriverRunConsole *rConsole, QWidget *
     //connect(dConsole, SIGNAL(runStarting(QString,int)), this, SLOT(resetRunningLines())); // hide running line marker while script is executing
     connect(dConsole, SIGNAL(breakpoint(MEC::Breakpoint)), this, SLOT(addBreakpoint(MEC::Breakpoint)));
     connect(dConsole, SIGNAL(breakpoints(QList<MEC::Breakpoint>)), this, SLOT(addBreakpointList(QList<MEC::Breakpoint>)));
+    connect(dConsole, SIGNAL(delegateContinueAction()), debug2Act, SLOT(trigger()));
 
     connect(this, SIGNAL(dataSyncDone()), dConsole, SLOT(allSynced()));
     connect(dConsole, SIGNAL(requestDataSync()), this, SLOT(syncTabsData()));
