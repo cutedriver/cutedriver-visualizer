@@ -317,8 +317,11 @@ bool MainWindow::setup()
     connectSignals();
 
     // xml/screen capture output path depending on OS
-    outputPath = QDir::tempPath();
-    qDebug() << "output path set to" << outputPath;
+#if (defined(Q_OS_WIN32))
+    outputPath = QString( getenv( "TEMP" ) ) + "/";
+#else
+    outputPath = "/tmp/";
+#endif
 
     if ( !offlineMode &&
          !executeTDriverCommand( commandSetOutputPath, "listener set_output_path " + outputPath) ) {
@@ -341,6 +344,7 @@ void MainWindow::setActiveDevice( QString deviceName )
 
         activeDevice["name"] = sut.value( "name" );
         activeDevice["type"] = sut.value( "type" );
+        activeDevice["default_timeout"] = sut.value( "default_timeout" );
 
         // Eisable record menu if active device type is kind of QT
         if ( sut.value( "type" ).contains( "qt", Qt::CaseInsensitive ) ) {
@@ -390,6 +394,28 @@ QString MainWindow::getDeviceType( QString deviceName )
     if ( executeTDriverCommand( commandGetDeviceType, command, deviceName, &reply ) ) {
         if (reply.contains("parameter")) {
             if (reply.value("parameter").size() == 2 && reply.value("parameter").at(0) == "type") {
+                result = reply.value("parameter").at(1);
+            }
+            else qDebug() << "BAD get_parameter VALUE" << reply.value("parameters");
+        }
+        else qDebug() << "BAD get_parameter REPLY" << reply;
+    }
+    else qDebug() << "FAILED get_parameter";
+
+    qDebug() << FCFL << "got" << result;
+    return QString(result);
+}
+
+QString MainWindow::getDeviceParameter( QString deviceName, QString parameter )
+{
+    qDebug() << FCFL << deviceName;
+    QByteArray result = "Unknown";
+    BAListMap reply;
+    QString command = deviceName + " get_parameter " + parameter;
+
+    if ( executeTDriverCommand( commandGetDeviceParameter, command, deviceName, &reply ) ) {
+        if (reply.contains("parameter")) {
+            if (reply.value("parameter").size() == 2 && reply.value("parameter").at(0) == parameter) {
                 result = reply.value("parameter").at(1);
             }
             else qDebug() << "BAD get_parameter VALUE" << reply.value("parameters");
@@ -651,17 +677,24 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
     bool exit = false;
     bool result = true;
     int iteration = 0;
+    int default_timeout=activeDevice["default_timeout"].toInt()*1000;
     unsigned resultEnum = OK;
+
+    if (default_timeout==0){
+        default_timeout=35000;
+    }
 
     do {
         BAListMap msg;
         msg["input"] = commandString.toAscii().split(' ');
 
-        qDebug() << FCFL << "going to execute" << msg;
+
+
+        qDebug() << FCFL << "going to execute" << msg << "Using timeout: " << default_timeout;
         QTime t;
         t.start();
         /*bool response1 =*/
-        TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 35000 );
+        TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, default_timeout );
         if (msg.contains("error")) {
             qDebug() << FCFL << "failure time" << float(t.elapsed())/1000.0 << "reply" << msg;
 
@@ -680,7 +713,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
                 msg.clear();
                 msg["input"] << activeDevice.value( "name" ).toAscii() << "disconnect";
                 /*bool response2 =*/
-                TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 35000 );
+                TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, default_timeout );
                 if (msg.contains("error")) {
                     fullError += "\n\nDisconnect after error failed!";
                     result = false;

@@ -120,11 +120,12 @@ public:
         commandRefreshImage,
         commandKeyPress,
         commandSetAttribute,
-        commandGetDeviceType,
+        commandGetDeviceType,        
         commandCheckApiFixture,
         commandBehavioursXml,
         commandGetVersionNumber,
-        commandSignalList
+        commandSignalList,
+        commandGetDeviceParameter
     };
 
     enum ExecuteCommandResult {
@@ -211,6 +212,7 @@ private:
 
     void setActiveDevice( QString deviceName );
     QString getDeviceType( QString deviceName );
+    QString getDeviceParameter( QString deviceName, QString parameter );
     QString getDriverVersionNumber();
 
     void noDeviceSelectedPopup();

@@ -492,6 +492,7 @@ bool MainWindow::getXmlParameters( QString filename )
                         QHash<QString, QString> sut;
                         sut.insert( "name", id);
                         sut.insert( "type", getDeviceType( id ) );
+                        sut.insert( "default_timeout", getDeviceParameter( id, "default_timeout" ));
                         tmpDeviceList.insert(id, sut);
                     }
 
