@@ -59,21 +59,21 @@ static inline QString strippedName(const QString &fullFileName) {
 
 
 TDriverTabbedEditor::TDriverTabbedEditor(QWidget *shortcutParent, QWidget *parent) :
-        QTabWidget(parent),
-        editorFont(),
-        proceedRunPending(false),
-        editBarP(new TDriverEditBar(this)),
-        rubyHighlighter(new TDriverRubyHighlighter()),
-        plainHighlighter(new TDriverHighlighter()),
-        runConsoleContainer(NULL),
-        runConsole(NULL),
-        runConsoleVisible(false),
-        debugConsoleContainer(NULL),
-        debugConsole(NULL),
-        debugConsoleVisible(false),
-        irConsoleContainer(NULL),
-        irConsole(NULL),
-        irConsoleVisible(false)
+    QTabWidget(parent),
+    editorFont(),
+    proceedRunPending(false),
+    editBarP(new TDriverEditBar(this)),
+    rubyHighlighter(new TDriverRubyHighlighter()),
+    plainHighlighter(new TDriverHighlighter()),
+    runConsoleContainer(NULL),
+    runConsole(NULL),
+    runConsoleVisible(false),
+    debugConsoleContainer(NULL),
+    debugConsole(NULL),
+    debugConsoleVisible(false),
+    irConsoleContainer(NULL),
+    irConsole(NULL),
+    irConsoleVisible(false)
 {
     // is there an easier way to set background color of empty QTabWidget?
     QStackedWidget *stack = findChild<QStackedWidget*>();
@@ -89,6 +89,8 @@ TDriverTabbedEditor::TDriverTabbedEditor(QWidget *shortcutParent, QWidget *paren
     connect(this, SIGNAL(currentChanged(int)), this, SLOT(currentChangeAction(int)));
     connect(this, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
     setTabsClosable(true);
+
+    connect(editBarP, SIGNAL(requestUnfocus()), this, SLOT(focusCurrent()));
 
     // create some non-global shortcuts
     {
@@ -202,6 +204,16 @@ void TDriverTabbedEditor::currentChangeAction(int index)
         qWarning("Warning! Unknown widget type in tab, some editor signals not connected.");
     }
 }
+
+
+void TDriverTabbedEditor::focusCurrent()
+{
+    TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
+    if (editor) {
+        editor->setFocus();
+    }
+}
+
 
 void TDriverTabbedEditor::createActions()
 {
@@ -759,7 +771,6 @@ void TDriverTabbedEditor::connectConsoles(TDriverRunConsole *rConsole, QWidget *
 
     connect(this, SIGNAL(requestRun(QString,TDriverRunConsole::RunRequestType)),
             this, SLOT(runFilePrep(QString,TDriverRunConsole::RunRequestType)));
-            //rConsole, SLOT(runFilePrep(QString,TDriverRunConsole::RunRequestType)));
 
     connect(rConsole, SIGNAL(requestRemoteDebug(QString,quint16,quint16, TDriverRunConsole*)),
             dConsole, SLOT(connectTo(QString,quint16,quint16, TDriverRunConsole*)));
@@ -1074,9 +1085,9 @@ bool TDriverTabbedEditor::queryUnsavedFate(TDriverTabbedEditor::ActionContext co
         if (!editor) continue; // ignore tab that is not TDriverCodeTextEdit
         if (!editor->document()->isModified()) continue; // ignore tab that is not modified
 
-        QString name(editor->fileName().isEmpty() ?
-                     "untitled "+QString::number(editor->getNoNameId()) :
-                     editor->fileName());
+        QString name(editor->fileName().isEmpty()
+                     ? "untitled "+QString::number(editor->getNoNameId())
+                     : editor->fileName());
         modifiedNames << name;
         if (currentIndex() == index) {
             unsavedCurrentName = strippedName(name);

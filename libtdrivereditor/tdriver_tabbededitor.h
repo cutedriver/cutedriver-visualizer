@@ -110,6 +110,7 @@ public slots:
     bool smartInsert(QString text, bool prependParent, bool prependDot);
 
     void currentChangeAction(int index);
+    void focusCurrent();
     bool open(void);
     bool saveCurrent(void);
     bool saveCurrentAs(void);

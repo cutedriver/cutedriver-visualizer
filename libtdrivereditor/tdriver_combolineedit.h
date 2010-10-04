@@ -26,8 +26,8 @@ class QKeyEvent;
 
 class TDriverComboLineEdit : public QComboBox
 {
-Q_OBJECT
-Q_PROPERTY(bool clearOnTrigger READ clearOnTrigger WRITE setClearOnTrigger)
+    Q_OBJECT
+    Q_PROPERTY(bool clearOnTrigger READ clearOnTrigger WRITE setClearOnTrigger)
 
 public:
     explicit TDriverComboLineEdit(QWidget *parent = 0);
@@ -35,6 +35,7 @@ public:
 
 signals:
     void triggered(QString text);
+    void escapePressed();
 
 public slots:
     void trigger();
@@ -42,7 +43,7 @@ public slots:
     void setClearOnTrigger(bool clear);
 
 protected:
-    virtual void    keyPressEvent(QKeyEvent *);
+    virtual void keyPressEvent(QKeyEvent *);
 
 private:
     bool clearOnTriggerPriv;

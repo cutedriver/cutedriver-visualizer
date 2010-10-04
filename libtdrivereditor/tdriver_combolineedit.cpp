@@ -24,8 +24,8 @@
 #include <QLineEdit>
 
 TDriverComboLineEdit::TDriverComboLineEdit(QWidget *parent) :
-        QComboBox(parent),
-        clearOnTriggerPriv(false)
+    QComboBox(parent),
+    clearOnTriggerPriv(false)
 {
     setEditable(true);
     setInsertPolicy(QComboBox::InsertAtTop);
@@ -94,6 +94,10 @@ void TDriverComboLineEdit::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Return:
         trigger();
         break;
+
+    case Qt::Key_Escape:
+        emit escapePressed();
+        // fall through
 
     default:
         QComboBox::keyPressEvent(event);

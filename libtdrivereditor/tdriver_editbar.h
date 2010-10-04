@@ -46,6 +46,7 @@ signals:
     void requestFind(QString findText, QTextDocument::FindFlags options = 0);
     void requestReplaceFind(QString findText, QString replaceText, QTextDocument::FindFlags options = 0);
     void requestReplaceAll(QString findText, QString replaceText, QTextDocument::FindFlags options = 0);
+    void requestUnfocus();
 
 public slots:
     void findNext();

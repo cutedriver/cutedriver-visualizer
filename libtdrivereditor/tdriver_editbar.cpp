@@ -53,6 +53,11 @@ TDriverEditBar::TDriverEditBar(QWidget *parent) :
     connect(findNextAct, SIGNAL(triggered()), findField, SLOT(externallyTriggered())); // add text to combobox history list
     connect(findField, SIGNAL(triggered(QString)), this, SLOT(findNext())); // do action with enter in combobox
 
+    connect(findField, SIGNAL(escapePressed()), this, SIGNAL(requestUnfocus()));
+    connect(replaceField, SIGNAL(escapePressed()), this, SIGNAL(requestUnfocus()));
+    connect(sutField, SIGNAL(escapePressed()), this, SIGNAL(requestUnfocus()));
+    connect(appField, SIGNAL(escapePressed()), this, SIGNAL(requestUnfocus()));
+
     toggleCaseAct->setObjectName("case toggle");
     toggleCaseAct->setCheckable(true);
     toggleCaseAct->setChecked(false);
