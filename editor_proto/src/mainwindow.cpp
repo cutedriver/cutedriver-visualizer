@@ -105,7 +105,7 @@ MainWindow::MainWindow(QStringList filelist, QWidget *parent) :
 
 void MainWindow::createMenu()
 {
-    QAction *exitAction = new QAction(tr("Exit"), this);
+    QAction *exitAction = new QAction(tr("E&xit"), this);
     exitAction->setObjectName("exit");
     QAction *aboutAct = new QAction(tr("About"), this);
     aboutAct->setObjectName("about");
