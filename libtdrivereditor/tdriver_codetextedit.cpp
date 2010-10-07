@@ -1396,10 +1396,6 @@ void TDriverCodeTextEdit::updateHighlights()
     highlightBlockDelimiters(extraSelections);
 
     setExtraSelections(extraSelections);
-
-    QTextCursor cur(textCursor());
-    cur.setCharFormat(QTextCharFormat());
-    setTextCursor(cur);
 }
 
 
