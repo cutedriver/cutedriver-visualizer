@@ -318,16 +318,16 @@ void TDriverCodeTextEdit::completerActivated(const QModelIndex &index)
 }
 
 
-// TODO: these should be configurable and not static  variables
-static int tabSize = 8;
-static int indentSize = 2;
+// TODO: these should be configurable and at least not static variables
+static int indentSizeForTabMode = 8;
+static int indentSizeForSpaceMode = 2;
 
 
 static inline bool adjustSpaceIndent(int &spaceIndent, QChar ch)
 {
     if (ch.isSpace()) {
         if (ch == '\t') {
-            spaceIndent = (spaceIndent - (spaceIndent % tabSize)) + tabSize;
+            spaceIndent = (spaceIndent - (spaceIndent % indentSizeForTabMode)) + indentSizeForTabMode;
         }
         else {
             ++spaceIndent;
@@ -338,20 +338,31 @@ static inline bool adjustSpaceIndent(int &spaceIndent, QChar ch)
 }
 
 
-static inline void countIndentation(const QString &line, int &indentLevel, int &indentChars)
+static inline void countIndentation(const QString &line, bool isTabMode, int &indentLevel, int &indentChars)
 {
+    int indentSize = (isTabMode) ? indentSizeForTabMode : indentSizeForSpaceMode;
     // counts indentation level (eg 1 if there are only spaces and their count is indentSize)
     int spaceIndent = 0;
-    int pos;
+    int skip = 0;
 
-    for (pos = 0; pos < line.length(); ++pos) {
-        QChar ch = line.at(pos);
-
-        if (!adjustSpaceIndent(spaceIndent, ch))
-            break;
+    static QVector<QChar> specials(
+                QVector<QChar>() << QChar::ParagraphSeparator << QChar::LineSeparator );
+    while (skip < line.length() && specials.contains(line.at(skip))) {
+        ++skip;
     }
 
-    indentChars = pos;
+    int pos = skip;
+
+    while (pos < line.length()) {
+        QChar ch = line.at(pos);
+
+        if (!adjustSpaceIndent(spaceIndent, ch)) {
+            break;
+        }
+        ++pos;
+    }
+
+    indentChars = pos-skip;
     indentLevel = (spaceIndent+indentSize-1)/indentSize; // round indentLevel up
 }
 
@@ -1057,55 +1068,9 @@ void TDriverCodeTextEdit::keyPressEvent(QKeyEvent *event)
         }
     }
 
-    if (!textEmpty && !handled && !isUsingTabulatorsMode && !textCursor().hasSelection() &&
-            (event->key() == Qt::Key_Backtab || event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete) &&
-            (event->modifiers() & Qt::ControlModifier)==0 )
-    {
-        if ( isReadOnly()) {
-            // just ignore
-            handled = true;
-        }
-        else {
-            // perform special indentation handling
-            QTextCursor tc(textCursor());
-            int column = tc.columnNumber();
-            tc.select(QTextCursor::LineUnderCursor);
-            int indLevel, indChars;
-            countIndentation(tc.selectedText(), indLevel, indChars);
-
-            // increase or decrease indentation depending on key
-            indLevel += ((event->key()==Qt::Key_Tab) ? +1 : -1);
-
-            // check if indentation adjustment is valid
-            if ( column <= indChars && indLevel >= 0 &&
-                    !(event->key()==Qt::Key_Backspace && column <=0 ) &&
-                    !(event->key()==Qt::Key_Delete && column >= indChars))
-            {
-                // select current indentation (if any) and replace with correct number of spaces
-                tc.movePosition(QTextCursor::StartOfLine);
-                tc.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, indChars);
-                setTextCursor(tc);
-                insertAtTextCursor(QString(indentSize * indLevel, ' '));
-
-                // set cursor column
-                tc = textCursor();
-                tc.movePosition(QTextCursor::StartOfLine);
-                if (event->key()==Qt::Key_Backspace)
-                    column = (indentSize<column) ? column-indentSize : 0;
-                else if (column > indentSize*indLevel || event->key()==Qt::Key_Tab || event->key()==Qt::Key_Backtab)
-                    column = indentSize*indLevel;
-                // else restore original column
-                tc.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, column);
-                setTextCursor(tc);
-                handled = true;
-            }
-            else if (event->key()==Qt::Key_Backtab) {
-                // avoid insertion of real tab by shift-tab
-                handled = true;
-            }
-            // else just let the default key action happen
-        }
-    } // endif of tab handling
+    if (!textEmpty && !handled) {
+        handled = doTabHandling(event);
+    }
 
     if (!handled) {
         //qDebug() << FCFL << "calling parent" << event->modifiers() << event->text();
@@ -1304,7 +1269,7 @@ void TDriverCodeTextEdit::commentCode()
         else {
             int dummy;
             int whitespaces;
-            countIndentation(line, dummy, whitespaces);
+            countIndentation(line, isUsingTabulatorsMode, dummy, whitespaces);
             if (whitespaces < line.length() && line.at(whitespaces) == '#') {
                 // remove first char after whitespaces
                 line.remove(whitespaces, 1);
@@ -1567,6 +1532,130 @@ void TDriverCodeTextEdit::highlightBreakpointLines(QList<QTextEdit::ExtraSelecti
         selection.cursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, lineNum-1);
         extraSelections.append(selection);
     }
+}
+
+
+bool TDriverCodeTextEdit::doTabHandling(QKeyEvent *event)
+{
+    static QSet<int> handledKeys(
+                QSet<int>() << Qt::Key_Tab << Qt::Key_Backtab << Qt::Key_Backspace << Qt::Key_Delete);
+
+    bool handled;
+    // let compiler warn us if handled isn't initialized for all code paths
+
+    QTextCursor tc(textCursor());
+
+    if (!handledKeys.contains(event->key()) || (event->modifiers()|Qt::ShiftModifier) != Qt::ShiftModifier) {
+        // not interested in this key or modifier other than shift is used
+        handled = false;
+    }
+
+    else if ((isUsingTabulatorsMode || tc.hasSelection())
+             && (event->key() == Qt::Key_Backspace || event->key() == Qt::Key_Delete)) {
+        // backspace and delete aren't handled specially when using tabulators or having a selection
+        handled = false;
+    }
+
+    else if (tc.hasSelection() || event->key() == Qt::Key_Backtab) {
+        // adjust indentation of entire block (or single line with backtab)
+        if (!tc.hasSelection()) tc.select(QTextCursor::LineUnderCursor);
+        indentSelection(tc, ( event->key()==Qt::Key_Tab));
+        handled = true;
+    }
+
+    else if (isUsingTabulatorsMode) {
+        // above did not match, no special handling in tabulator mode
+        handled = false;
+    }
+
+    else if ( isReadOnly()) {
+        // do nothing in readonly mode
+        handled = true;
+    }
+
+    else {
+        // adjust indentation
+        int column = tc.columnNumber();
+        tc.select(QTextCursor::BlockUnderCursor);
+        int indLevel, indChars;
+        countIndentation(tc.selectedText(), isUsingTabulatorsMode, indLevel, indChars);
+
+        // increase or decrease indentation depending on key
+        indLevel += ((event->key()==Qt::Key_Tab) ? +1 : -1);
+
+        // check if indentation adjustment is valid
+        if ( column <= indChars && indLevel >= 0 &&
+                !(event->key()==Qt::Key_Backspace && column <=0 ) &&
+                !(event->key()==Qt::Key_Delete && column >= indChars))
+        {
+            reindentSelectionStart(tc, indLevel, indChars);
+
+            // set cursor column
+            tc = textCursor();
+            tc.movePosition(QTextCursor::StartOfLine);
+            int indentSize = (isUsingTabulatorsMode) ? indentSizeForTabMode : indentSizeForSpaceMode;
+            if (event->key()==Qt::Key_Backspace)
+                column = (indentSize<column) ? column-indentSize : 0;
+            else if (column > indentSize*indLevel || event->key()==Qt::Key_Tab || event->key()==Qt::Key_Backtab)
+                column = indentSize*indLevel;
+            // else restore original column
+            tc.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, column);
+            setTextCursor(tc);
+            handled = true;
+        }
+        else if (event->key()==Qt::Key_Backtab) {
+            // avoid insertion of real tab by shift-tab
+            handled = true;
+        }
+        else {
+            handled = false;
+        }
+    }
+    return handled;
+}
+
+
+void TDriverCodeTextEdit::indentSelection(QTextCursor tc, bool increaseIndentation)
+{
+    int lastBlock;
+    {
+        QTextCursor tempCur(tc);
+        tempCur.setPosition(tc.selectionEnd());
+        if (tempCur.isNull()) return;
+        if (tempCur.positionInBlock() == 0) {
+            tempCur.movePosition(QTextCursor::PreviousCharacter);
+            // if above fails, it means selection is empty first line, proceed with indentation
+        }
+        lastBlock = tempCur.blockNumber();
+    }
+    tc.setPosition(tc.selectionStart());
+
+    do {
+        int indLevel, indChars;
+        tc.select(QTextCursor::BlockUnderCursor);
+        countIndentation(tc.selectedText(), isUsingTabulatorsMode, indLevel, indChars);
+
+        indLevel += ((increaseIndentation) ? 1 : -1);
+        reindentSelectionStart(tc, indLevel, indChars);
+
+    } while (tc.movePosition(QTextCursor::NextBlock) && (tc.blockNumber() <= lastBlock) );
+}
+
+
+void TDriverCodeTextEdit::reindentSelectionStart(QTextCursor tc, int indLevel, int indChars)
+{
+    // select current indentation (if any) and replace with correct number of spaces
+    tc.movePosition(QTextCursor::StartOfBlock);
+    tc.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, indChars);
+
+    ignoreCursorPosChanges = true;
+    if (isUsingTabulatorsMode) {
+        tc.insertText(QString(indLevel, '\t'));
+    }
+    else {
+        tc.insertText(QString(indentSizeForSpaceMode * indLevel, ' '));
+    }
+    ignoreCursorPosChanges = false;
 }
 
 
@@ -1890,4 +1979,5 @@ void TDriverCodeTextEdit::documentBlockCountChange(int newCount)
 
     updateSideAreaWidth();
 }
+
 

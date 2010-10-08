@@ -220,6 +220,9 @@ private slots:
     void completerActivated(const QModelIndex &);
 
 private:
+    bool doTabHandling(QKeyEvent *);
+    void indentSelection(QTextCursor tc, bool increaseIndentation);
+    void reindentSelectionStart(QTextCursor tc, int indLevel, int indChars);
     bool forwardSearch(int targetLine, int &ind);
     bool binarySearch(int targetLine, int &ind);
     void insertAtComplCursor(QString text) {
