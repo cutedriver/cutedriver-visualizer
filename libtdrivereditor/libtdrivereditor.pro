@@ -22,7 +22,6 @@
 include (../visualizer.pri)
 TARGET = tdrivereditor
 DESTDIR = ./
-win32:DLLDESTDIR = ../bin
 TEMPLATE = lib
 CONFIG += shared
 CONFIG += create_prl

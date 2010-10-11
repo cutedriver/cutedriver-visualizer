@@ -25,7 +25,6 @@ QT += network \
 QT -= gui
 TARGET = tdriverutil
 DESTDIR = ./
-win32:DLLDESTDIR = ../bin
 TEMPLATE = lib
 CONFIG += shared
 CONFIG += create_prl
@@ -41,9 +40,11 @@ HEADERS += tdriver_translationdb.h \
     tdriver_rubyinterface.h \
     tdriver_rbiprotocol.h \
     tdriver_debug_macros.h
+OTHER_FILES += tdriver_interface.rb
+
+target.files += $$PWD/tdriver_interface.rb
 
 # install
 unix:!symbian:target.path = /usr/lib
 win32::target.path = C:/tdriver/visualizer
 INSTALLS += target
-OTHER_FILES += tdriver_interface.rb

@@ -23,8 +23,7 @@
 # -------------------------------------------------
 include (../visualizer.pri)
 TEMPLATE = app
-win32: TARGET = ../../bin/editor_proto
-unix: TARGET = editor_proto
+TARGET = editor_proto
 
 CONFIG += link_prl
 

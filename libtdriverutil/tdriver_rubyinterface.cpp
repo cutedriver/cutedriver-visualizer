@@ -492,7 +492,7 @@ bool TDriverRubyInterface::executeCmd(const QByteArray &name, BAListMap &cmd_rep
 
         if (handler->waitSeqNum(seqNum, timeout)) {
             cmd_reply = handler->waitedMessage();
-            // TODO: make final decision about which logic to use here, and change ruby_interface.rb accordingly:
+            // TODO: make final decision about which logic to use here, and change tdriver_interface.rb accordingly:
 #if 1
             if (cmd_reply.contains("error") && cmd_reply.value("error").isEmpty()) cmd_reply["error"] << "Unknown error";
 #else

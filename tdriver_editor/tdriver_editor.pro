@@ -18,8 +18,7 @@
 # ###########################################################################
 include (../visualizer.pri)
 TEMPLATE = app
-win32:TARGET = ../../bin/tdriver_visualizer
-unix:TARGET = tdriver_visualizer
+TARGET = tdriver_visualizer
 DEPENDPATH += .. \
     ../inc
 INCLUDEPATH += .. \
@@ -72,7 +71,6 @@ unix: {
     documentation.files = ../doc/help/qdoc-temp/*
 
     # tdriver_editor.files = debian/etc/tdriver/visualizer/tdriver_visualizer.sh
-    tdriver_editor_complete.files += $$EDITORUTILDIR/tdriver_interface.rb
     tdriver_editor_complete.files += /usr/lib/libaudio.so.2
     tdriver_editor_complete.files += /usr/lib/libaudio.so.2.4
     tdriver_editor_complete.files += $$QMAKE_LIBDIR_QT/libQtCore.so.4
@@ -81,7 +79,7 @@ unix: {
     tdriver_editor_complete.files += $$QMAKE_LIBDIR_QT/libQtXml.so.4
     tdriver_editor_complete.files += $$QMAKE_LIBDIR_QT/libQtNetwork.so.4
     tdriver_editor_complete.files += $$EDITORLIBDIR/libtdrivereditor.so.1
-    tdriver_editor_complete.files += $$EDITORUTILDIR/libtdriverutil.so.1
+    tdriver_editor_complete.files += $$UTILLIBDIR/libtdriverutil.so.1
     tdriver_editor_complete.files += $$EDITOR_PROTO_DIR/editor_proto
     tdriver_editor_complete.path = /opt/tdriver_visualizer
     OBJECTS_DIR = ../build/tdriver_editor
@@ -90,7 +88,6 @@ unix: {
     # Standalone version, no dependencies embedded
     tdriver_editor_standalone.files += $$TARGET
     tdriver_editor_standalone.path = /usr/bin
-    tdriver_editor_standalone_share.files += $$EDITORUTILDIR/tdriver_interface.rb
     tdriver_editor_standalone_share.path = /etc/tdriver/visualizer
     documentation_standalone.path = /usr/share/doc/visualizer/help
     documentation_standalone.files = ../doc/help/qdoc-temp/*
@@ -109,14 +106,12 @@ win32: {
     tdriver_editor_complete.files += $$DLLDIR/QtGui4.dll
     tdriver_editor_complete.files += $$DLLDIR/QtNetwork4.dll
 
-    # message($$tdriver_editor_complete.files)  #debug
-    # tdriver_editor_completefiles = debian/etc/tdriver/visualizer/tdriver_visualizer.sh
-    tdriver_editor_complete.files += $$EDITORUTILDIR/tdriver_interface.rb
     documentation.path = C:/tdriver/visualizer/help
     documentation.files = ../doc/help/qdoc-temp/*
 }
 
 # message($${tdriver_editor_complete.files})
+
 INSTALLS += tdriver_editor_complete
 INSTALLS += documentation
 INSTALLS += target

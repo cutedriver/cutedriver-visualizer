@@ -1,7 +1,7 @@
-PROJECT_ROOT=$$PWD
-EDITORLIBDIR = $$PWD/libtdrivereditor
-EDITORUTILDIR = $$PWD/libtdriverutil
+EDITORLIBDIR = ../libtdrivereditor
 EDITOR_LIB = tdrivereditor
-UTILLIBDIR = $$PWD/libtdriverutil
-EDITOR_PROTO_DIR=$$PWD/editor_proto
+
+UTILLIBDIR = ../libtdriverutil
 UTIL_LIB = tdriverutil
+
+EDITOR_PROTO_DIR=../editor_proto
