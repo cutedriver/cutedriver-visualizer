@@ -21,7 +21,7 @@
 # -------------------------------------------------
 include (../visualizer.pri)
 TARGET = tdrivereditor
-DESTDIR = ./
+
 TEMPLATE = lib
 CONFIG += shared
 CONFIG += create_prl
@@ -32,8 +32,8 @@ QT += network
 # For libutil
 CONFIG += link_prl
 INCLUDEPATH += $$UTILLIBDIR
-LIBS += -L$$UTILLIBDIR \
-    -l$$UTIL_LIB
+#LIBS += -L$$UTILLIBDIR -l$$UTIL_LIB
+LIBS += -l$$UTIL_LIB
 SOURCES += tdriver_tabbededitor.cpp \
     tdriver_runconsole.cpp \
     tdriver_rubyhighlighter.cpp \

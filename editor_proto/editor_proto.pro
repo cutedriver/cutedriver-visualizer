@@ -28,11 +28,13 @@ TARGET = editor_proto
 CONFIG += link_prl
 
 INCLUDEPATH += $$EDITORLIBDIR
-LIBS += -L$$EDITORLIBDIR -l$$EDITOR_LIB
+#LIBS += -L$$EDITORLIBDIR -l$$EDITOR_LIB
+LIBS += -l$$EDITOR_LIB
 QT += network
 
 INCLUDEPATH += $$UTILLIBDIR
-LIBS += -L$$UTILLIBDIR -l$$UTIL_LIB
+#LIBS += -L$$UTILLIBDIR -l$$UTIL_LIB
+LIBS += -l$$UTIL_LIB
 QT += sql
 
 SOURCES += src/main.cpp \
@@ -41,13 +43,9 @@ HEADERS += src/mainwindow.h
 
 unix: {
     target.path = /opt/tdriver_visualizer
-        #tdriver_editor.files += editor_proto
-        #tdriver_editor.path = /opt/tdriver_visualizer
 }
 win32: {
     target.path = C:/tdriver/visualizer
-        #tdriver_editor.files += editor_proto.exe
-        #tdriver_editor.path = C:/tdriver/visualizer
 }
 #INSTALLS += tdriver_editor
 INSTALLS += target

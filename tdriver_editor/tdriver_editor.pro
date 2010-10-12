@@ -28,14 +28,14 @@ CONFIG += link_prl
 
 # For libutil
 INCLUDEPATH += $$UTILLIBDIR
-LIBS += -L$$UTILLIBDIR \
-    -l$$UTIL_LIB
+#LIBS += -L$$UTILLIBDIR -l$$UTIL_LIB
+LIBS += -l$$UTIL_LIB
 QT += sql
 
 # For libtdrivereditor:
 INCLUDEPATH += $$EDITORLIBDIR
-LIBS += -L$$EDITORLIBDIR \
-    -l$$EDITOR_LIB
+#LIBS += -L$$EDITORLIBDIR -l$$EDITOR_LIB
+LIBS += -l$$EDITOR_LIB
 QT += network
 
 # Input

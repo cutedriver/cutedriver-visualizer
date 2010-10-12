@@ -24,7 +24,7 @@ QT += network \
     sql
 QT -= gui
 TARGET = tdriverutil
-DESTDIR = ./
+
 TEMPLATE = lib
 CONFIG += shared
 CONFIG += create_prl
