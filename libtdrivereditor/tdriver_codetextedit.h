@@ -92,6 +92,7 @@ public slots:
     void madeCurrent();
 
     bool doFind(QString findText, QTextDocument::FindFlags options = 0);
+    bool doIncrementalFind(QString findText, QTextDocument::FindFlags options = 0);
     bool doReplaceFind(QString findText, QString replaceText, QTextDocument::FindFlags options = 0);
     void doReplaceAll(QString findText, QString replaceText, QTextDocument::FindFlags options = 0);
 

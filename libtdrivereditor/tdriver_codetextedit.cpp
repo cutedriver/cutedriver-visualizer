@@ -1204,6 +1204,18 @@ bool TDriverCodeTextEdit::doFind(QString findText, QTextDocument::FindFlags opti
     return true;
 }
 
+bool TDriverCodeTextEdit::doIncrementalFind(QString findText, QTextDocument::FindFlags options)
+{
+    {
+        QTextCursor cur(textCursor());
+        if (cur.hasSelection() && cur.position() != cur.selectionStart()) {
+            cur.setPosition(cur.selectionStart());
+            setTextCursor(cur);
+        }
+    }
+    return doFind(findText, options);
+}
+
 
 bool TDriverCodeTextEdit::doReplaceFind(QString findText, QString replaceText, QTextDocument::FindFlags options)
 {

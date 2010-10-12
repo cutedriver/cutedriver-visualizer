@@ -43,13 +43,15 @@ public:
     TDriverComboLineEdit *replaceTextField() { return replaceField; }
 
 signals:
-    void requestFind(QString findText, QTextDocument::FindFlags options = 0);
-    void requestReplaceFind(QString findText, QString replaceText, QTextDocument::FindFlags options = 0);
-    void requestReplaceAll(QString findText, QString replaceText, QTextDocument::FindFlags options = 0);
+    void requestFind(QString findText, QTextDocument::FindFlags options);
+    void requestFindIncremental(QString findText, QTextDocument::FindFlags options);
+    void requestReplaceFind(QString findText, QString replaceText, QTextDocument::FindFlags options);
+    void requestReplaceAll(QString findText, QString replaceText, QTextDocument::FindFlags options);
     void requestUnfocus();
 
 public slots:
     void findNext();
+    void findIncremental();
     void findPrev();
     void replaceFindNext();
     void replaceAll();

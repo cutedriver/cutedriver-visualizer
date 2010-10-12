@@ -20,6 +20,7 @@
 
 #include "tdriver_editbar.h"
 #include "tdriver_combolineedit.h"
+#include "tdriver_debug_macros.h"
 
 #include <QAction>
 #include <QTextDocument>
@@ -52,6 +53,7 @@ TDriverEditBar::TDriverEditBar(QWidget *parent) :
     connect(findNextAct, SIGNAL(triggered()), this, SLOT(findNext()));
     connect(findNextAct, SIGNAL(triggered()), findField, SLOT(externallyTriggered())); // add text to combobox history list
     connect(findField, SIGNAL(triggered(QString)), this, SLOT(findNext())); // do action with enter in combobox
+    connect(findField, SIGNAL(editTextChanged(QString)), this, SLOT(findIncremental()));
 
     connect(findField, SIGNAL(escapePressed()), this, SIGNAL(requestUnfocus()));
     connect(replaceField, SIGNAL(escapePressed()), this, SIGNAL(requestUnfocus()));
@@ -117,6 +119,14 @@ void TDriverEditBar::findNext()
     QTextDocument::FindFlags options = 0;
     if (toggleCaseAct->isChecked()) options |= QTextDocument::FindCaseSensitively;
     emit requestFind(findField->currentText(), options);
+}
+
+
+void TDriverEditBar::findIncremental()
+{
+    QTextDocument::FindFlags options = 0;
+    if (toggleCaseAct->isChecked()) options |= QTextDocument::FindCaseSensitively;
+    emit requestFindIncremental(findField->currentText(), options);
 }
 
 

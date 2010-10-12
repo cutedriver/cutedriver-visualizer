@@ -133,6 +133,7 @@ void TDriverTabbedEditor::disconnectTabSignals()
     disconnect(toggleWrapModeAct, SIGNAL(toggled(bool)), 0, 0);
 
     disconnect(editBarP, SIGNAL(requestFind(QString,QTextDocument::FindFlags)), 0, 0);
+    disconnect(editBarP, SIGNAL(requestFindIncremental(QString,QTextDocument::FindFlags)), 0, 0);
     disconnect(editBarP, SIGNAL(requestReplaceFind(QString,QString,QTextDocument::FindFlags)), 0, 0);
     disconnect(editBarP, SIGNAL(requestReplaceAll(QString,QString,QTextDocument::FindFlags)), 0, 0);
 
@@ -161,6 +162,8 @@ void TDriverTabbedEditor::connectTabSignals(TDriverCodeTextEdit *editor)
 
     connect(editBarP, SIGNAL(requestFind(QString,QTextDocument::FindFlags)),
             editor, SLOT(doFind(QString,QTextDocument::FindFlags)));
+    connect(editBarP, SIGNAL(requestFindIncremental(QString,QTextDocument::FindFlags)),
+            editor, SLOT(doIncrementalFind(QString,QTextDocument::FindFlags)));
     connect(editBarP, SIGNAL(requestReplaceFind(QString,QString,QTextDocument::FindFlags)),
             editor, SLOT(doReplaceFind(QString,QString,QTextDocument::FindFlags)));
     connect(editBarP, SIGNAL(requestReplaceAll(QString,QString,QTextDocument::FindFlags)),
