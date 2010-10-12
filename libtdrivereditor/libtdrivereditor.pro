@@ -20,14 +20,13 @@
 # Project created by QtCreator 2010-02-19T10:17:24
 # -------------------------------------------------
 include (../visualizer.pri)
+
 TARGET = tdrivereditor
 
 TEMPLATE = lib
 CONFIG += shared
 CONFIG += create_prl
 QT += network
-
-//DEFINES += QT_NO_CAST_FROM_ASCII
 
 # For libutil
 CONFIG += link_prl
@@ -63,13 +62,11 @@ unix:!symbian {
     editor_completions.path = /etc/tdriver/visualizer/completions
     editor_templates.path = /etc/tdriver/visualizer/templates
 }
-win32: {
+win32 {
     target.path = C:/tdriver/visualizer
     editor_completions.path = C:/tdriver/visualizer/completions
     editor_templates.path = C:/tdriver/visualizer/templates
 }
 editor_completions.files = completions/*
 editor_templates.files = templates/*
-INSTALLS += target
-INSTALLS += editor_completions \
-    editor_templates
+INSTALLS += target editor_completions editor_templates

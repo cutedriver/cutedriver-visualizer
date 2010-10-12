@@ -20,16 +20,19 @@
 # Project created by QtCreator 2010-04-16T14:55:40
 # -------------------------------------------------
 include (../visualizer.pri)
+
+TARGET = tdriverutil
+
 QT += network \
     sql
 QT -= gui
-TARGET = tdriverutil
 
 TEMPLATE = lib
 CONFIG += shared
 CONFIG += create_prl
+
 DEFINES += LIBTDRIVERUTIL_LIBRARY
-//DEFINES += QT_NO_CAST_FROM_ASCII
+
 SOURCES += tdriver_translationdb.cpp \
     tdriver_util.cpp \
     tdriver_rubyinterface.cpp \
@@ -42,9 +45,17 @@ HEADERS += tdriver_translationdb.h \
     tdriver_debug_macros.h
 OTHER_FILES += tdriver_interface.rb
 
-target.files += $$PWD/tdriver_interface.rb
-
 # install
-unix:!symbian:target.path = /usr/lib
-win32::target.path = C:/tdriver/visualizer
-INSTALLS += target
+unix:!symbian {
+    target.path = /usr/lib
+}
+win32 {
+    target.path = C:/tdriver/visualizer
+}
+
+rbfiles.files += $$PWD/tdriver_interface.rb
+rbfiles.path = target.path
+
+
+INSTALLS += target rbfiles
+
