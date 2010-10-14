@@ -9,4 +9,4 @@ UTIL_LIB = tdriverutil
 EDITOR_PROTO_DIR=../editor_proto
 
 DESTDIR = ../bin
-LIBS += -L$$DESTDIR
+QMAKE_LIBDIR = $$DESTDIR $$QMAKE_LIBDIR
