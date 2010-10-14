@@ -41,6 +41,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QTextStream>
+#include <QTextCodec>
+#include <QByteArray>
 #include <QMenuBar>
 #include <QMenu>
 #include <QUrl>
@@ -55,6 +57,14 @@
 
 static inline QString strippedName(const QString &fullFileName) {
     return QFileInfo(fullFileName).fileName();
+}
+
+
+static inline void setEditorDefaultEncoding(TDriverCodeTextEdit *editor) {
+    if (editor) {
+        editor->setFileCodec(QTextCodec::codecForName("UTF-8"));
+        editor->setFileCodecUtfBom(false);
+    }
 }
 
 
@@ -462,24 +472,24 @@ bool TDriverTabbedEditor::saveCurrent(void)
 bool TDriverTabbedEditor::saveTab(int index)
 {
     // TODO: if sender is tab context menu, currentWidget isn't correct tab!
-    TDriverCodeTextEdit *w = qobject_cast<TDriverCodeTextEdit*>(widget(index));
+    TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(widget(index));
 
-    if (!w) return true; // consider file unsaveable and situation therefore "ok"
+    if (!editor) return true; // consider file unsaveable and situation therefore "ok"
 
-    if (w->fileName().isEmpty()) {
+    if (editor->fileName().isEmpty()) {
         qDebug() << FFL << "no filename";
-        return saveTabAs(index, tr("Save unnamed file as..."));
+        return saveTabAs(index, tr("Save unnamed file as UTF-8 w/o BOM..."));
     }
     else {
-        qDebug() << FFL << w->fileName();
-        return saveFile(w->fileName(), index); // ignore return code
+        qDebug() << FFL << editor->fileName();
+        return saveFile(editor->fileName(), index, false);
     }
 }
 
 
 bool TDriverTabbedEditor::saveCurrentAs(void)
 {
-    return saveTabAs(currentIndex(), tr("Save with new name..."));
+    return saveTabAs(currentIndex(), tr("Save with new name as UTF-8 w/o BOM..."));
 }
 
 bool TDriverTabbedEditor::saveCurrentAsTemplate(void)
@@ -511,6 +521,8 @@ bool TDriverTabbedEditor::saveTabAs(int index, const QString &caption, const QSt
 {
     setCurrentIndex(index);
     const TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(widget(index));
+    if (!editor) return false;
+
     QString dirName;
     if (editor && !editor->fileName().isEmpty()) {
         dirName = MEC::absoluteFilePath(editor->fileName());
@@ -526,7 +538,7 @@ bool TDriverTabbedEditor::saveTabAs(int index, const QString &caption, const QSt
     }
     else {
         qDebug("%s: got filename '%s'", __FUNCTION__, qPrintable(fileName));
-        return saveFile(fileName, index); // ignore return code
+        return saveFile(fileName, index, true); // ignore return code
     }
 }
 
@@ -640,6 +652,7 @@ void TDriverTabbedEditor::newFile(QString fileName)
     newEdit->setTranslationDatabase(paramMap, MEC::settings);
     setEditorFontAndTabWidth(newEdit, editorFont);
     newEdit->setFileName(fileName);
+    //setEditorDefaultEncoding(newEdit);
 
     connect(newEdit->document(), SIGNAL(modificationChanged(bool)),
             this, SLOT(documentModification(bool)));
@@ -871,60 +884,105 @@ void TDriverTabbedEditor::showIrConsole()
 bool TDriverTabbedEditor::loadFile(QString fileName, bool fromTemplate)
 {
     qDebug() << FFL << fileName;
-    if (fileName.isEmpty()) return false;
-
+    bool ret = false;
     QFile file(fileName);
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+
+    if (fileName.isEmpty()) {
+        QMessageBox::warning(this, tr("TDriver Editor"), tr("No file name!"));
+    }
+
+    else if (!file.open(QFile::ReadOnly | QFile::Text)) {
         QMessageBox::warning(this, tr("TDriver Editor"),
-                             tr("Can't read file %1:\n%2.").arg(fileName).arg(file.errorString()));
-        return false;
+                             tr("Can't read file '%1':\n%2.")
+                             .arg(fileName)
+                             .arg(file.errorString()));
     }
 
-    TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
-
-    if (editor && editor->document()->isEmpty() && editor->fileName().isEmpty()) {
-        // just reset modified flag of existing tab (empty, unnamed document)
-        editor->document()->setModified(false);
-    }
     else {
-        // create new tab for document to be loaded
-        newFile();
-        editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
-        Q_ASSERT(editor);
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+        TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
+
+        if (editor && editor->document()->isEmpty() && editor->fileName().isEmpty()) {
+            // just reset modified flag of existing tab (empty, unnamed document)
+            editor->document()->setModified(false);
+        }
+        else {
+            // create new tab for document to be loaded
+            newFile();
+            editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
+            Q_ASSERT(editor);
+        }
+
+        QString stringData;
+        QByteArray byteData(file.readAll());
+        bool haveBom = false;
+        bool encodingTestedOk;
+        QTextCodec *codec = QTextCodec::codecForUtfText(byteData, NULL);
+        if (codec == NULL) {
+            qDebug() << FCFL << "Unicode codec autodetection failed, trying UTF-8";
+            codec = QTextCodec::codecForName("UTF-8");
+            stringData = codec->toUnicode(byteData);
+            encodingTestedOk = (codec->fromUnicode(stringData) == byteData);
+            if (!encodingTestedOk) {
+                qDebug() << FCFL << "Encoding back to UTF-8 produced different result, trying codecForLocale";
+                codec = QTextCodec::codecForLocale();
+                stringData = codec->toUnicode(byteData);
+                encodingTestedOk = (codec->fromUnicode(stringData) == byteData);
+            }
+        }
+        else {
+            stringData = codec->toUnicode(byteData);
+            haveBom = true;
+            QByteArray testBuf;
+            {
+                QTextStream testStream(&testBuf);
+                testStream.setCodec(codec);
+                testStream.setGenerateByteOrderMark(haveBom);
+                testStream << stringData;
+            }
+            encodingTestedOk = (testBuf == byteData);
+        }
+        editor->setFileCodec(codec);
+        editor->setFileCodecUtfBom(haveBom);
+        editor->setPlainText(stringData);
+        editor->setFileName(fileName, fromTemplate);
+        qDebug() << FCFL
+                 << "editor set to file" << editor->fileName()
+                 << "codec" << editor->fileCodec()->name();
+
+        if (!fromTemplate) {
+            emit documentNameChanged(editor->fileName());
+            recentFileUpdate(fileName);
+        }
+
+        updateTab();
+
+        //statusBar()->showMessage(tr("File loaded"), 2000);
+        QApplication::restoreOverrideCursor();
+        if (!encodingTestedOk) {
+            QMessageBox::warning(this, tr("TDriver Editor"),
+                                 tr("Decoded file '%1' using codec '%2'%3,\n"
+                                    "but encoding it when saving will NOT produce identical file!.")
+                                 .arg(fileName)
+                                 .arg(QString::fromLocal8Bit(editor->fileCodec()->name()))
+                                 .arg(haveBom ? tr(" with UTF BOM") : tr(" without UTF BOM")));
+        }
+        ret = true;
     }
 
-    QTextStream in(&file);
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-
-    // TODO: check if load can fail at this point, and handle it
-    editor->setPlainText(in.readAll());
-
-    editor->setFileName(fileName, fromTemplate);
-
-    if (!fromTemplate) {
-
-        emit documentNameChanged(editor->fileName());
-        recentFileUpdate(fileName);
-    }
-    updateTab();
-    QApplication::restoreOverrideCursor();
-
-    //statusBar()->showMessage(tr("File loaded"), 2000);
-
-    return true;
+    return ret;
 }
 
 
-bool TDriverTabbedEditor::saveFile(QString fileName, int index)
+bool TDriverTabbedEditor::saveFile(QString fileName, int index, bool resetEncoding)
 {
     if (index < 0) index = currentIndex();
 
     TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(widget(index));
 
-    if (!editor) {
-        qDebug("%s:%s WARNING! current tab widget invalid", __FILE__, __FUNCTION__);
-        return false;
-    }
+    if (!editor) return false;
+
+    if (resetEncoding) setEditorDefaultEncoding(editor);
 
     if (editor->fileName() != fileName) {
         // name is changed and document marked modified even if saving will fail
@@ -947,9 +1005,14 @@ bool TDriverTabbedEditor::saveFile(QString fileName, int index)
         return false;
     }
 
-    QTextStream out(&file);
     QApplication::setOverrideCursor(Qt::WaitCursor);
-    out << editor->toPlainText();
+
+    {
+        QTextStream outStream(&file);
+        if (editor->fileCodec()) outStream.setCodec(editor->fileCodec());
+        outStream.setGenerateByteOrderMark(editor->fileCodecUtfBom());
+        outStream << editor->toPlainText();
+    }
     file.close();
     editor->document()->setModified(false);
     QApplication::restoreOverrideCursor();
@@ -1024,6 +1087,16 @@ void TDriverTabbedEditor::updateTab(int index)
     }
 
     label.append(suffix);
+    if (editor->fileCodec()) {
+        QString codecName(QString::fromAscii(editor->fileCodec()->name()));
+        const char *bomSuffix = "";
+
+        if (codecName.contains("utf", Qt::CaseInsensitive)) {
+            bomSuffix = (editor->fileCodecUtfBom()) ? " BOM" : " w/o BOM";
+        }
+
+        label.append(tr(" (%1%2)").arg(codecName).arg(bomSuffix));
+    }
     label.replace(QString("&"), QString("&&")); // single & defines keyboard shortcut
     setTabText(index, label);
 }
@@ -1145,11 +1218,8 @@ bool TDriverTabbedEditor::queryUnsavedFate(TDriverTabbedEditor::ActionContext co
         return saveAll(); // proceed if saveAll was successful
 
     case QMessageBox::Cancel:
-        return false; // don't proceed
-
     default:
-        qDebug() << FFL << "THIS LINE SHOULDN'T BE REACHED";
-        return false;
+        return false; // don't proceed
     }
 }
 

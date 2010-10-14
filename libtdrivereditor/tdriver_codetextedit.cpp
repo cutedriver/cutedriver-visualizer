@@ -77,6 +77,8 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
     phraseModel(NULL),
     stackHighlightStart(-1),
     translationDBconfigured(false),
+    fcodec(NULL),
+    fcodecUtfBom(false),
     lastBlock(-1),
     lastBlockCount(document()->blockCount()),
     isRunning(false),

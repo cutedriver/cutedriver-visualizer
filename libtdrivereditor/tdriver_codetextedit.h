@@ -38,6 +38,7 @@ class QAbstractItemModel;
 class QModelIndex;
 class QCompleter;
 class QFont;
+class QTextCodec;
 // contains line numbers, breakpoints, etc.
 class SideArea;
 //class QMenu;
@@ -47,6 +48,8 @@ class TDriverCodeTextEdit : public QPlainTextEdit
 {
     Q_OBJECT
     Q_PROPERTY(QString fileName READ fileName WRITE setFileName)
+    //Q_PROPERTY(QTextCodec* fileCodec READ fileCodec WRITE setFileCodec)
+    //Q_PROPERTY(bool fileCodecUtfBom READ fileCodecUtfBom WRITE setFileCodecUtfBom)
     Q_PROPERTY(int noNameId READ getNoNameId)
     Q_PROPERTY(int noNameIdCounter READ getNoNameIdCounter)
 
@@ -70,7 +73,13 @@ public:
     void setHighlighter(TDriverHighlighter *);
 
     const QString &fileName() const { return fname; }
-    void setFileName(QString fn, bool onlySetModes=false); // returns true if mode changes happend
+    void setFileName(QString name, bool onlySetModes=false); // emits modesChanged()
+
+    QTextCodec *fileCodec() { return fcodec; }
+    void setFileCodec(QTextCodec *codec) { fcodec = codec; }
+
+    bool fileCodecUtfBom() const { return fcodecUtfBom; }
+    void setFileCodecUtfBom(bool haveBom) { fcodecUtfBom = haveBom; }
 
     bool useTabulatorsMode() const { return isUsingTabulatorsMode; }
     bool rubyMode() const { return isRubyMode; }
@@ -166,6 +175,9 @@ private:
     QStringList translationDBerrors;
 
     QString fname;
+    QTextCodec *fcodec;
+    bool fcodecUtfBom;
+
     int lastBlock; // used for avoiding unnecessary calls to updateHighlights
     int lastBlockCount;
     bool isRunning;

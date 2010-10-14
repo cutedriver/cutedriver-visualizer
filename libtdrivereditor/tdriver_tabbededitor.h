@@ -150,7 +150,7 @@ public slots:
 
     // these (and newFile() above) allow programmatically setting up editor files
     bool loadFile(QString fileName, bool fromTemplate = false);
-    bool saveFile(QString fileName, int index=-1);
+    bool saveFile(QString fileName, int index, bool resetEncoding);
     void recentFileUpdate(QString fileName);
     void updateRecentFileActions();
 
