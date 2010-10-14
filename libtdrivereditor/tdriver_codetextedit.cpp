@@ -1636,7 +1636,8 @@ void TDriverCodeTextEdit::indentSelection(QTextCursor tc, bool increaseIndentati
         QTextCursor tempCur(tc);
         tempCur.setPosition(tc.selectionEnd());
         if (tempCur.isNull()) return;
-        if (tempCur.positionInBlock() == 0) {
+        if (tempCur.position() == tempCur.block().position()) {
+            // cursor is at the beginning of a QTextBlock, don't include the block
             tempCur.movePosition(QTextCursor::PreviousCharacter);
             // if above fails, it means selection is empty first line, proceed with indentation
         }
