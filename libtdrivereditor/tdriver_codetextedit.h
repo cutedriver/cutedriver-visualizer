@@ -100,6 +100,9 @@ public slots:
     void setWrapMode(bool enabled);
     void madeCurrent();
 
+    bool doFind(QString findText, QTextCursor &cur, QTextDocument::FindFlags options);
+    bool doReplaceFind(QString findText, QString replaceText, QTextCursor &cur, QTextDocument::FindFlags options);
+
     bool doFind(QString findText, QTextDocument::FindFlags options = 0);
     bool doIncrementalFind(QString findText, QTextDocument::FindFlags options = 0);
     bool doReplaceFind(QString findText, QString replaceText, QTextDocument::FindFlags options = 0);
@@ -177,6 +180,8 @@ private:
     QString fname;
     QTextCodec *fcodec;
     bool fcodecUtfBom;
+
+    bool lastFindWrapped;
 
     int lastBlock; // used for avoiding unnecessary calls to updateHighlights
     int lastBlockCount;
