@@ -53,8 +53,8 @@ win32 {
     target.path = C:/tdriver/visualizer
 }
 
-rbfiles.files += $$PWD/tdriver_interface.rb
-rbfiles.path = target.path
+rbfiles.files += tdriver_interface.rb
+rbfiles.path = $$target.path
 
 
 INSTALLS += target rbfiles
