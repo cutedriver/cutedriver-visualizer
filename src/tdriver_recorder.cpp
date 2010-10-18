@@ -125,14 +125,13 @@ void TDriverRecorder::startRecording() {
     mScriptField->clear();
     mScriptField->setEnabled( false );
 
-    QString command = mStrActiveDevice + " start_record " + mActiveApp;
     QString errorMessage;
 
     BAListMap msg;
-    msg["input"] << command.toAscii();
+    msg["input"] << mStrActiveDevice.toAscii() << "start_record" << mActiveApp.toAscii();
 
     setActionsEnabled(false, false, false);
-    if (TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 15000)) {
+    if (TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, 15000)) {
         qDebug("Recording started");
         setActionsEnabled(false, true, false);
     }
@@ -146,18 +145,18 @@ void TDriverRecorder::startRecording() {
 
 void TDriverRecorder::stopRecording() {
 
-    QString command = mStrActiveDevice + " stop_record " + mActiveApp;
     QString errorMessage;
 
     BAListMap msg;
-    msg["input"] << command.toAscii();
+    msg["input"] << mStrActiveDevice.toAscii() << "stop_record" << mActiveApp.toAscii();
     setActionsEnabled(false, false, false);
 
-    if (TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 15000)) {
+    if (TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, 20000)) {
         mScriptField->clear();
         mScriptField->setEnabled( true );
 
-        QFile data( outputPath + "/visualizer_rec_fragment.rb" );
+        QString path(outputPath + "/visualizer_rec_fragment.rb");
+        QFile data( path );
 
         if ( data.open( QFile::ReadOnly ) ) {
             QTextStream stream( &data );
@@ -209,13 +208,12 @@ void TDriverRecorder::testRecording() {
 
         file.close();
 
-        QString command = mStrActiveDevice + " test_record";
         QString errorMessage;
 
         BAListMap msg;
-        msg["input"] << command.toAscii();
+        msg["input"] << mStrActiveDevice.toAscii() + "test_record";
         setActionsEnabled(false, false, false);
-        if (TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, 15000)) {
+        if (TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, 15000)) {
             QMessageBox::critical( 0, tr( "Recording test ok" ), errorMessage );
         }
         else {

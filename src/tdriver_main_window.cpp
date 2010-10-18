@@ -694,7 +694,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
         QTime t;
         t.start();
         /*bool response1 =*/
-        TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, default_timeout );
+        TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, default_timeout );
         if (msg.contains("error")) {
             qDebug() << FCFL << "failure time" << float(t.elapsed())/1000.0 << "reply" << msg;
 
@@ -713,7 +713,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
                 msg.clear();
                 msg["input"] << activeDevice.value( "name" ).toAscii() << "disconnect";
                 /*bool response2 =*/
-                TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, default_timeout );
+                TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, default_timeout );
                 if (msg.contains("error")) {
                     fullError += "\n\nDisconnect after error failed!";
                     result = false;
