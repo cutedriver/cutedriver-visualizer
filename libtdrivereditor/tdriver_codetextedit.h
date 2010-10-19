@@ -138,6 +138,7 @@ public slots:
 
     // Valid line numbers are 1 .. document.blockCount
     void dataSyncRequest();
+    void gotoLine(int lineNum);
     void setRunningLine(int lineNum);
     void clearBreakpoints();
     void rdebugBreakpointReset();

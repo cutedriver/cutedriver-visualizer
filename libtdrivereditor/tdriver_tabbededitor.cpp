@@ -39,6 +39,8 @@
 #include <QIcon>
 #include <QAction>
 #include <QFile>
+#include <QUrl>
+
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -47,7 +49,6 @@
 #include <QByteArray>
 #include <QMenuBar>
 #include <QMenu>
-#include <QUrl>
 #include <QDockWidget>
 #include <QSet>
 #include <QFont>
@@ -760,8 +761,12 @@ bool TDriverTabbedEditor::syntaxCheck()
 
     QStringList args;
     args << "-cw" << editor->fileName();
-    TDriverExecuteDialog *process = new TDriverExecuteDialog::TDriverExecuteDialog("ruby", args);
-    process->open();
+    if (!execDialog.isNull()) execDialog->close();
+
+    execDialog = new TDriverExecuteDialog::TDriverExecuteDialog("ruby", args, this);
+    execDialog->setAttribute(Qt::WA_DeleteOnClose, true);
+    connect(execDialog, SIGNAL(anchorClicked(QUrl)), this, SLOT(gotoLine(QUrl)));
+    execDialog->show();
 
     return false;
 }
@@ -1418,10 +1423,60 @@ void TDriverTabbedEditor::addBreakpointList(QList<struct MEC::Breakpoint> bpList
 }
 
 
+void TDriverTabbedEditor::gotoLine(const QString fileName, int lineNum)
+{
+    if (lineNum > 0 && !fileName.isEmpty()) {
+
+        QList<TDriverCodeTextEdit*> editors = setupLineJump(fileName, lineNum);
+
+        for (int ind = 0; ind < editors.count(); ++ind) {
+            editors.at(ind)->gotoLine(lineNum);
+            setCurrentWidget(editors.at(ind));
+        }
+
+        if (!editors.isEmpty()) {
+            setCurrentWidget(editors.first());
+            currentWidget()->activateWindow();
+            currentWidget()->setFocus();
+        }
+    }
+}
+
+void TDriverTabbedEditor::gotoLine(const QUrl &fileLineSpec)
+{
+    QString fileName = fileLineSpec.toString().section(':', 0, -2);
+    bool ok;
+    int lineNum = fileLineSpec.toString().section(':', -1).toInt(&ok);
+
+    if (ok) gotoLine(fileName, lineNum);
+}
+
 void TDriverTabbedEditor::setRunningLine(QString fileName, int lineNum)
 {
-    // TODO: refactor setBreakpoint and setRunningLine to use common helper function
-    int setCount = 0;
+    QList<TDriverCodeTextEdit*> editors = setupLineJump(fileName, lineNum);
+
+    for (int ind = 0; ind < count() ; ++ind) {
+        TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(widget(ind));
+        if (editor) {
+            if(editors.contains(editor)) {
+                // set running lines in all found tabs
+                editor->setRunningLine(lineNum);
+            }
+            else {
+                // clear running lines in other tabs
+                editor->setRunningLine(0);
+            }
+        }
+
+        if (!editors.isEmpty()) setCurrentWidget(editors.first());
+    }
+}
+
+
+QList<TDriverCodeTextEdit*> TDriverTabbedEditor::setupLineJump(const QString &fileName, int lineNum)
+{
+    QList<TDriverCodeTextEdit*> ret;
+
     for (int ind = 0; ind < count() ; ++ind) {
         TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(widget(ind));
         if (!editor) {
@@ -1430,34 +1485,28 @@ void TDriverTabbedEditor::setRunningLine(QString fileName, int lineNum)
         }
 
         if (editor->fileName() == fileName) {
-            qDebug() << FFL << "setting running line of tab" << ind << editor->fileName();
-            editor->setRunningLine(lineNum);
-            ++setCount;
-        }
-        else {
-            // clear running lines in other tabs
-            editor->setRunningLine(0);
+            ret.append(editor);
         }
     }
 
-    if (setCount==0) {
+    if (ret.isEmpty()) {
         // not set yet, ie. file not found in tabs, try to open!
         qDebug() << FFL << fileName <<"not open, opening";
         if (loadFile(fileName)) {
             TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
             if (editor) {
-                qDebug() << FFL << "made new tab, setting running line in" << editor->fileName();
-                editor->setRunningLine(lineNum);
+                qDebug() << FFL << "made new tab for" << editor->fileName();
+                ret.append(editor);
             }
-            else {
-                qFatal("loadFile '%s' didn't create TDriverCodeTextEdit", qPrintable(fileName));
-            }
+            else qWarning("loadFile '%s' didn't create TDriverCodeTextEdit", qPrintable(fileName));
         }
         else {
             // TODO: inform the user that loading file failed?
             qDebug() << FFL << "loading file failed:" << fileName;
         }
     }
+
+    return ret;
 }
 
 

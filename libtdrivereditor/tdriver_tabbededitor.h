@@ -26,6 +26,7 @@
 
 #include <QTabWidget>
 #include <QFont>
+#include <QPointer>
 
 class QAction;
 class QDockWidget;
@@ -34,12 +35,14 @@ class QHideEvent;
 class QMenuBar;
 class QSettings;
 class QCloseEvent;
+class QUrl;
 
 class TDriverEditBar;
 class TDriverRunConsole;
 class TDriverDebugConsole;
 class TDriverRubyInteract;
 class TDriverCodeTextEdit;
+class TDriverExecuteDialog;
 
 #include <QList>
 #include <QTextCursor>
@@ -100,6 +103,8 @@ public slots:
 
     void addBreakpoint(struct MEC::Breakpoint);
     void addBreakpointList(QList<struct MEC::Breakpoint>);
+    void gotoLine(const QString file, int lineNum);
+    void gotoLine(const QUrl &fileLineSpec);
     void setRunningLine(const QString file, int lineNum);
     void resetRunningLines();
     void resetBreakpoints();
@@ -160,6 +165,8 @@ private slots:
 
     void updateTab(int index=-1);
 
+private:
+    QList<TDriverCodeTextEdit*> setupLineJump(const QString &file, int lineNum);
 
 private:
     QMap<QString, QString> paramMap;
@@ -233,6 +240,8 @@ private:
 #endif
     QAction *debug2Act;
     QAction *syntaxCheckAct;
+
+    QPointer<TDriverExecuteDialog> execDialog;
 };
 
 #endif // TDRIVER_TABBEDEDITOR_H

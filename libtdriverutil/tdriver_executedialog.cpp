@@ -14,10 +14,9 @@ TDriverExecuteDialog::TDriverExecuteDialog(const QString &cmd, const QStringList
     startOnShow(true),
     terminateFlag(false)
 {
-    setAttribute(Qt::WA_DeleteOnClose, true);
-
     ui->setupUi(this);
-    ui->outputView->setReadOnly(true);
+    ui->outputView->setOpenLinks(false);
+
     updateButtonStates();
 
     connect(process, SIGNAL(error(QProcess::ProcessError)), this, SLOT(error(QProcess::ProcessError)));
@@ -29,11 +28,14 @@ TDriverExecuteDialog::TDriverExecuteDialog(const QString &cmd, const QStringList
 
     connect(ui->buttonBox->button(QDialogButtonBox::Abort), SIGNAL(clicked()), this, SLOT(terminate()));
     connect(ui->buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), this, SLOT(close()));
+
+    connect(ui->outputView, SIGNAL(anchorClicked(QUrl)), this, SIGNAL(anchorClicked(QUrl)));
 }
 
 
 TDriverExecuteDialog::~TDriverExecuteDialog()
 {
+    //qDebug("TDriverExecuteDialog dtor");
     delete ui;
     ui = NULL;
 }
@@ -54,7 +56,8 @@ void TDriverExecuteDialog::terminate()
     if (process->state() == QProcess::Running) {
         process->terminate();
         terminateFlag = true;
-        ui->outputView->appendHtml("<b>TERMINATE REQUESTED</b>");
+        ui->outputView->setTextColor(Qt::gray);
+        ui->outputView->append("<b>TERMINATE REQUESTED</b>");
     }
 }
 
@@ -69,7 +72,7 @@ void TDriverExecuteDialog::error(QProcess::ProcessError error)
     QString text = tr("<b>PROCESS ERROR: error code %1</b>")
             .arg(process->error());
 
-    ui->outputView->appendHtml(text);
+    ui->outputView->append(text);
 }
 
 
@@ -82,18 +85,24 @@ void TDriverExecuteDialog::finished(int exitCode, QProcess::ExitStatus exitStatu
     else {
         text = tr("<b>ABNORMAL EXIT</b>");
     }
-    ui->outputView->appendHtml(text);
+    ui->outputView->setTextColor(Qt::gray);
+    ui->outputView->append(text);
 }
 
 
 void TDriverExecuteDialog::readyReadStandardError()
 {
-    ui->outputView->appendPlainText(process->readAllStandardError());
+    ui->outputView->setTextColor(Qt::darkRed);
+    QString text(process->readAllStandardError());
+    // for reference: C:/tdriver/visualizer/tdriver_interface.rb:33
+    text.replace(QRegExp("([a-zA-Z0-9_-/:.~ ]{4,}): "), "<i><a href=\"\\1\">\\1</a></i> : ");
+    ui->outputView->append(text);
 }
 
 void TDriverExecuteDialog::readyReadStandardOutput()
 {
-    ui->outputView->appendPlainText(process->readAllStandardOutput());
+    ui->outputView->setTextColor(Qt::darkGreen);
+    ui->outputView->append(process->readAllStandardOutput());
 }
 
 
@@ -102,13 +111,15 @@ void TDriverExecuteDialog::started()
     QString argStr(cmdStr);
     if (!argList.isEmpty()) cmdStr += " " + argList.join(" ");
     QString text = tr("<b>STARTED: <i>%1</i></b>").arg(argStr);
-    ui->outputView->appendHtml(text);
+    ui->outputView->setTextColor(Qt::gray);
+    ui->outputView->append(text);
 }
 
 
 void TDriverExecuteDialog::stateChanged(QProcess::ProcessState newState)
 {
-    //ui->outputView->appendHtml(tr("<i>PROCESS STATE changed to: %1</i>").arg(newState));
+    //ui->outputView->setTextColor(Qt::lightGray);
+    //ui->outputView->append(tr("<i>PROCESS STATE changed to: %1</i>").arg(newState));
     updateButtonStates();
 }
 
@@ -121,3 +132,4 @@ void TDriverExecuteDialog::showEvent(QShowEvent *)
     }
     updateButtonStates();
 }
+

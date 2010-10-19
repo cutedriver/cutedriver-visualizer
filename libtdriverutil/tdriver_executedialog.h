@@ -7,7 +7,8 @@
 #include <QStringList>
 #include <QProcess>
 
-class QPlainTextEdit;
+class QUrl;
+
 namespace Ui {
     class TDriverExecuteDialog;
 }
@@ -27,15 +28,17 @@ public:
 
 signals:
 
+    void anchorClicked(const QUrl &link);
+
 public slots:
     void terminate();
 
-    void	error ( QProcess::ProcessError error );
-    void	finished ( int exitCode, QProcess::ExitStatus exitStatus );
-    void	readyReadStandardError ();
-    void	readyReadStandardOutput ();
-    void	started ();
-    void	stateChanged ( QProcess::ProcessState newState );
+    void error ( QProcess::ProcessError error );
+    void finished ( int exitCode, QProcess::ExitStatus exitStatus );
+    void readyReadStandardError ();
+    void readyReadStandardOutput ();
+    void started ();
+    void stateChanged ( QProcess::ProcessState newState );
 
 protected:
     virtual void showEvent(QShowEvent *);

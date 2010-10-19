@@ -1947,10 +1947,8 @@ void TDriverCodeTextEdit::dataSyncRequest()
 }
 
 
-void TDriverCodeTextEdit::setRunningLine(int lineNum)
+void TDriverCodeTextEdit::gotoLine(int lineNum)
 {
-    qDebug() << FFL << fileName() << lineNum << "running:" << isRunning;
-
     if (lineNum > 0) {
         QTextCursor tc = textCursor();
         tc.movePosition(QTextCursor::Start);
@@ -1958,6 +1956,14 @@ void TDriverCodeTextEdit::setRunningLine(int lineNum)
         setTextCursor(tc);
         centerCursor();
     }
+}
+
+
+void TDriverCodeTextEdit::setRunningLine(int lineNum)
+{
+    qDebug() << FFL << fileName() << lineNum << "running:" << isRunning;
+
+    gotoLine(lineNum);
 
     if (lineNum == runningLine) return; // no change, avoid updates below
 
