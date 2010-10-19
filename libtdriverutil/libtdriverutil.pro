@@ -25,7 +25,6 @@ TARGET = tdriverutil
 
 QT += network \
     sql
-QT -= gui
 
 TEMPLATE = lib
 CONFIG += shared
@@ -36,13 +35,20 @@ DEFINES += LIBTDRIVERUTIL_LIBRARY
 SOURCES += tdriver_translationdb.cpp \
     tdriver_util.cpp \
     tdriver_rubyinterface.cpp \
-    tdriver_rbiprotocol.cpp
+    tdriver_rbiprotocol.cpp \
+    tdriver_executedialog.cpp
+
 HEADERS += tdriver_translationdb.h \
     libtdriverutil_global.h \
     tdriver_util.h \
     tdriver_rubyinterface.h \
     tdriver_rbiprotocol.h \
-    tdriver_debug_macros.h
+    tdriver_debug_macros.h \
+    tdriver_executedialog.h
+
+FORMS += \
+    tdriver_executedialog.ui
+
 OTHER_FILES += tdriver_interface.rb
 
 # install

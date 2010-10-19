@@ -129,6 +129,7 @@ public slots:
     bool debug1(void);
 #endif
     bool debug2(void);
+    bool syntaxCheck(void);
 
     bool saveTab(int index);
     bool saveTabAs(int index, const QString &caption, const QString &filter=QString());
@@ -213,7 +214,6 @@ private:
     QAction *pasteAct;
     QAction *selectAllAct;
 
-
     // code manipulation actions
     QAction *commentCodeAct;
 
@@ -232,6 +232,7 @@ private:
     QAction *debug1Act;
 #endif
     QAction *debug2Act;
+    QAction *syntaxCheckAct;
 };
 
 #endif // TDRIVER_TABBEDEDITOR_H

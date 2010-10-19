@@ -29,6 +29,8 @@
 #include "tdriver_editbar.h"
 #include "tdriver_combolineedit.h"
 
+
+#include <tdriver_executedialog.h>
 #include <tdriver_util.h>
 #include <tdriver_debug_macros.h>
 
@@ -422,6 +424,13 @@ void TDriverTabbedEditor::createActions()
     connect(debug2Act, SIGNAL(triggered()), this, SLOT(debug2()));
     debug2Act->setEnabled(true);
 
+    syntaxCheckAct = new QAction(tr("&Check syntax"), this);
+    syntaxCheckAct->setObjectName("editor run syntaxcheck");
+    syntaxCheckAct->setToolTip(tr("Save all and run current file through 'ruby -cw'"));
+    runActs.append(syntaxCheckAct);
+    connect(syntaxCheckAct, SIGNAL(triggered()), this, SLOT(syntaxCheck()));
+    syntaxCheckAct->setEnabled(true);
+
     // make actions() to return a flat list of all actions
     addActions(fileActs);
     addActions(editActs);
@@ -730,6 +739,7 @@ bool TDriverTabbedEditor::debug1()
 }
 #endif
 
+
 bool TDriverTabbedEditor::debug2()
 {
     // TODO: same as run()
@@ -743,6 +753,20 @@ bool TDriverTabbedEditor::debug2()
 }
 
 
+bool TDriverTabbedEditor::syntaxCheck()
+{
+    TDriverCodeTextEdit *editor = prepareExtAction();
+    if (!editor) return false;
+
+    QStringList args;
+    args << "-cw" << editor->fileName();
+    TDriverExecuteDialog *process = new TDriverExecuteDialog::TDriverExecuteDialog("ruby", args);
+    process->open();
+
+    return false;
+}
+
+
 TDriverCodeTextEdit *TDriverTabbedEditor::prepareExtAction()
 {
     // TODO: if sender is tab context menu, currentWidget isn't correct tab!
@@ -752,20 +776,12 @@ TDriverCodeTextEdit *TDriverTabbedEditor::prepareExtAction()
 
     if (editor && !queryUnsavedFate(BeforeRun)) return NULL;
 
-#if 0
-    if (editor && editor->document()->isModified()) {
-        if (!saveCurrent()) {
-            // TODO: show dialog
-            qDebug() << FFL << "not saved";
-            editor=NULL;
-        }
-    }
-#endif
     if (editor && editor->fileName().isEmpty()) {
-        // TODO: show dialog
+        QMessageBox::information(this, tr("No file"), tr("This action needs a file"));
         qDebug() << FFL << "no file name";
         editor=NULL;
     }
+
     return editor;
 }
 
