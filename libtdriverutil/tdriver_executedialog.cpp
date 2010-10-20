@@ -27,7 +27,7 @@ TDriverExecuteDialog::TDriverExecuteDialog(const QString &cmd, const QStringList
     connect(process, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(stateChanged(QProcess::ProcessState)));
 
     connect(ui->buttonBox->button(QDialogButtonBox::Abort), SIGNAL(clicked()), this, SLOT(terminate()));
-    connect(ui->buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), this, SLOT(close()));
+    connect(ui->buttonBox->button(QDialogButtonBox::Close), SIGNAL(clicked()), this, SLOT(close()));
 
     connect(ui->outputView, SIGNAL(anchorClicked(QUrl)), this, SIGNAL(anchorClicked(QUrl)));
 }
@@ -46,10 +46,15 @@ void TDriverExecuteDialog::updateButtonStates()
     ui->buttonBox->button(QDialogButtonBox::Abort)->setEnabled(
                 process->state() == QProcess::Running);
 
-    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(
+    ui->buttonBox->button(QDialogButtonBox::Close)->setEnabled(
                 process->state() == QProcess::NotRunning);
 }
 
+
+bool TDriverExecuteDialog::autoClose()
+{
+    return !(ui->noAutoCloseCheckbox->isChecked());
+}
 
 void TDriverExecuteDialog::terminate()
 {

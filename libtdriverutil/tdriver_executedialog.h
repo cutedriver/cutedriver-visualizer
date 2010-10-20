@@ -13,21 +13,21 @@ namespace Ui {
     class TDriverExecuteDialog;
 }
 
-class TDriverExecuteDialog : public QDialog
+class LIBTDRIVERUTILSHARED_EXPORT TDriverExecuteDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit LIBTDRIVERUTILSHARED_EXPORT TDriverExecuteDialog(
+    explicit TDriverExecuteDialog(
         const QString &cmd, const QStringList &args = QStringList(),
         QWidget *parent = 0, Qt::WindowFlags f = 0);
 
     ~TDriverExecuteDialog();
 
     void updateButtonStates();
+    bool autoClose();
 
 signals:
-
     void anchorClicked(const QUrl &link);
 
 public slots:
