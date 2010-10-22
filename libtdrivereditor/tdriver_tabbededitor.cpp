@@ -909,7 +909,7 @@ bool TDriverTabbedEditor::loadFile(QString fileName, bool fromTemplate)
     QFile file(fileName);
 
     if (fileName.isEmpty()) {
-        QMessageBox::warning(this, tr("TDriver Editor"), tr("No file name!"));
+        // ignore request to open empty file
     }
 
     else if (!file.open(QFile::ReadOnly | QFile::Text)) {
@@ -1165,7 +1165,6 @@ void TDriverTabbedEditor::dropEvent(QDropEvent *ev)
                 qDebug() << FFL << "failed to convert to local file from url" << url;
                 continue;
             }
-            // TODO: give error dialog if loadFile fails
             loadFile(fileName);
         }
     }
@@ -1501,7 +1500,6 @@ QList<TDriverCodeTextEdit*> TDriverTabbedEditor::setupLineJump(const QString &fi
             else qWarning("loadFile '%s' didn't create TDriverCodeTextEdit", qPrintable(fileName));
         }
         else {
-            // TODO: inform the user that loading file failed?
             qDebug() << FFL << "loading file failed:" << fileName;
         }
     }

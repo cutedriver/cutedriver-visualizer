@@ -44,7 +44,7 @@ public:
 
     bool goOnline();
 
-    bool executeCmd( const QByteArray &name, BAListMap &cmd_reply, unsigned long timeout);
+    bool executeCmd( const QByteArray &name, BAListMap &cmd_reply, unsigned long timeout, const QString &showCommand = QString());
     quint32 sendCmd( const QByteArray &name, const BAListMap &cmd);
 
     int getPort();
