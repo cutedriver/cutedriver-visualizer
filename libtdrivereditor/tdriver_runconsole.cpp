@@ -51,9 +51,9 @@ static const char TDRIVER_RUBY_INTERACTSCRIPT[] = "tdriver_rubyinteract.rb";
 #define DEFAULT_RDEBUG_BIN "ruby.exe"
 #define DEFAULT_RDEBUG_ARGS (QStringList() << "C:/Ruby/bin/rdebug")
 #else
-#define DEFAULT_RUBY_BIN = "ruby"
-#define DEFAULT_RDEBUG_BIN = "/var/lib/gems/1.8/bin/rdebug"
-#define DEFAULT_RDEBUG_ARGS = (QStringList())
+#define DEFAULT_RUBY_BIN "ruby"
+#define DEFAULT_RDEBUG_BIN "/var/lib/gems/1.8/bin/rdebug"
+#define DEFAULT_RDEBUG_ARGS (QStringList())
 #endif
 
 
