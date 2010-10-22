@@ -115,7 +115,7 @@ void TDriverRubyInteract::resetScript()
     prevSeqNum = 0;
 
     BAListMap msg;
-    bool ok = TDriverRubyInterface::globalInstance()->executeCmd("interact reset", msg, 5000);
+    bool ok = TDriverRubyInterface::globalInstance()->executeCmd("interact reset", msg, 5000, "reset");
 
     if (ok) {
         if (msg.contains("error_message")) {

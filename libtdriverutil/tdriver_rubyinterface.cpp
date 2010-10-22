@@ -33,7 +33,7 @@
 #include <QMutexLocker>
 #include <QWaitCondition>
 #include <QMutex>
-
+#include <QMessageBox>
 
 #include "tdriver_debug_macros.h"
 
@@ -479,18 +479,37 @@ quint32 TDriverRubyInterface::sendCmd( const QByteArray &name, const BAListMap &
     return seqNum;
 }
 
-bool TDriverRubyInterface::executeCmd(const QByteArray &name, BAListMap &cmd_reply, unsigned long timeout)
+bool TDriverRubyInterface::executeCmd(const QByteArray &name, BAListMap &cmd_reply, unsigned long timeout, const QString &showCommand)
 {
     VALIDATE_THREAD_NOT;
-    if (!goOnline()) return false;
+    if (!goOnline()) {
+        cmd_reply["error"] << "Could not connect to TDriver framework.";
+        return false;
+    }
 
     QMutexLocker lock(syncMutex);
     qDebug() << FCFL << "SENDING" << cmd_reply;
     quint32 seqNum = sendCmd(name, cmd_reply);
     //qDebug() << FCFL << "Sent" << seqNum << name << cmd_reply;
     if (seqNum != 0) {
-
-        if (handler->waitSeqNum(seqNum, timeout)) {
+        QMessageBox *box = NULL;
+        if (!showCommand.isNull()) {
+            box = new QMessageBox(
+                        QMessageBox::Information,
+                        tr("Executing tdriver_interface.rb command"),
+                        tr("Command information: %1\nTimeout: %2 ms").arg(showCommand).arg(timeout),
+                        QMessageBox::Cancel);
+            foreach (QAbstractButton *button, box->buttons()) box->removeButton(button);
+            box->show();
+            box->repaint();
+        }
+        bool success = handler->waitSeqNum(seqNum, timeout);
+        if (box) {
+            box->hide();
+            box->repaint();
+            delete box;
+        }
+        if (success) {
             cmd_reply = handler->waitedMessage();
             // TODO: make final decision about which logic to use here, and change tdriver_interface.rb accordingly:
 #if 1
