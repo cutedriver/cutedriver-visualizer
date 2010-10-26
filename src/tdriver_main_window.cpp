@@ -45,7 +45,7 @@ MainWindow::MainWindow() :
     foreach(QObject *child, tdriverMsgBox->children()) {
         QCheckBox *cb = qobject_cast<QCheckBox*>(child);
         if (cb) {
-            qDebug() << FCFL << "hiding tdriverMsgBox QCheckBox" << cb->text();
+            //qDebug() << FCFL << "hiding tdriverMsgBox QCheckBox" << cb->text();
             cb->hide();
             cb->setDisabled(true);
             cb->setCheckState(Qt::Checked);
@@ -53,7 +53,7 @@ MainWindow::MainWindow() :
         else {
             QPushButton *pb = qobject_cast<QPushButton*>(child);
             if (pb) {
-                qDebug() << FCFL << "connecting tdriverMsgBox QPushButton" << pb->text();
+                //qDebug() << FCFL << "connecting tdriverMsgBox QPushButton" << pb->text();
                 connect(pb, SIGNAL(clicked()), this, SLOT(tdriverMsgOkClicked()));
             }
         }
