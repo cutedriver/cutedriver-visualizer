@@ -1714,6 +1714,7 @@ void TDriverCodeTextEdit::indentSelection(QTextCursor tc, bool increaseIndentati
         }
         lastBlock = tempCur.blockNumber();
     }
+    tc.beginEditBlock();
     tc.setPosition(tc.selectionStart());
 
     do {
@@ -1725,6 +1726,7 @@ void TDriverCodeTextEdit::indentSelection(QTextCursor tc, bool increaseIndentati
         reindentSelectionStart(tc, indLevel, indChars);
 
     } while (tc.movePosition(QTextCursor::NextBlock) && (tc.blockNumber() <= lastBlock) );
+    tc.endEditBlock();
 }
 
 
