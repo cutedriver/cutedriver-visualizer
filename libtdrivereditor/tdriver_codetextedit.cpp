@@ -1324,7 +1324,7 @@ void TDriverCodeTextEdit::commentCode()
     MEC::replaceUnicodeSeparators(text);
     QStringList lines = text.split("\n", QString::KeepEmptyParts);
     foreach (const QString &line, lines) {
-        int spcInd;
+        int spcInd = 0;
         bool blankLine = MEC::isBlankLine(line);
         if (!doCommenting && !blankLine) {
             QChar firstRealChar = countSpaceIndentation(line, spcInd);
@@ -1928,7 +1928,7 @@ void TDriverCodeTextEdit::uiToggleBreakpointLine(int lineNum)
     else {
         if (lineNum == document()->blockCount()) return; // last line not allowed
         qDebug() << FFL << "Inserting new breakpoint line" << lineNum << "(at ind" << ind << "/ size" << bpList.size() << ")";
-        MEC::Breakpoint bp = { num:0, enabled:true, file:fileName(), line:lineNum };
+        MEC::Breakpoint bp(0, true, fileName(), lineNum);
         bpList.insert(ind, bp);
         emit addedBreakpoint(bp);
 

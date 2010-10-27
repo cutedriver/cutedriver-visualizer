@@ -29,7 +29,7 @@
 typedef enum EDbType {
     Undefined = 0,
     MySQL = 1,
-    SQLite = 2,
+    SQLite = 2
 } EDbType;
 
 class LIBTDRIVERUTILSHARED_EXPORT TDriverTranslationDb {
