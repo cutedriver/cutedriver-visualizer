@@ -54,13 +54,14 @@ OTHER_FILES += tdriver_interface.rb
 # install
 unix:!symbian {
     target.path = /usr/lib
+    rbfiles.path = /etc/tdriver/visualizer
 }
 win32 {
     target.path = C:/tdriver/visualizer
+    rbfiles.path = $$target.path
 }
 
 rbfiles.files += tdriver_interface.rb
-rbfiles.path = $$target.path
 
 
 INSTALLS += target rbfiles
