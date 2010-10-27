@@ -468,11 +468,11 @@ static QList<struct MEC::Breakpoint> parseBreakpoints(QStringList list)
         }
 
         bool ok1, ok4;
-        struct MEC::Breakpoint bp = {
-            num:rx.cap(1).toInt(&ok1),
-                enabled:(rx.cap(2) == "y"),
-                    file:rx.cap(3),
-                        line:rx.cap(4).toInt(&ok4) };
+        struct MEC::Breakpoint bp(
+                rx.cap(1).toInt(&ok1),
+                (rx.cap(2) == "y"),
+                rx.cap(3),
+                rx.cap(4).toInt(&ok4) );
         if (ok1 && ok4)
             result.append(bp);
         else

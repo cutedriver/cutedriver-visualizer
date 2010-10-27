@@ -43,6 +43,11 @@ template <class T> class QList;
 namespace MEC {
 
     struct Breakpoint {
+        Breakpoint() : num(0), enabled(false), line(0) {}
+
+        Breakpoint(int indexNum, bool isEnabled, const QString &fileName, int lineNum) :
+            num(indexNum), enabled(isEnabled), file(fileName), line(lineNum) {}
+
         int num; // breakpoint id in debugger
         bool enabled; // wether breakpoint is enabled or disabled
         QString file; // absolute file name of file breakpoint is in
