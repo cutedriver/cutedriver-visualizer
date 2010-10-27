@@ -37,8 +37,6 @@ build-stamp: configure-stamp
 	dh_testdir
 	# Add here commands to compile the package.
 	$(MAKE) $(PARALLEL_MAKEFLAGS)
-	# Need to re-run qmake because of http://bugreports.qt.nokia.com/browse/QTBUG-5558?
-	qmake $(QMAKE_OPTIONS)
 	#docbook-to-man debian/qttas.sgml > qttas.1
 	touch $@
 
@@ -55,7 +53,8 @@ install: build
 	dh_testroot
 	dh_clean -k 
 	dh_installdirs
-
+	# Bugs in the qmake
+	qmake $(QMAKE_OPTIONS)
 	INSTALL_ROOT=$(CURDIR)/debian/tmp $(MAKE) $(PARALLEL_MAKEFLAGS) install
 	# Add here commands to install the package into debian/qttas.
 

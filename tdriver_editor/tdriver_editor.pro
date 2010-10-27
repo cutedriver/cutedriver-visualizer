@@ -78,22 +78,30 @@ unix: {
     tdriver_editor_complete.files += $$QMAKE_LIBDIR_QT/libQtSql.so.4
     tdriver_editor_complete.files += $$QMAKE_LIBDIR_QT/libQtXml.so.4
     tdriver_editor_complete.files += $$QMAKE_LIBDIR_QT/libQtNetwork.so.4
-    tdriver_editor_complete.files += $$EDITORLIBDIR/libtdrivereditor.so.1
-    tdriver_editor_complete.files += $$UTILLIBDIR/libtdriverutil.so.1
+    tdriver_editor_complete.files += $$DESTDIR/libtdrivereditor.so.1
+    tdriver_editor_complete.files += $$DESTDIR/libtdriverutil.so.1
+    tdriver_editor_complete.files += $$DESTDIR/libcommon.so.1
     tdriver_editor_complete.files += $$EDITOR_PROTO_DIR/editor_proto
     tdriver_editor_complete.path = /opt/tdriver_visualizer
     OBJECTS_DIR = ../build/tdriver_editor
     MOC_DIR = ../build/tdriver_editor
 
     # Standalone version, no dependencies embedded
-    tdriver_editor_standalone.files += $$TARGET
+    tdriver_editor_standalone.files = ../bin/tdriver_visualizer
     tdriver_editor_standalone.path = /usr/bin
+
+    tdriver_editor_standalone_share.files = $$EDITORLIBDIR/templates/* $$EDITORLIBDIR/completions/*
+
     tdriver_editor_standalone_share.path = /etc/tdriver/visualizer
-    documentation_standalone.path = /usr/share/doc/visualizer/help
-    documentation_standalone.files = ../doc/help/qdoc-temp/*
+
+# Pending new documentation
+# TODO add just a link to the online doc
+#    documentation_standalone.path = /usr/share/doc/visualizer/help
+#    documentation_standalone.files = ../doc/help/qdoc-temp/*
+
     INSTALLS += tdriver_editor_standalone \
-        tdriver_editor_standalone_share \
-        documentation_standalone
+        tdriver_editor_standalone_share 
+#        documentation_standalone
 }
 
 win32: {

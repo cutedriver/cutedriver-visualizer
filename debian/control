@@ -11,13 +11,15 @@ Depends: libc6 (>= 2.4), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.1.1)
 Description: Testability Driver Visualizer 
  Testability Driver Visualizer is a tool for visualizing the content of qt applications.
  Test developers can use the object information from visualizer to build test scripts.
+ This package is a standalone pacakge, it contains visualizer and required Qt libraries. It 
+ will install under /opt.
 
 
 Package: visualizer
 Architecture: any
-Depends: libc6 (>= 2.4), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.1.1), libqt4-core, libqt4-network, libqt4-xml, ui-fonts, libqt4-sql
+Depends: libc6 (>= 2.4), libgcc1 (>= 1:4.1.1), libstdc++6 (>= 4.1.1), libqt4-core, libqt4-network, libqt4-xml, libqt4-sql
 Description: Testability Driver Visualizer 
  Testability Driver Visualizer is a tool for visualizing the content of qt applications.
- Test developers can use the object information from visualizer to build test scripts.
+ Test developers can use the object information from visualizer to build test scripts. 
 
 
