@@ -26,6 +26,7 @@
 
 #include <QTabWidget>
 #include <QFont>
+#include <QPointer>
 
 class QAction;
 class QDockWidget;
@@ -34,12 +35,14 @@ class QHideEvent;
 class QMenuBar;
 class QSettings;
 class QCloseEvent;
+class QUrl;
 
 class TDriverEditBar;
 class TDriverRunConsole;
 class TDriverDebugConsole;
 class TDriverRubyInteract;
 class TDriverCodeTextEdit;
+class TDriverExecuteDialog;
 
 #include <QList>
 #include <QTextCursor>
@@ -100,6 +103,8 @@ public slots:
 
     void addBreakpoint(struct MEC::Breakpoint);
     void addBreakpointList(QList<struct MEC::Breakpoint>);
+    void gotoLine(const QString file, int lineNum);
+    void gotoLine(const QUrl &fileLineSpec);
     void setRunningLine(const QString file, int lineNum);
     void resetRunningLines();
     void resetBreakpoints();
@@ -129,6 +134,7 @@ public slots:
     bool debug1(void);
 #endif
     bool debug2(void);
+    bool syntaxCheck(void);
 
     bool saveTab(int index);
     bool saveTabAs(int index, const QString &caption, const QString &filter=QString());
@@ -150,7 +156,7 @@ public slots:
 
     // these (and newFile() above) allow programmatically setting up editor files
     bool loadFile(QString fileName, bool fromTemplate = false);
-    bool saveFile(QString fileName, int index=-1);
+    bool saveFile(QString fileName, int index, bool resetEncoding);
     void recentFileUpdate(QString fileName);
     void updateRecentFileActions();
 
@@ -159,6 +165,8 @@ private slots:
 
     void updateTab(int index=-1);
 
+private:
+    QList<TDriverCodeTextEdit*> setupLineJump(const QString &file, int lineNum);
 
 private:
     QMap<QString, QString> paramMap;
@@ -213,7 +221,6 @@ private:
     QAction *pasteAct;
     QAction *selectAllAct;
 
-
     // code manipulation actions
     QAction *commentCodeAct;
 
@@ -232,6 +239,9 @@ private:
     QAction *debug1Act;
 #endif
     QAction *debug2Act;
+    QAction *syntaxCheckAct;
+
+    QPointer<TDriverExecuteDialog> execDialog;
 };
 
 #endif // TDRIVER_TABBEDEDITOR_H

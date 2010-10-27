@@ -1,23 +1,23 @@
-/*************************************************************************** 
-** 
-** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-** All rights reserved. 
-** Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-** 
-** This file is part of Testability Driver. 
-** 
-** If you have questions regarding the use of this file, please contact 
-** Nokia at testabilitydriver@nokia.com . 
-** 
-** This library is free software; you can redistribute it and/or 
-** modify it under the terms of the GNU Lesser General Public 
-** License version 2.1 as published by the Free Software Foundation 
-** and appearing in the file LICENSE.LGPL included in the packaging 
-** of this file. 
-** 
-****************************************************************************/ 
- 
- 
+/***************************************************************************
+**
+** Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+** All rights reserved.
+** Contact: Nokia Corporation (testabilitydriver@nokia.com)
+**
+** This file is part of Testability Driver.
+**
+** If you have questions regarding the use of this file, please contact
+** Nokia at testabilitydriver@nokia.com .
+**
+** This library is free software; you can redistribute it and/or
+** modify it under the terms of the GNU Lesser General Public
+** License version 2.1 as published by the Free Software Foundation
+** and appearing in the file LICENSE.LGPL included in the packaging
+** of this file.
+**
+****************************************************************************/
+
+
 
 #include <QtPlugin>
 #include <QDebug>
@@ -63,60 +63,57 @@ bool VisualizerAccessor::execute(void * objectInstance, QString commandName, QHa
 
     bool result = false;
     resultString = commandName;
-    QString className;
-    QObject *tmpQObject = reinterpret_cast<QObject*>(objectInstance);
-    if (tmpQObject) className = tmpQObject->metaObject()->className();
-    //    resultString.append(" "+className);
-    TDriverTabbedEditor *tabs = qobject_cast<TDriverTabbedEditor*>(tmpQObject);
-    //    resultString = (resultString + " & %1 %2 %3").
-    //            arg(reinterpret_cast<uint>(objectInstance), 8, 16, QChar('0')).
-    //            arg(reinterpret_cast<uint>(tmpQObject), 8, 16, QChar('0')).
-    //            arg(reinterpret_cast<uint>(tabs), 8, 16, QChar('0'));
 
-    if (commandName == "editor_save") {
-        if (tabs) {
-            if (parameters.contains("filename")) {
-                int index = QVariant(parameters.value("tabindex", "-1")).toInt(&result);
-                if (result) {
-                    result = reinterpret_cast<TDriverTabbedEditor*>(objectInstance)->saveFile(
-                            parameters["filename"], index);
-                    resultString += ": saveFile called";
-                }
-                else
-                    resultString += " error: invalid tab index";
-            }
-            else
-                resultString += " error: missing command parameter: filename";
-        }
-        else {
-            resultString = (commandName + " error: invalid object @0x%1 class name '%2'").
-                           arg(reinterpret_cast<uint>(tmpQObject), 8, 16, QChar('0')).
-                           arg(className);
-        }
+    static QStringList valid_commands(QStringList() << "ping" << "editor_save" << "editor_load");
+
+    if (!valid_commands.contains(commandName)) {
+        resultString += " error: invalid command";
     }
-    else if (commandName == "editor_load") {
-        if (tabs) {
-            if (parameters.contains("filename")) {
-                result = reinterpret_cast<TDriverTabbedEditor*>(objectInstance)->loadFile(
-                        parameters["filename"], QVariant(parameters.value("istemplate", false)).toBool());
-                resultString += ": loadFile called";
-            }
-            else
-                resultString += " error: missing command parameter: filename";
-        }
-        else {
-            resultString = (commandName + " error: invalid object @0x%1 class name '%2'").
-                           arg(reinterpret_cast<uint>(tmpQObject), 8, 16, QChar('0')).
-                           arg(className);
-        }
-    }
+
+    // first commands that do not need editor instance
     else if (commandName == "ping") {
         if (parameters.contains("data")) resultString = parameters["data"];
         else resultString = "pong";
         result = true;
     }
+
+    // then commands that need editor instance
     else {
-        resultString += " error: invalid command";
+        // TODO: add code to check that objectInstance really is a QObject pointer
+        TDriverTabbedEditor *tabs = qobject_cast<TDriverTabbedEditor*>(
+                    reinterpret_cast<QObject*>(objectInstance));
+        QString className = (tabs) ? tabs->metaObject()->className() : "<invalid>";
+
+        if (!tabs) {
+            resultString = (commandName + " error: invalid object @0x%1 class name '%2'")
+                    .arg(reinterpret_cast<uint>(objectInstance), 8, 16, QChar('0'))
+                    .arg(className);
+        }
+
+        else if (commandName == "editor_save") {
+            if (parameters.contains("filename")) {
+                int index = QVariant(parameters.value("tabindex", "-1")).toInt(&result);
+                if (result) {
+                    result = tabs->saveFile(parameters["filename"], index, true);
+                    resultString += ": saveFile called";
+                }
+                else {
+                    resultString += " error: invalid tab index";
+                }
+            }
+            else {
+                resultString += " error: missing command parameter: filename";
+            }
+        }
+
+        else if (commandName == "editor_load") {
+            if (parameters.contains("filename")) {
+                result = tabs->loadFile(parameters["filename"], QVariant(parameters.value("istemplate", false)).toBool());
+                resultString += ": loadFile called";
+            }
+            else
+                resultString += " error: missing command parameter: filename";
+        }
     }
 
     return result;

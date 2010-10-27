@@ -85,10 +85,6 @@ protected:
     QAction *clearAct;
     QAction *terminateAct;
     QAction *killAct;
-
-    const QString RubyProg;
-    const QString RdebugProg;
-
 };
 
 

@@ -644,7 +644,9 @@ end
 def @listener.get_recorded_script( sut, app_id )
   application = sut.application( :id => app_id )
   _output_filename_rb = File.join( @working_directory, 'visualizer_rec_fragment.rb' )
+  #$lg.debug this_method + " print_script next"
   script = MobyUtil::Recorder.print_script( sut, application )
+  #$lg.debug this_method + " print_script over: \n#{script}\n-----"
   File.open( _output_filename_rb, 'w') do | file |
     file << script
     file.close
@@ -690,14 +692,15 @@ def @listener.main_loop (conn)
     $lg.debug this_method + " MSG #{seqNumIn} #{nameIn} : #{msgIn.inspect}"
 
     #listener.rb was old script, which had STDIN/STDOUT interface
-    if (nameIn == 'listener.rb emulation' and msgIn.key?('input') and not (input_array = msgIn['input']).empty?)
+    if ((nameIn == 'visualization' or nameIn == 'listener.rb emulation') and 
+          msgIn.key?('input') and 
+          not (input_array = msgIn['input']).empty?)
     then
       @listener_reply = Hash.new
       # handle commands where input_array length is 1
       break if ( input_array[0] == "quit" )
 
       if input_array.size >= 2
-        sleep 1
         sut_id = input_array.first.to_sym
         cmd = input_array[ 1 ].downcase.to_sym
         eval_cmd = ""
@@ -830,7 +833,7 @@ def @listener.main_loop (conn)
       msgOut = @listener_reply
 
     #ruby_interact.rb was old script, which had STDIN/STDOUT interface
-    elsif (nameIn == 'ruby_interact.rb emulation' and
+    elsif ((nameIn == 'interaction' or nameIn == 'ruby_interact.rb emulation') and
               msgIn.key?('command') and
               not (inputcmd = msgIn['command']).empty?)
     then

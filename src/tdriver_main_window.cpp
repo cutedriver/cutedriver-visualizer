@@ -45,7 +45,7 @@ MainWindow::MainWindow() :
     foreach(QObject *child, tdriverMsgBox->children()) {
         QCheckBox *cb = qobject_cast<QCheckBox*>(child);
         if (cb) {
-            qDebug() << FCFL << "hiding tdriverMsgBox QCheckBox" << cb->text();
+            //qDebug() << FCFL << "hiding tdriverMsgBox QCheckBox" << cb->text();
             cb->hide();
             cb->setDisabled(true);
             cb->setCheckState(Qt::Checked);
@@ -53,7 +53,7 @@ MainWindow::MainWindow() :
         else {
             QPushButton *pb = qobject_cast<QPushButton*>(child);
             if (pb) {
-                qDebug() << FCFL << "connecting tdriverMsgBox QPushButton" << pb->text();
+                //qDebug() << FCFL << "connecting tdriverMsgBox QPushButton" << pb->text();
                 connect(pb, SIGNAL(clicked()), this, SLOT(tdriverMsgOkClicked()));
             }
         }
@@ -694,7 +694,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
         QTime t;
         t.start();
         /*bool response1 =*/
-        TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, default_timeout );
+        TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, default_timeout );
         if (msg.contains("error")) {
             qDebug() << FCFL << "failure time" << float(t.elapsed())/1000.0 << "reply" << msg;
 
@@ -713,7 +713,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
                 msg.clear();
                 msg["input"] << activeDevice.value( "name" ).toAscii() << "disconnect";
                 /*bool response2 =*/
-                TDriverRubyInterface::globalInstance()->executeCmd("listener.rb emulation", msg, default_timeout );
+                TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, default_timeout );
                 if (msg.contains("error")) {
                     fullError += "\n\nDisconnect after error failed!";
                     result = false;

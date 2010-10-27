@@ -35,6 +35,7 @@
 #include <QCoreApplication>
 #include <QLabel>
 #include <QDir>
+#include <QSettings>
 
 #include <tdriver_util.h>
 #include <tdriver_debug_macros.h>
@@ -45,22 +46,26 @@ static quint16 controlPort = 47748; // note: ruby-debug 0.10.0 with ruby 1.8 def
 
 static const char TDRIVER_RUBY_INTERACTSCRIPT[] = "tdriver_rubyinteract.rb";
 
+#ifdef Q_WS_WIN
+#define DEFAULT_RUBY_BIN "ruby.exe"
+#define DEFAULT_RDEBUG_BIN "ruby.exe"
+#define DEFAULT_RDEBUG_ARGS (QStringList() << "C:/Ruby/bin/rdebug")
+#else
+#define DEFAULT_RUBY_BIN = "ruby"
+#define DEFAULT_RDEBUG_BIN = "/var/lib/gems/1.8/bin/rdebug"
+#define DEFAULT_RDEBUG_ARGS = (QStringList())
+#endif
+
+
 
 TDriverRunConsole::TDriverRunConsole(bool makeProc, QWidget *parent) :
-        QWidget(parent),
-        proc(makeProc ? new QProcess(this): NULL),
-        toolbar(new QToolBar),
-        layout(new QVBoxLayout),
-        commandLineLabel(new QLabel(tr("stdin:"))),
-        console(new TDriverConsoleTextEdit),
-        outputMode(NO_OUTPUT),
-#ifdef Q_WS_WIN
-        RubyProg("ruby.exe"),
-        RdebugProg("rdebug.bat")
-#else
-        RubyProg("ruby"),
-        RdebugProg("rdebug")
-#endif
+    QWidget(parent),
+    proc(makeProc ? new QProcess(this): NULL),
+    toolbar(new QToolBar),
+    layout(new QVBoxLayout),
+    commandLineLabel(new QLabel(tr("stdin:"))),
+    console(new TDriverConsoleTextEdit),
+    outputMode(NO_OUTPUT)
 {
     layout->setObjectName("runconsole");
     console->setObjectName("runconsole");
@@ -198,6 +203,10 @@ bool TDriverRunConsole::runFile(QString fileName, TDriverRunConsole::RunRequestT
     console->appendText(tr("Working directory: %1").arg(proc->workingDirectory()), console->notifyFormat);
     //static const QString RubyAutoflushPrefix("STDOUT.sync=true;");
 
+    QString RubyProg(MEC::settings->value("editor/ruby_application", DEFAULT_RUBY_BIN).toString());
+    QString RdebugProg(MEC::settings->value("editor/rdebug_application", DEFAULT_RDEBUG_BIN).toString());
+    QStringList RdebugArgs(MEC::settings->value("editor/rdebug_start_arguments", DEFAULT_RDEBUG_ARGS).toStringList());
+
     switch(type) {
 
     case RunRequest:
@@ -213,6 +222,7 @@ bool TDriverRunConsole::runFile(QString fileName, TDriverRunConsole::RunRequestT
         //progToRun = RubyProg;
         //args << "-e" << RubyAutoflushPrefix + "require 'ruby-debug'; debugger ; require '" + fileName + "'";
         progToRun = RdebugProg;
+        args << Rdebug1stArg;
         //console->setLocalEcho(true);
         break;
 #else
@@ -222,6 +232,7 @@ bool TDriverRunConsole::runFile(QString fileName, TDriverRunConsole::RunRequestT
     case Debug2Request:
         outputMode = RDEBUG_OUTPUT;
         progToRun = RdebugProg;
+        args << RdebugArgs;
         args << "-s"; // remote debugging server
         args << "-w"; // wait for connection
         // TODO: make these ports configurable
@@ -247,7 +258,7 @@ bool TDriverRunConsole::runFile(QString fileName, TDriverRunConsole::RunRequestT
 
     args << scriptArg; // script filename
     qDebug() << FCFL << "EXEC: " << progToRun << "in dir" << proc->workingDirectory()
-            << "with args " << args << "(modes" << type << outputMode << ")";
+             << "with args " << args << "(modes" << type << outputMode << ")";
     console->appendLine("EXEC in " + proc->workingDirectory() + ": " + progToRun + " " + args.join(" "), console->notifyFormat);
     proc->start(progToRun, args, QIODevice::ReadWrite|QIODevice::Text);
     emit runSignal(true);
@@ -272,8 +283,9 @@ void TDriverRunConsole::rdebugReady()
     else {
         qDebug() << FCFL << "Bad outputmode" << outputMode <<", script probably ended, signal ignored.";
 #ifdef Q_WS_WIN
-        QMessageBox::warning( this, tr("Running script failed unexpectedly"), tr("Check this:\n  Launch Windows Task Manager, then\n  kill 'ruby.exe' if it is running"));
-
+        QMessageBox::warning( this,
+                             tr("Running script failed unexpectedly"),
+                             tr("Check this:\n  Launch Windows Task Manager, then\n  kill 'ruby.exe' if it is running"));
 #endif
     }
 }

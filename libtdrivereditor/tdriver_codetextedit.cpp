@@ -77,6 +77,9 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
     phraseModel(NULL),
     stackHighlightStart(-1),
     translationDBconfigured(false),
+    fcodec(NULL),
+    fcodecUtfBom(false),
+    lastFindWrapped(false),
     lastBlock(-1),
     lastBlockCount(document()->blockCount()),
     isRunning(false),
@@ -1188,21 +1191,64 @@ void TDriverCodeTextEdit::madeCurrent()
 
 bool TDriverCodeTextEdit::doFind(QString findText, QTextDocument::FindFlags options)
 {
-    if (!find(findText, options)) {
+    QTextCursor cur(textCursor());
+    bool ret = doFind(findText, cur, options);
+    setTextCursor(cur);
+    return ret;
+}
+
+
+static inline void copyTextCursorSelection(QTextCursor &dest, const QTextCursor &src) {
+    // assumes src and dest have same document()
+    dest.setPosition(src.anchor());
+    dest.setPosition(src.position(), QTextCursor::KeepAnchor);
+}
+
+
+bool TDriverCodeTextEdit::doFind(QString findText, QTextCursor &cur, QTextDocument::FindFlags options)
+{
+    if (cur.document() != document() || findText.isEmpty()) return false;
+
+    QTextCursor foundCur = document()->find(findText, cur, options);
+
+    if (foundCur.isNull()) {
         // wrap search
-        QTextCursor cur(textCursor());
+        lastFindWrapped = true;
         bool back = (options & QTextDocument::FindBackward);
-        moveCursor(back ? QTextCursor::End : QTextCursor::Start);
-        if (!find(findText, options)) {
-            // not found even after warp
-            setTextCursor(cur);
-            // TODO: statusbar: not found
+        foundCur = cur;
+        foundCur.movePosition(back ? QTextCursor::End : QTextCursor::Start);
+
+        foundCur = document()->find(findText, foundCur, options);
+        if (foundCur.isNull()) {
+            cur.setPosition(back ? cur.selectionStart() : cur.selectionEnd());
             return false;
         }
-        // else TODO: statusbar: search wrapped
     }
+    else {
+        lastFindWrapped = false;
+    }
+    copyTextCursorSelection(cur, foundCur);
     return true;
 }
+
+
+bool TDriverCodeTextEdit::doReplaceFind(QString findText, QString replaceText, QTextCursor &cur, QTextDocument::FindFlags options)
+{
+    if (cur.document() != document() || isReadOnly() || findText.isEmpty()) return false;
+
+    if (cur.hasSelection()) {
+        Qt::CaseSensitivity caseSens = (options & QTextDocument::FindCaseSensitively)
+                ? Qt::CaseSensitive
+                : Qt::CaseInsensitive;
+        if (0 == QString::compare(cur.selectedText(), findText, caseSens)) {
+            int pos = cur.selectionStart();
+            cur.insertText(replaceText);
+            if ((options & QTextDocument::FindBackward)) cur.setPosition(pos);
+        }
+    }
+    return doFind(findText, cur, options);
+}
+
 
 bool TDriverCodeTextEdit::doIncrementalFind(QString findText, QTextDocument::FindFlags options)
 {
@@ -1219,21 +1265,48 @@ bool TDriverCodeTextEdit::doIncrementalFind(QString findText, QTextDocument::Fin
 
 bool TDriverCodeTextEdit::doReplaceFind(QString findText, QString replaceText, QTextDocument::FindFlags options)
 {
-    if (!isReadOnly() &&
-            textCursor().hasSelection() &&
-            0 == QString::compare(textCursor().selectedText(), findText,
-                                  (options & QTextDocument::FindCaseSensitively) ? Qt::CaseSensitive : Qt::CaseInsensitive)) {
-        insertAtTextCursor(replaceText);
-    }
-    return doFind(findText, options);
+    QTextCursor cur(textCursor());
+    bool ret = doReplaceFind(findText, replaceText, cur, options);
+    setTextCursor(cur);
+    return ret;
 }
 
 
 void TDriverCodeTextEdit:: doReplaceAll(QString findText, QString replaceText, QTextDocument::FindFlags options)
 {
-    if (isReadOnly()) return;
+    if (isReadOnly() || findText.isEmpty()) return;
 
-    while(doReplaceFind(findText, replaceText, options));
+    QTextCursor cur(textCursor());
+
+    // wraparound logic requires forward direction in replace:
+    options &= ~QTextDocument::FindBackward;
+    if (cur.hasSelection()) cur.setPosition(cur.selectionStart());
+
+    if (doFind(findText, cur, options)) {
+        // first occurence to be replaced is now selected
+        // startMarker position must be set after replacing it, or replace will move it!
+        QTextCursor startMarker(cur);
+        int startPos = cur.selectionStart();
+
+        bool wrapped = false;
+        lastFindWrapped = false; // reset the internal wrap indicator flag
+
+        cur.beginEditBlock();
+        while (doReplaceFind(findText, replaceText, cur, options)) {
+            if (lastFindWrapped) {
+                if (wrapped) break; // safeguard, this probably shouldn't happen ever
+                else wrapped = true;
+            }
+            if (startPos >= 0) {
+                startMarker.setPosition(startPos);
+                startPos = -1;
+            }
+            if (wrapped && startMarker.position() <= cur.position()) break;
+        }
+        cur.endEditBlock();
+    }
+
+    setTextCursor(cur);
 }
 
 
@@ -1251,7 +1324,7 @@ void TDriverCodeTextEdit::commentCode()
     MEC::replaceUnicodeSeparators(text);
     QStringList lines = text.split("\n", QString::KeepEmptyParts);
     foreach (const QString &line, lines) {
-        int spcInd;
+        int spcInd = 0;
         bool blankLine = MEC::isBlankLine(line);
         if (!doCommenting && !blankLine) {
             QChar firstRealChar = countSpaceIndentation(line, spcInd);
@@ -1641,6 +1714,7 @@ void TDriverCodeTextEdit::indentSelection(QTextCursor tc, bool increaseIndentati
         }
         lastBlock = tempCur.blockNumber();
     }
+    tc.beginEditBlock();
     tc.setPosition(tc.selectionStart());
 
     do {
@@ -1652,6 +1726,7 @@ void TDriverCodeTextEdit::indentSelection(QTextCursor tc, bool increaseIndentati
         reindentSelectionStart(tc, indLevel, indChars);
 
     } while (tc.movePosition(QTextCursor::NextBlock) && (tc.blockNumber() <= lastBlock) );
+    tc.endEditBlock();
 }
 
 
@@ -1853,7 +1928,7 @@ void TDriverCodeTextEdit::uiToggleBreakpointLine(int lineNum)
     else {
         if (lineNum == document()->blockCount()) return; // last line not allowed
         qDebug() << FFL << "Inserting new breakpoint line" << lineNum << "(at ind" << ind << "/ size" << bpList.size() << ")";
-        MEC::Breakpoint bp = { num:0, enabled:true, file:fileName(), line:lineNum };
+        MEC::Breakpoint bp(0, true, fileName(), lineNum);
         bpList.insert(ind, bp);
         emit addedBreakpoint(bp);
 
@@ -1874,10 +1949,8 @@ void TDriverCodeTextEdit::dataSyncRequest()
 }
 
 
-void TDriverCodeTextEdit::setRunningLine(int lineNum)
+void TDriverCodeTextEdit::gotoLine(int lineNum)
 {
-    qDebug() << FFL << fileName() << lineNum << "running:" << isRunning;
-
     if (lineNum > 0) {
         QTextCursor tc = textCursor();
         tc.movePosition(QTextCursor::Start);
@@ -1885,6 +1958,14 @@ void TDriverCodeTextEdit::setRunningLine(int lineNum)
         setTextCursor(tc);
         centerCursor();
     }
+}
+
+
+void TDriverCodeTextEdit::setRunningLine(int lineNum)
+{
+    qDebug() << FFL << fileName() << lineNum << "running:" << isRunning;
+
+    gotoLine(lineNum);
 
     if (lineNum == runningLine) return; // no change, avoid updates below
 
