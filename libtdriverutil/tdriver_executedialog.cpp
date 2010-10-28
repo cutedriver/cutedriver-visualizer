@@ -74,9 +74,7 @@ void TDriverExecuteDialog::error(QProcess::ProcessError error)
     //QMetaEnum enumMeta = process->metaObject()->enumerator(enumInd);
     //QString enumStr(enumMeta.valueToKey(process->error());
 
-    QString text = tr("<b>PROCESS ERROR: error code %1</b>")
-            .arg(process->error());
-
+    QString text = tr("<b>PROCESS ERROR: error code %1</b>").arg(error);
     ui->outputView->append(text);
 }
 
@@ -121,7 +119,7 @@ void TDriverExecuteDialog::started()
 }
 
 
-void TDriverExecuteDialog::stateChanged(QProcess::ProcessState newState)
+void TDriverExecuteDialog::stateChanged(QProcess::ProcessState /*newState*/)
 {
     //ui->outputView->setTextColor(Qt::lightGray);
     //ui->outputView->append(tr("<i>PROCESS STATE changed to: %1</i>").arg(newState));
