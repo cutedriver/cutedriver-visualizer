@@ -79,6 +79,8 @@ class TDriverDebugConsole;
 class TDriverRubyInteract;
 class TDriverComboLineEdit;
 
+#include "tdriver_main_types.h"
+
 class MainWindow : public QMainWindow {
 
     Q_OBJECT
@@ -92,7 +94,7 @@ public:
 
     bool setup();
     bool checkVersion( QString current, QString required );
-    bool collectMatchingVisibleObjects( QPoint pos, QList<int> &matchingObjects );
+    bool collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey> &matchingObjects );
 
     // note: cancelAction must be first (lowest value) below
     enum ContextMenuSelection {
@@ -120,7 +122,7 @@ public:
         commandRefreshImage,
         commandKeyPress,
         commandSetAttribute,
-        commandGetDeviceType,        
+        commandGetDeviceType,
         commandCheckApiFixture,
         commandBehavioursXml,
         commandGetVersionNumber,
@@ -138,10 +140,10 @@ public:
              };
 
 public:    // methods to access test object data by object id
-    const QMap<QString, QHash<QString, QString> > &testobjAttributes(int id) { return attributesMap[id]; }
-    const QStringList &testobjGeometries(int id) { return geometriesMap[id]; }
-    const QTreeWidgetItem *testobjTreeWidget(int id) { return objectTreeMap[id]; }
-    const QHash<QString, QString> &testobjTreeData(int id) { return objectTreeData[id]; }
+    const QMap<QString, QHash<QString, QString> > &testobjAttributes(TestObjectKey id) { return attributesMap[id]; }
+    //const QStringList &testobjGeometries(AttributeKey id) { return geometriesMap[id]; }
+    //const QTreeWidgetItem *testobjTreeWidget(AttributeKey id) { return objectTreeMap[id]; }
+    const QHash<QString, QString> &testobjTreeData(TestObjectKey id) { return objectTreeData[id]; }
 
 public slots:
     void statusbar( QString text, int currentProgressValue, int maxProgressValue, int timeout = 0 );
@@ -177,18 +179,18 @@ private:
     QMap<QString, QString> tdriverXmlParameters;
 
     QHash<QString, QString> applicationsHash;
-    QMap<int, QString> applicationsProcessIdMap;
+    QMap<ProcessKey, QString> applicationsProcessIdMap;
 
-    QMap<int, QMap<QString, QHash<QString, QString> > > attributesMap;
+    QMap<TestObjectKey, QMap<QString, QHash<QString, QString> > > attributesMap;
     QHash<QString, QMap<QString, QHash<QString, QString> > > apiMethodsMap;
     QHash<QString, QStringList > apiSignalsMap;
     QMap<QString, Behaviour> behavioursMap;
 
-    QMap<int, QStringList> geometriesMap;
-    QList<int> visibleObjectsList;
+    QMap<TestObjectKey, QStringList> geometriesMap;
+    QList<TestObjectKey> visibleObjectsList;
 
-    QMap<int, QTreeWidgetItem *> objectTreeMap;
-    QMap<int, QHash<QString, QString> > objectTreeData;
+    QMap<TestObjectKey, QTreeWidgetItem *> objectTreeMap;
+    QMap<TestObjectKey, QHash<QString, QString> > objectTreeData;
     QHash<QString, QMap<QString, QString> > objectMethods;
     QHash<QString, QMap<QString, QString> > objectSignals;
 
@@ -275,7 +277,7 @@ private:
 
     void resizeObjectTree();
 
-    QMap<QString, int> propertyTabLastTimeUpdated;
+    QMap<QString, TestObjectKey> propertyTabLastTimeUpdated;
 
     QMap<QString, QString> currentApplication;
 
@@ -433,16 +435,16 @@ private:
 
     // highlight
 
-    int lastHighlightedObjectPtr;
-    void drawHighlight( int itemPtr );
+    TestObjectKey lastHighlightedObjectPtr;
+    void drawHighlight( TestObjectKey itemPtr );
 
 
-    bool highlightById( int id, bool selectItem, QString insertMethodToEditor = QString() );
+    bool highlightById( TestObjectKey id, bool selectItem, QString insertMethodToEditor = QString() );
     bool highlightAtCoords( QPoint pos, bool selectItem, QString insertMethodToEditor = QString() );
     // insertMethodToEditor.isNull means don't insert,
     // insertMethodToEditor.isEmpty means insert without method name
 
-    bool getSmallestObjectFromMatches( QList<int> *matchingObjects, int &objectPtr );
+    bool getSmallestObjectFromMatches( QList<TestObjectKey> *matchingObjects, TestObjectKey &objectPtr );
 
     // shortcuts widget
 
@@ -516,7 +518,7 @@ private:
     QTreeWidgetItem *findDialogSubtreeRoot;
 
     bool containsWords( QHash<QString, QString> itemData, QString text, bool caseSensitive, bool entireWords  );
-    bool attributeContainsWords( int itemPtr, QString text, bool caseSensitive, bool entireWords );
+    bool attributeContainsWords( TestObjectKey itemPtr, QString text, bool caseSensitive, bool entireWords );
 
     QErrorMessage *tdriverMsgBox;
     int tdriverMsgTotal;
@@ -603,9 +605,9 @@ private slots:
     void imageInsertFindItem();
     void imageInsertCoords();
 
-    void imageInsertObjectFromId(int id);
-    void imageInspectFromId(int id);
-    void imageTapFromId(int id);
+    void imageInsertObjectFromId(TestObjectKey id);
+    void imageInspectFromId(TestObjectKey id);
+    void imageTapFromId(TestObjectKey id);
 
 
     void changeImageResize();
@@ -661,7 +663,7 @@ private slots:
     void closeFindDialog();
 
 private:
-    QString treeObjectRubyId(int treeItemPtr, int sutItemPtr);
+    QString treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey sutItemPtr);
     QTreeWidgetItem *findDialogSubtreeNext(QTreeWidgetItem *current, QTreeWidgetItem *root, bool wrap=false);
     QTreeWidgetItem *findDialogSubtreePrev(QTreeWidgetItem *current, QTreeWidgetItem *root, bool wrap=false);
     bool compareTreeItem(QTreeWidgetItem *item, const QString &findString, bool matchCase, bool entireWords, bool searchAttributes);

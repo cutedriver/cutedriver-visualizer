@@ -286,13 +286,13 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
     QMenu *menu = new QMenu("Image View Context Menu");
 
     if (objTreeOwner) {
-        QList<int> matchingObjects;
+        QList<TestObjectKey> matchingObjects;
 
         if ( objTreeOwner->collectMatchingVisibleObjects( getEventPosInImage(), matchingObjects ) ) {
             qSort( matchingObjects.begin(), matchingObjects.end() );
             QMap<QAction*, QString> sortKeys;
 
-            foreach(int id, matchingObjects) {
+            foreach(TestObjectKey id, matchingObjects) {
                 const QMap<QString, QHash<QString, QString> > &attrMap = objTreeOwner->testobjAttributes(id);
                 const QHash<QString, QString> &treeData = objTreeOwner->testobjTreeData(id);
 
@@ -317,10 +317,10 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
                 }
 
                 if (idText.isEmpty())
-                    idText += QString(" id %1").arg(id);
+                    idText = QString(" id ") + testObjectKey2Str(id);
 
                 if (sortKey.isEmpty())
-                    sortKey = "3"+QString::number(id).rightJustified(11);
+                    sortKey = "3" + testObjectKey2Str(id).rightJustified(11);
 
                 QString typeText = treeData["type"];
                 if (typeText.isEmpty())
@@ -342,7 +342,7 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
                 // Object description performs find in tree
                 QAction *tmpAct = new QAction(typeText + idText, menu);
                 sortKeys[tmpAct] = sortKey;
-                tmpAct->setData(id);
+                tmpAct->setData(testObjectKey2Str(id));
                 QFont tmpFont = tmpAct->font();
                 tmpFont.setBold(true);
                 tmpFont.setUnderline(true);
@@ -352,12 +352,12 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
 
                 // extra actions
                 tmpAct = new QAction(tr("    Send Tap to SUT"), menu);
-                tmpAct->setData(id);
+                tmpAct->setData(testObjectKey2Str(id));
                 menu->insertAction(before, tmpAct);
                 connect(tmpAct, SIGNAL(triggered()), this, SLOT(forwardTapById()));
 
                 tmpAct = new QAction(tr("    Insert to Editor"), menu);
-                tmpAct->setData(id);
+                tmpAct->setData(testObjectKey2Str(id));
                 menu->insertAction(before, tmpAct);
                 connect(tmpAct, SIGNAL(triggered()), this, SLOT(forwardInsertObjectById()));
             }
@@ -481,41 +481,36 @@ void TDriverImageView::dragAction()
 }
 
 
-static int idFromActionData(QObject *sender)
+static TestObjectKey idFromActionData(QObject *sender)
 {
+    ulong idNum = 0;
     QAction *senderAct = qobject_cast<QAction*>(sender);
-
-    if (!senderAct) return -1;
-
-    bool ok = false;
-    int id = senderAct->data().toInt(&ok);
-
-    if(!ok || id < 0) return -1;
-
-    return id;
+    if (senderAct)
+        idNum = senderAct->data().toUInt();
+    return (TestObjectKey)idNum;
 }
 
 
 void TDriverImageView::forwardTapById()
 {
-    int id = idFromActionData(sender());
+    TestObjectKey id = idFromActionData(sender());
     //qDebug() << __FUNCTION__ << id;
-    if (id >= 0) emit imageTapById(id);
+    if (id != 0) emit imageTapById(id);
 }
 
 
 void TDriverImageView::forwardInspectById()
 {
-    int id = idFromActionData(sender());
+    TestObjectKey id = idFromActionData(sender());
     //qDebug() << __FUNCTION__ << id;
-    if (id >= 0) emit imageInspectById(id);
+    if (id != 0) emit imageInspectById(id);
 }
 
 
 void TDriverImageView::forwardInsertObjectById()
 {
-    int id = idFromActionData(sender());
-    if (id >= 0) emit imageInsertObjectById(id);
+    TestObjectKey id = idFromActionData(sender());
+    if (id != 0) emit imageInsertObjectById(id);
 }
 
 
