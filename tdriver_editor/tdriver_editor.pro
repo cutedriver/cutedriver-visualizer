@@ -100,19 +100,18 @@ unix: {
 #    documentation_standalone.files = ../doc/help/qdoc-temp/*
 
     INSTALLS += tdriver_editor_standalone \
-        tdriver_editor_standalone_share 
+        tdriver_editor_standalone_share
 #        documentation_standalone
 }
 
 win32: {
-    DLLDIR = $$dirname(QMAKE_QMAKE)
+    MY_QTDIR = $$dirname(QMAKE_QMAKE)
     target.path = C:/tdriver/visualizer
     tdriver_editor_complete.path = C:/tdriver/visualizer
-    tdriver_editor_complete.files += $$EDITORLIBDIR/$${EDITOR_LIB}.dll
-    tdriver_editor_complete.files += $$DLLDIR/QtXml4.dll
-    tdriver_editor_complete.files += $$DLLDIR/QtCore4.dll
-    tdriver_editor_complete.files += $$DLLDIR/QtGui4.dll
-    tdriver_editor_complete.files += $$DLLDIR/QtNetwork4.dll
+    tdriver_editor_complete.files += $$MY_QTDIR/QtXml4.dll
+    tdriver_editor_complete.files += $$MY_QTDIR/QtCore4.dll
+    tdriver_editor_complete.files += $$MY_QTDIR/QtGui4.dll
+    tdriver_editor_complete.files += $$MY_QTDIR/QtNetwork4.dll
 
     documentation.path = C:/tdriver/visualizer/help
     documentation.files = ../doc/help/qdoc-temp/*
