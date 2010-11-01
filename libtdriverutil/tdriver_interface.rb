@@ -582,6 +582,7 @@ end
 
 def @listener.get_ui_dump( sut, sut_id, app_id = nil )
   MobyUtil::Parameter[ sut.id ][ :filter_type] = 'none'
+  MobyUtil::Parameter[ sut.id ][ :use_find_object] = 'false'
   _output_filename_xml = File.join( @working_directory, "visualizer_dump_#{ sut_id }.xml" )
   File.delete( _output_filename_xml ) if File.exist?( _output_filename_xml )
   data = sut.get_ui_dump( *[ ( { :id => app_id } unless app_id.nil? ) ].compact )
