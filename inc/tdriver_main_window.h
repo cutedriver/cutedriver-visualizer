@@ -272,8 +272,8 @@ private:
     void createTreeViewDockWidget();
 
     //QTreeWidgetItem *currentObjectTreeItem;
-    int collapsedObjectTreeItemPtr;
-    int expandedObjectTreeItemPtr;
+    TestObjectKey collapsedObjectTreeItemPtr;
+    TestObjectKey expandedObjectTreeItemPtr;
 
     void resizeObjectTree();
 

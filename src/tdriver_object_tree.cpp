@@ -671,7 +671,7 @@ void MainWindow::objectViewItemClicked( QTreeWidgetItem * item, int column) {
 // Store last collapsed objectTreeWidgetItem - Note: value will be set to NULL when focus is changed
 void MainWindow::collapseTreeWidgetItem( QTreeWidgetItem * item ) {
 
-    collapsedObjectTreeItemPtr = ( int )( item );
+    collapsedObjectTreeItemPtr = (TestObjectKey)( item );
     expandedObjectTreeItemPtr = 0;
 
     resizeObjectTree();
@@ -682,15 +682,14 @@ void MainWindow::collapseTreeWidgetItem( QTreeWidgetItem * item ) {
 void MainWindow::expandTreeWidgetItem(QTreeWidgetItem * item) {
 
     collapsedObjectTreeItemPtr = 0;
-    expandedObjectTreeItemPtr = ( int )( item );
+    expandedObjectTreeItemPtr = (TestObjectKey)( item );
 
     resizeObjectTree();
-
 }
 
 void MainWindow::objectTreeExpandAll() {
 
-    int currentItem = ( int )( objectTree->currentItem() );
+    TestObjectKey currentItem = (TestObjectKey)( objectTree->currentItem() );
 
     // exit if object tree is empty
     if ( currentItem == 0 ) { return; }
@@ -702,7 +701,7 @@ void MainWindow::objectTreeExpandAll() {
 
 void MainWindow::objectTreeCollapseAll() {
 
-    int currentItem = ( int )( objectTree->currentItem() );
+    TestObjectKey currentItem = (TestObjectKey)( objectTree->currentItem() );
 
     // exit if object tree is empty
     if ( currentItem == 0 ) { return; }
@@ -715,7 +714,7 @@ void MainWindow::objectTreeCollapseAll() {
 
 void MainWindow::objectTreeKeyPressEvent( QKeyEvent * event ) {
 
-    int currentItem = ( int )( objectTree->currentItem() );
+    TestObjectKey currentItem = (TestObjectKey)( objectTree->currentItem() );
 
     // exit if object tree is empty
     if ( currentItem == 0 ) { return; }
