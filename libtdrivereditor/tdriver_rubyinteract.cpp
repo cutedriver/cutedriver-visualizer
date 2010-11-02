@@ -118,11 +118,11 @@ void TDriverRubyInteract::resetScript()
     bool ok = TDriverRubyInterface::globalInstance()->executeCmd("interact reset", msg, 5000, "reset");
 
     if (ok) {
-        if (msg.contains("error_message")) {
+        if (msg.contains("error")) {
             qWarning() << FCFL << "ERROR FROM SCRIPT" << msg;
             QMessageBox::warning(this, tr("Ryby Reset error"),
                                  tr("Sent command 'interact reset'.\nGot error:\n%1")
-                                 .arg(joinLines(msg.value("error_message"))));
+                                 .arg(joinLines(msg.value("error"))));
 
         }
         else {
@@ -176,11 +176,13 @@ void TDriverRubyInteract::rubyIsOnline()
 
 bool TDriverRubyInteract::sendNextQuery()
 {
+    QString goOnlineError;
+
     if (queryQueue.isEmpty()) {
         return true;
     }
 
-    else if (!TDriverRubyInterface::globalInstance()->goOnline()) {
+    else if (!(goOnlineError = TDriverRubyInterface::globalInstance()->goOnline()).isNull()) {
         return false;
     }
 

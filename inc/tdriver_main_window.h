@@ -120,7 +120,7 @@ public:
         commandRefreshImage,
         commandKeyPress,
         commandSetAttribute,
-        commandGetDeviceType,        
+        commandGetDeviceType,
         commandCheckApiFixture,
         commandBehavioursXml,
         commandGetVersionNumber,
@@ -146,6 +146,7 @@ public:    // methods to access test object data by object id
 public slots:
     void statusbar( QString text, int currentProgressValue, int maxProgressValue, int timeout = 0 );
     void statusbar( QString text, int timeout = 0 );
+    void handleRbiError(QString title, QString text, QString details);
 
 private:
 
@@ -533,6 +534,7 @@ private slots:
     void tdriverMsgSetTitleText();
     void tdriverMsgOkClicked();
     void tdriverMsgFinished();
+    void tdriverMsgAppend(QString message);
 
     void collapseTreeWidgetItem( QTreeWidgetItem *item );
     void expandTreeWidgetItem( QTreeWidgetItem *item );

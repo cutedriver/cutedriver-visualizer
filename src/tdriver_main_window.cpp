@@ -41,7 +41,7 @@ MainWindow::MainWindow() :
         tdriverMsgShown(1)
 {
     // ugly hack to disable the "don't show again" checkbox,
-    // may not work in future Qt versions, and may not work an all platforms
+    // may not work in future Qt versions, and may not work on all platforms
     foreach(QObject *child, tdriverMsgBox->children()) {
         QCheckBox *cb = qobject_cast<QCheckBox*>(child);
         if (cb) {
@@ -93,6 +93,15 @@ void MainWindow::tdriverMsgFinished()
 }
 
 
+void MainWindow::tdriverMsgAppend(QString message)
+{
+    message.replace('\n', QChar::ParagraphSeparator);
+    ++tdriverMsgTotal;
+    tdriverMsgSetTitleText();
+    tdriverMsgBox->showMessage(message);
+    tdriverMsgBox->raise();
+    tdriverMsgBox->repaint();
+}
 
 // Performs post-initialization checking.
 void MainWindow::checkInit()
@@ -150,30 +159,33 @@ bool MainWindow::setup()
     applicationSettings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "Nokia", "TDriver_Visualizer");
 
     TDriverRubyInterface::startGlobalInstance();
+    connect(TDriverRubyInterface::globalInstance(), SIGNAL(rbiError(QString,QString,QString)),
+            this, SLOT(handleRbiError(QString,QString,QString)));
 
     // determine if connection to TDriver established -- if not, allow user to run TDriver Visualizer in viewer/offline mode
     offlineMode = true;
     t.start();
-    if ( TDriverRubyInterface::globalInstance()->goOnline()) {
+    QString goOnlineError;
+    if (!(goOnlineError = TDriverRubyInterface::globalInstance()->goOnline()).isNull()) {
+        tdriverMsgAppend(tr("TDriver Visualizer failed to interface with TDriver framework:\n\n" )
+                    + goOnlineError
+                    + tr("\n\n=== Launching in offline mode ==="));
+    }
+    else {
         QString installedDriverVersion = getDriverVersionNumber();
 
         if ( !checkVersion( installedDriverVersion, REQUIRED_DRIVER_VERSION ) ) {
-
-            QMessageBox::critical(
-                    0,
-                    tr("TDriver Visualizer v") + VISUALIZER_VERSION,
-                    tr("TDriver Visualizer is not compatible with this version of TDriver. Please update your TDriver environment.\n\n") +
-                    tr("Installed version: ") + installedDriverVersion +
-                    tr("\nRequired version: ") + REQUIRED_DRIVER_VERSION + tr(" or later")+
-                    tr("\n\nLaunching in offline mode.")
-                    );
+            tdriverMsgAppend(tr("TDriver Visualizer is not compatible with this version of TDriver. Please update your TDriver environment.\n\n") +
+                             tr("Installed version: ") + installedDriverVersion +
+                             tr("\nRequired version: ") + REQUIRED_DRIVER_VERSION + tr(" or later")+
+                             tr("\n\n=== Launching in offline mode ===")
+                             );
         }
         else {
             offlineMode = false; // TDriver successfully initialized!
         }
     }
     qDebug() << FCFL << "RBI goOnline  result" << !offlineMode << "secs" << float(t.elapsed())/1000.0;
-
 
     if (offlineMode) {
         qWarning("Failed to initialize TDriver, closing Ruby process");
@@ -574,6 +586,16 @@ void MainWindow::statusbar( QString text, int currentProgressValue, int maxProgr
     statusBar()->repaint();
 }
 
+void MainWindow::handleRbiError(QString title, QString text, QString details)
+{
+    tdriverMsgAppend(tr("Error from TDriver interface:\n")
+                     + title
+                     + "\n____________________\n"
+                     + text
+                     + "\n____________________\n"
+                     + details);
+}
+
 
 void MainWindow::processErrorMessage(ExecuteCommandType commandType, const BAListMap &msg, const QString &additionalInformation,
                                      unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError )
@@ -741,12 +763,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
     } while (!exit);
 
     if ( !result && !(resultEnum & SILENT) ) {
-        fullError.replace('\n', QChar::ParagraphSeparator);
-        ++tdriverMsgTotal;
-        tdriverMsgSetTitleText();
-        tdriverMsgBox->showMessage( fullError );
-        tdriverMsgBox->raise();
-        tdriverMsgBox->repaint();
+        tdriverMsgAppend(fullError);
 #if 0
         QMessageBox msgBox(this);
         msgBox.setSizeGripEnabled(true); // wont work...

@@ -122,10 +122,14 @@ void TDriverRubyInterface::run()
 }
 
 
-bool TDriverRubyInterface::goOnline()
+QString TDriverRubyInterface::goOnline()
 {
     VALIDATE_THREAD_NOT;
+
+    QString errorMessage;
+
     qDebug() << FCFL << "entry in initstate" << initState;
+
     Q_ASSERT(isRunning()); // must only be called when thread is running
     QMutexLocker lock(syncMutex);
     if (initState == Closed) {
@@ -135,6 +139,7 @@ bool TDriverRubyInterface::goOnline()
         emit requestRubyConnection(counter);
         if (!msgCond->wait(syncMutex, 80*1000)) {
             qWarning() << "Request to starting ruby process failed unexpectedly!";
+            errorMessage = tr("Internal request to start TDriver interface failed!");
         }
     }
 
@@ -145,6 +150,7 @@ bool TDriverRubyInterface::goOnline()
             bool ok = handler->waitHello(5000);
             qDebug() << FCFL << "after waitHello:" << ok << handler->isHelloReceived();
             if (!handler->isHelloReceived()) {
+                errorMessage = tr("TDriver interface did not send valid hello message!");
                 qWarning() << "Ruby script tdriver_interface.rb did not say hello to us (initState" << initState << "), closing.";
                 requestClose();
             }
@@ -158,9 +164,15 @@ bool TDriverRubyInterface::goOnline()
             initState = Connected;
         }
     }
+    else {
+        errorMessage = tr("Could not bring TDriver interface to running state!");
+    }
 
     qDebug() << FCFL << "return in initstate" << initState << ", connected" << (initState == Connected);
-    return (initState == Connected);
+
+    if (initState == Connected) return QString(); // success
+    else if (errorMessage.isNull()) return tr("Unknown goOnline error!");
+    else return errorMessage;
 }
 
 
@@ -265,7 +277,7 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
         if (!QFile::exists( scriptFile )) {
             initErrorMsg = tr("Could not find Visualizer listener server file '%1'" ).arg(scriptFile);
             qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
-            emit error(errorTitle, initErrorMsg, "");
+            emit rbiError(errorTitle, initErrorMsg, "");
             ok = false;
         }
     }
@@ -277,21 +289,21 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
     if ( ok && !process->waitForStarted( 20000 ) ) {
         initErrorMsg = tr("Could not start Ruby script '%1'" ).arg(scriptFile);
         qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
-        emit error(errorTitle, initErrorMsg, "");
+        emit rbiError(errorTitle, initErrorMsg, "");
         ok = false;
     }
 
     if ( ok && !process->waitForReadyRead(40000)) {
         initErrorMsg = tr("Could not read startup parameters." );
         qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
-        emit error(errorTitle, initErrorMsg, "");
+        emit rbiError(errorTitle, initErrorMsg, "");
         ok = false;
     }
 
     if ( ok && !process->canReadLine()) {
         initErrorMsg = tr("Could not read full line of." );
         qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
-        emit error(errorTitle, initErrorMsg, "");
+        emit rbiError(errorTitle, initErrorMsg, "");
         ok = false;
     }
 
@@ -302,31 +314,42 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
 
         // Ruby string printed at script startup:
         // "TDriverVisualizerRubyInterface version #{tdriver_interface_rb_version} port #{server.addr[1]} tdriver #{tdriver_gem_version}"
+        int scriptVersion = 0;
         if (startupList.length() < 7 ||
-            startupList[0] != "TDriverVisualizerRubyInterface" ||
-            startupList[1] != "version" ||
-            startupList[2].toInt() == 0 ||
-            startupList[3] != "port" ||
-            startupList[4].toInt() == 0 ||
-            startupList[5] != "tdriver" ||
-            startupList[6].isEmpty())
+            startupList.at(0) != "TDriverVisualizerRubyInterface" ||
+            startupList.at(1) != "version" ||
+            (scriptVersion = startupList.at(2).toInt()) == 0 ||
+            startupList.at(3) != "port" ||
+            startupList.at(4).toInt() == 0 ||
+            startupList.at(5) != "tdriver" ||
+            startupList.at(6).isEmpty())
         {
             initErrorMsg = tr("Invalid first line '%1'.").arg(QString::fromLocal8Bit(startupLine));
             qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
-            emit error(errorTitle, initErrorMsg, tr("More ouput:\n") + process->readAllStandardOutput());
+            emit rbiError(errorTitle, initErrorMsg, process->readAllStandardOutput());
+            ok = false;
+        }
+        else if (REQUIRED_TDRIVER_INTERFACE_RB_VERSION != scriptVersion) {
+            initErrorMsg = tr("Script reported version %1, but %2 is required.\n"
+                              "Last Visualizer update may not have been fully successful.\n"
+                              "Please find and remove obsolete tdriver_interface.rb file and reinstall.")
+                    .arg(scriptVersion)
+                    .arg(REQUIRED_TDRIVER_INTERFACE_RB_VERSION);
+            qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
+            emit rbiError(errorTitle, initErrorMsg, process->readAllStandardOutput());
             ok = false;
         }
         else {
-            rbiVersion = startupList[2].toInt();
-            rbiPort = startupList[4].toInt();
-            rbiTDriverVersion = startupList[6];
+            rbiVersion = scriptVersion;
+            rbiPort = startupList.at(4).toInt();
+            rbiTDriverVersion = startupList.at(6);
         }
     }
 
-    if (ok && ((rbiPort < 1 || rbiPort > 65535) || rbiVersion != 1)) {
+    if (ok && ((rbiPort < 1 || rbiPort > 65535) || rbiVersion != REQUIRED_TDRIVER_INTERFACE_RB_VERSION)) {
         initErrorMsg = tr("Invalid values on first line: rbiPort %1, rbiVersion %2").arg(rbiPort).arg(rbiVersion);
         qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
-        emit error(errorTitle, initErrorMsg, tr("More ouput:\n") + process->readAllStandardOutput());
+        emit rbiError(errorTitle, initErrorMsg, process->readAllStandardOutput());
         ok = false;
     }
 
@@ -348,7 +371,7 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
         if (!conn->waitForConnected(30000)) {
             initErrorMsg = tr("Failed to connect to Ruby process via TCP/IP!");
             qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
-            emit error(errorTitle, initErrorMsg, "");
+            emit rbiError(errorTitle, initErrorMsg, "");
             ok = false;
         }
     }
@@ -482,8 +505,9 @@ quint32 TDriverRubyInterface::sendCmd( const QByteArray &name, const BAListMap &
 bool TDriverRubyInterface::executeCmd(const QByteArray &name, BAListMap &cmd_reply, unsigned long timeout, const QString &showCommand)
 {
     VALIDATE_THREAD_NOT;
-    if (!goOnline()) {
-        cmd_reply["error"] << "Could not connect to TDriver framework.";
+    QString goOnlineError;
+    if (!(goOnlineError = goOnline()).isNull()) {
+        cmd_reply["error"] << ("Could not connect to TDriver framework: "+goOnlineError.toAscii());
         return false;
     }
 

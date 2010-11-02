@@ -35,6 +35,8 @@ class LIBTDRIVERUTILSHARED_EXPORT TDriverRubyInterface : public QThread
 {
 Q_OBJECT
 public:
+    enum { REQUIRED_TDRIVER_INTERFACE_RB_VERSION=2};
+
     explicit TDriverRubyInterface();
     ~TDriverRubyInterface();
 
@@ -42,7 +44,7 @@ public:
     void requestClose();
     static TDriverRubyInterface *globalInstance();
 
-    bool goOnline();
+    QString goOnline(); // return Null string on success, error message on error
 
     bool executeCmd( const QByteArray &name, BAListMap &cmd_reply, unsigned long timeout, const QString &showCommand = QString());
     quint32 sendCmd( const QByteArray &name, const BAListMap &cmd);
@@ -57,7 +59,7 @@ protected:
     void run();
 
 signals:
-    void error(QString title, QString text, QString details);
+    void rbiError(QString title, QString text, QString details);
     void requestRubyConnection(int counter);
     void requestCloseSignal();
     void rubyProcessFinished();

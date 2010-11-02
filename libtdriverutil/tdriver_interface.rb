@@ -70,7 +70,12 @@ else
   @tdriver_gem_version = 'error'
 end
 
-@tdriver_interface_rb_version = '1'
+@tdriver_interface_rb_version = '2'
+# tdriver_interface_rb_version history
+# 1 : initial version
+# 2 : message name changes:
+#     'listener.rb emulation' -> 'visualization', 'ruby_interact.rb emulation' -> 'interaction'
+
 @server = TCPServer.new("127.0.0.1", 0)
 
 # stdout printout format defined by list below:
@@ -693,8 +698,8 @@ def @listener.main_loop (conn)
     $lg.debug this_method + " MSG #{seqNumIn} #{nameIn} : #{msgIn.inspect}"
 
     #listener.rb was old script, which had STDIN/STDOUT interface
-    if ((nameIn == 'visualization' or nameIn == 'listener.rb emulation') and 
-          msgIn.key?('input') and 
+    if ((nameIn == 'visualization') and
+          msgIn.key?('input') and
           not (input_array = msgIn['input']).empty?)
     then
       @listener_reply = Hash.new
@@ -834,7 +839,7 @@ def @listener.main_loop (conn)
       msgOut = @listener_reply
 
     #ruby_interact.rb was old script, which had STDIN/STDOUT interface
-    elsif ((nameIn == 'interaction' or nameIn == 'ruby_interact.rb emulation') and
+    elsif ((nameIn == 'interaction') and
               msgIn.key?('command') and
               not (inputcmd = msgIn['command']).empty?)
     then
