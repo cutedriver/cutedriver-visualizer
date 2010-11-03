@@ -86,7 +86,7 @@ bool VisualizerAccessor::execute(void * objectInstance, QString commandName, QHa
 
         if (!tabs) {
             resultString = (commandName + " error: invalid object @0x%1 class name '%2'")
-                    .arg(reinterpret_cast<uint>(objectInstance), 8, 16, QChar('0'))
+                    .arg(reinterpret_cast<ulong>(objectInstance), 8, 16, QChar('0'))
                     .arg(className);
         }
 

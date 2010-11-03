@@ -52,7 +52,7 @@ bool MainWindow::containsWords( QHash<QString, QString> itemData, QString text, 
 
 }
 
-bool MainWindow::attributeContainsWords( int itemPtr, QString text, bool caseSensitive, bool entireWords )
+bool MainWindow::attributeContainsWords( TestObjectKey itemPtr, QString text, bool caseSensitive, bool entireWords )
 {
     bool result = false;
 
@@ -183,7 +183,7 @@ bool MainWindow::compareTreeItem(QTreeWidgetItem *item, const QString &findStrin
 {
     if (!item) return false;
 
-    int itemIndex = (int)item;
+    TestObjectKey itemIndex = (TestObjectKey)item;
     Q_ASSERT(objectTreeData.contains( itemIndex) );
 
     // check values in itemData

@@ -490,7 +490,7 @@ void MainWindow::appSelected() {
                 menuActions.at( i )->setChecked( false );
             }
 
-            QString processId = applicationsProcessIdMap.value( ( int )( action ) );
+            QString processId = applicationsProcessIdMap.value( (ProcessKey)( action ) );
             currentApplication.clear();
             currentApplication.insert( "name", applicationsHash.value( processId ) );
             currentApplication.insert( "id",   processId );

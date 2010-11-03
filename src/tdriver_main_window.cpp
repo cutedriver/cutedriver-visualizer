@@ -251,7 +251,7 @@ bool MainWindow::setup()
     // object tree
     collapsedObjectTreeItemPtr = 0;
     expandedObjectTreeItemPtr = 0;
-    lastHighlightedObjectPtr = -1;
+    lastHighlightedObjectPtr = 0;
 
     // clear application process id list, used when selecting application from menu
     applicationsProcessIdMap.clear();

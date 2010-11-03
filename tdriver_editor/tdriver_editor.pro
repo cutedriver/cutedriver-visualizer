@@ -39,7 +39,8 @@ LIBS += -l$$EDITOR_LIB
 QT += network
 
 # Input
-HEADERS += ../inc/assistant.h
+HEADERS += ../inc/assistant.h \
+    ../inc/tdriver_main_types.h
 HEADERS += ../inc/tdriver_behaviour.h
 HEADERS += ../inc/tdriver_image_view.h
 HEADERS += ../inc/tdriver_main_window.h

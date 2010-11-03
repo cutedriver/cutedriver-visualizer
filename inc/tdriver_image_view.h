@@ -32,6 +32,8 @@
 //#include <QWaitCondition>
 #include <QPointF>
 
+#include "tdriver_main_types.h"
+
 class MainWindow;
 
 class TDriverImageView : public QFrame
@@ -86,9 +88,9 @@ signals:
     void imageInsertObjectAtClick();
     void imageInsertCoordsAtClick();
 
-    void imageTapById(int id);
-    void imageInspectById(int id);
-    void imageInsertObjectById(int id);
+    void imageTapById(TestObjectKey id);
+    void imageInspectById(TestObjectKey id);
+    void imageInsertObjectById(TestObjectKey id);
 
     void insertToCodeEditor(QString text, bool prependParent, bool prependDot);
 

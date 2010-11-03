@@ -34,9 +34,9 @@ void MainWindow::connectImageWidgetSignals() {
     connect( imageWidget, SIGNAL( imageInsertCoordsAtClick()), this, SLOT( imageInsertCoords() ) );
     connect( imageWidget, SIGNAL( imageInsertObjectAtClick()), this, SLOT( imageInsertFindItem() ) );
 
-    connect( imageWidget, SIGNAL( imageInsertObjectById(int)), this, SLOT(imageInsertObjectFromId(int)));
-    connect( imageWidget, SIGNAL( imageInspectById(int)), this, SLOT(imageInspectFromId(int)));
-    connect( imageWidget, SIGNAL( imageTapById(int)), this, SLOT(imageTapFromId(int)));
+    connect( imageWidget, SIGNAL( imageInsertObjectById(TestObjectKey)), this, SLOT(imageInsertObjectFromId(TestObjectKey)));
+    connect( imageWidget, SIGNAL( imageInspectById(TestObjectKey)), this, SLOT(imageInspectFromId(TestObjectKey)));
+    connect( imageWidget, SIGNAL( imageTapById(TestObjectKey)), this, SLOT(imageTapFromId(TestObjectKey)));
 }
 
 
@@ -103,21 +103,21 @@ void MainWindow::imageInsertCoords()
 }
 
 
-void MainWindow::imageInsertObjectFromId(int id)
+void MainWindow::imageInsertObjectFromId(TestObjectKey id)
 {
     qDebug() << __FUNCTION__ << id;
     highlightById(id, true, "");
 }
 
 
-void MainWindow::imageInspectFromId(int id)
+void MainWindow::imageInspectFromId(TestObjectKey id)
 {
     qDebug() << __FUNCTION__ << id;
     highlightById(id, true);
 }
 
 
-void MainWindow::imageTapFromId(int id)
+void MainWindow::imageTapFromId(TestObjectKey id)
 {
     qDebug() << __FUNCTION__ << id;
 
@@ -127,7 +127,7 @@ void MainWindow::imageTapFromId(int id)
         highlightById( id, true );
     }
     else {
-        QMessageBox::critical( 0, "Tap to screen", "No object found with id " + QString::number( id));
+        QMessageBox::critical( 0, "Tap to screen", "No object found with id " + testObjectKey2Str(id));
     }
 }
 
@@ -174,7 +174,7 @@ void MainWindow::clickedImage()
 }
 
 
-void MainWindow::drawHighlight( int itemPtr ) {
+void MainWindow::drawHighlight( TestObjectKey itemPtr ) {
 
     //qDebug() << "drawHighlight";
 
@@ -254,7 +254,7 @@ bool MainWindow::geometryContains( QString geometry, int x, int y ) {
 
 }
 
-bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<int> & matchingObjects ) {
+bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey> & matchingObjects ) {
 
     //qDebug() << "collectMatchingVisibleObjects";
 
@@ -262,7 +262,7 @@ bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<int> & matchin
 
     matchingObjects.clear();
 
-    QList<int>::const_iterator visibleObject;
+    QList<TestObjectKey>::const_iterator visibleObject;
 
     for ( visibleObject = visibleObjectsList.constBegin(); visibleObject != visibleObjectsList.constEnd(); ++visibleObject ) {
 
@@ -271,7 +271,7 @@ bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<int> & matchin
         if ( !geometries.isEmpty() ) {
 
             if ( geometryContains ( geometries.at( 0 ), pos.x(), pos.y() ) ) {
-                matchingObjects << int( *visibleObject );
+                matchingObjects << (TestObjectKey)( *visibleObject );
                 result = true;
             }
 
@@ -307,15 +307,15 @@ int MainWindow::geometrySize( QString geometry ) {
 
 }
 
-bool MainWindow::getSmallestObjectFromMatches( QList<int> *matchingObjects, int & objectPtr ) {
+bool MainWindow::getSmallestObjectFromMatches( QList<TestObjectKey> *matchingObjects, TestObjectKey & objectPtr ) {
 
     //qDebug() << "getSmallestObjectFromMatches";
 
     bool result = false;
     int smallestObjectSize = -1;
-    int smallestObjectPtr = -1;
+    TestObjectKey smallestObjectPtr = 0;
 
-    QList<int>::const_iterator matchingObject;
+    QList<TestObjectKey>::const_iterator matchingObject;
     for ( matchingObject = matchingObjects->constBegin(); matchingObject != matchingObjects->constEnd(); ++matchingObject ) {
 
         QStringList geometries = geometriesMap.value( *matchingObject );
@@ -325,8 +325,8 @@ bool MainWindow::getSmallestObjectFromMatches( QList<int> *matchingObjects, int 
             // calculate size of object in pixels
             int matchingObjectSize = geometrySize( geometries.at( 0 ) );
 
-            if ( ( smallestObjectPtr == -1 || matchingObjectSize < smallestObjectSize ) && matchingObjectSize > 0 ) {
-                smallestObjectPtr = int( *matchingObject );
+            if ( ( smallestObjectPtr == 0 || matchingObjectSize < smallestObjectSize ) && matchingObjectSize > 0 ) {
+                smallestObjectPtr = *matchingObject;
                 smallestObjectSize = matchingObjectSize;
                 result = true;
             }
@@ -338,14 +338,14 @@ bool MainWindow::getSmallestObjectFromMatches( QList<int> *matchingObjects, int 
 }
 
 
-bool MainWindow::highlightById( int id, bool selectItem, QString insertMethodToEditor )
+bool MainWindow::highlightById( TestObjectKey id, bool selectItem, QString insertMethodToEditor )
 {
     QTreeWidgetItem *item = objectTreeMap.value( id );
     if (item == NULL) {
         return false;
     }
     else {
-        drawHighlight( ( int )( item ) );
+        drawHighlight( ( TestObjectKey )( item ) );
 
         // select item from object tree if selectItem is true
         if ( selectItem ) {
@@ -367,13 +367,13 @@ bool MainWindow::highlightAtCoords( QPoint pos, bool selectItem, QString insertM
 
     bool result = false;
 
-    QList<int> matchingObjects;
+    QList<TestObjectKey> matchingObjects;
 
     if ( collectMatchingVisibleObjects( pos, matchingObjects ) ) {
 
         qSort( matchingObjects.begin(), matchingObjects.end() );
 
-        int matchingObject = -1;
+        TestObjectKey matchingObject = 0;
 
         if ( getSmallestObjectFromMatches( &matchingObjects, matchingObject ) ) {
 

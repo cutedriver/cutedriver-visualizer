@@ -36,8 +36,8 @@ bool MainWindow::updateBehaviourXml()
     QTreeWidgetItem *node = root;
 
     while ( (node = findDialogSubtreeNext(node, root)) ) {
-        Q_ASSERT(objectTreeData.contains((int)node ));
-        QHash<QString, QString> objectTreeItemData = objectTreeData.value( (int)node);
+        Q_ASSERT(objectTreeData.contains(( TestObjectKey )node ));
+        QHash<QString, QString> objectTreeItemData = objectTreeData.value( ( TestObjectKey )node);
         QString objectType = objectTreeItemData.value( "type" );
 
         if ( !objectTypes.contains( objectType ) && !behavioursMap.contains( objectType ) ) {
@@ -192,7 +192,7 @@ void MainWindow::updateApplicationsList() {
     appAction->setCheckable( true );
 
     appAction->setShortcut( QKeySequence( "ALT+" + QString::number( 0 ) ) );
-    applicationsProcessIdMap.insert( ( int )( appAction ), "0" );
+    applicationsProcessIdMap.insert( (ProcessKey)(appAction), "0" );
     connect( appAction, SIGNAL( triggered() ), this, SLOT( appSelected() ) );
     appsMenu->addAction( appAction );
 
@@ -226,7 +226,7 @@ void MainWindow::updateApplicationsList() {
 
         }
 
-        applicationsProcessIdMap.insert( ( int )( appAction ), iterator.key() );
+        applicationsProcessIdMap.insert( (ProcessKey)(appAction), iterator.key() );
 
         connect( appAction, SIGNAL( triggered() ), this, SLOT( appSelected() ) );
         appsMenu->addAction( appAction );

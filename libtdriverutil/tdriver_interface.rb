@@ -78,33 +78,40 @@ end
 
 @server = TCPServer.new("127.0.0.1", 0)
 
-# stdout printout format defined by list below:
-# entries must be in that order, separated by whitespace
-# first line is to be split by whitespaces, after which string list indexes are:
-# 0: "TDriverVisualizerRubyInterface"
-# 1: "version"
-# 2: version number of script interface, to be changed with incompatible changes
-# 3: "port"
-# 4: port on localhost where script listens for client connection
-# 5: "tdriver"
-# 6: version string if tdriver required ok, "error" otherwise, with error dump starting from second line
-hellolist = [
-  'TDriverVisualizerRubyInterface',
-  'version', @tdriver_interface_rb_version.to_s, # protocol version, increase for incompatible changes
-  'port', @server.addr[1].to_s, # port on localhost where script listens for client connection
-  'tdriver', @tdriver_gem_version.to_s ] # tdriver version string, or "error" if require tdriver failed
-hellostring = hellolist.join(' ')
-STDOUT.puts hellostring
+def puts_hello
+  # stdout printout format defined by list below:
+  # entries must be in that order, separated by whitespace
+  # first line is to be split by whitespaces, after which string list indexes are:
+  # 0: "TDriverVisualizerRubyInterface"
+  # 1: "version"
+  # 2: version number of script interface, to be changed with incompatible changes
+  # 3: "port"
+  # 4: port on localhost where script listens for client connection
+  # 5: "tdriver"
+  # 6: version string if tdriver required ok, "error" otherwise, with error dump starting from second line
+  hellolist = [
+    'TDriverVisualizerRubyInterface',
+    'version', @tdriver_interface_rb_version.to_s, # protocol version, increase for incompatible changes
+    'port', @server.addr[1].to_s, # port on localhost where script listens for client connection
+    'tdriver', @tdriver_gem_version.to_s ] # tdriver version string, or "error" if require tdriver failed
+  hellostring = hellolist.join(' ')
+  STDOUT.puts hellostring
 
-if @tdriver_gem_version == 'error' or not @tdriver_require_error.empty?
-  $lg.fatal hellostring
-  $lg.fatal @tdriver_require_error
-  STDOUT.puts
-  exit 1
+  if @tdriver_gem_version == 'error' or not @tdriver_require_error.empty?
+
+    $lg.fatal hellostring
+    $lg.fatal @tdriver_require_error
+    STDOUT.puts
+    return false
+
+  else
+
+    $lg.info hellostring
+    STDOUT.flush
+    return true
+
+  end
 end
-
-$lg.info hellostring
-STDOUT.flush
 
 
 ############################################################################
@@ -870,7 +877,7 @@ end # def listener_main_loop
 # main program
 ############################################################################
 
-
+puts_hello
 benchtime = Benchmark.measure {
   begin
     $lg.debug "calling server accept"
