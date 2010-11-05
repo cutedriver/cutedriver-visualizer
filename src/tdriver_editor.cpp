@@ -68,7 +68,12 @@ int main(int argc, char *argv[])
 {
 
     QApplication app(argc, argv);
-    out = new QFile ( QString( QApplication::applicationDirPath() ) + "/tdriver_visualizer.log" );
+    out = new QFile(QDir::tempPath() + "/tdriver_visualizer_main.log" );
+
+    // ignore errors in remove and rename
+    QFile::remove(out->fileName()+".1");
+    QFile::rename(out->fileName(), out->fileName()+".1");
+
     out->open( QIODevice::WriteOnly | QIODevice::Text );
     qInstallMsgHandler(output);
 
