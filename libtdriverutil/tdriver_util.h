@@ -32,6 +32,7 @@ Q_OBJECT
 public:
     explicit TDriverUtil(QObject *parent = 0);
 
+    static QString helpUrlString(const char *file);
     static QString tdriverHelperFilePath(const QString &filename, const QString &overrideEnvVar=QString());
     static QString smartJoin(const QString &str1, QChar sep, const QString &str2 = QString());
 

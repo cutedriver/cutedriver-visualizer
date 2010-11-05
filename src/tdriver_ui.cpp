@@ -58,30 +58,21 @@ void MainWindow::showAboutVisualizer() {
 //    Shows the Visualizer help page.
 void MainWindow::showVisualizerHelp()
 {
-
     //showContextVisualizerAssistant("howto-visualizer.html");
-
     //QUrl helpUrl("https://cwiki.nokia.com/Testability/TDriverVisualizer");
-    //QDesktopServices::openUrl(helpUrl);
-    QString pagePath;
-    pagePath=QApplication::applicationDirPath();
-    pagePath += "/help/howto-use-visualizer.html";
-    QUrl helpUrl(pagePath);
-    QDesktopServices::openUrl(helpUrl);
 
+    QUrl helpUrl(TDriverUtil::helpUrlString("/howto-use-visualizer.html"));
+    QDesktopServices::openUrl(helpUrl);
 }
 
 //    Shows the main TDriver Visualizer help page.
 void MainWindow::showMainVisualizerAssistant()
 {
-    QString pagePath;
-    pagePath=QApplication::applicationDirPath();
-    pagePath += "/help/index.html";
-    QUrl helpUrl(pagePath);
+    QUrl helpUrl(TDriverUtil::helpUrlString("index.html"));
     QDesktopServices::openUrl(helpUrl);
 }
 
-//    Shows the defined help page using Assistant.
+//    Shows the defined help page
 void MainWindow::showContextVisualizerAssistant(const QString& page)
 {
 
@@ -94,9 +85,7 @@ void MainWindow::showContextVisualizerAssistant(const QString& page)
     //helpProc->setEnvironment( QProcess::systemEnvironment());
     //helpProc->start("cmd.exe", argList);
 
-    QString pagePath(QDir::currentPath());
-    pagePath += "/help/index.html";
-    QUrl helpUrl(pagePath);
+    QUrl helpUrl(TDriverUtil::helpUrlString("index.html"));
     QDesktopServices::openUrl(helpUrl);
 
 }

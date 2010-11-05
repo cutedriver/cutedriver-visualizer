@@ -163,7 +163,6 @@ private:
     bool offlineMode;
 
     TDriverRecorder *mRecorder;
-    //Assistant *tdriverAssistant;
 
     QSettings *applicationSettings;
     QString outputPath;
