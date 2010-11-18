@@ -160,16 +160,13 @@ void MainWindow::createViewMenu() {
     viewMenu->setObjectName("main view");
     // dockable widget menu
 
-    viewMenuDockWidgets = new QMenu( "&Dockable widgets", viewMenu );
-    viewMenuDockWidgets->setObjectName("main view dockwidgets");
-
     // dockable widget menu: clipboard
 
     viewClipboard = new QAction( this );
     viewClipboard->setObjectName("main toggle clipboard");
     viewClipboard->setText( "&Clipboard" );
     viewClipboard->setCheckable( true );
-    viewMenuDockWidgets->addAction( viewClipboard );
+    viewMenu->addAction( viewClipboard );
 
     // dockable widget menu: view images
 
@@ -177,7 +174,7 @@ void MainWindow::createViewMenu() {
     viewImage->setObjectName("main toggle imageview");
     viewImage->setText( tr( "&Image" ) );
     viewImage->setCheckable( true );
-    viewMenuDockWidgets->addAction( viewImage );
+    viewMenu->addAction( viewImage );
 
     // dockable widget menu: properties view
 
@@ -186,7 +183,7 @@ void MainWindow::createViewMenu() {
     viewProperties->setText( tr( "&Properties" ) );
     viewProperties->setEnabled( false );
     viewProperties->setCheckable( true );
-    viewMenuDockWidgets->addAction( viewProperties );
+    viewMenu->addAction( viewProperties );
     viewProperties->setVisible( false );
 
     // dockable widget menu: shortcuts
@@ -195,7 +192,7 @@ void MainWindow::createViewMenu() {
     viewShortcuts->setObjectName("main toggle shortcuts");
     viewShortcuts->setText( tr( "&Shortcuts" ) );
     viewShortcuts->setCheckable( true );
-    viewMenuDockWidgets->addAction( viewShortcuts );
+    viewMenu->addAction( viewShortcuts );
 
     // dockable widget menu: editor
 
@@ -203,7 +200,7 @@ void MainWindow::createViewMenu() {
     viewEditor->setObjectName("main toggle editor");
     viewEditor->setText( tr( "Code &Editor" ) );
     viewEditor->setCheckable( true );
-    viewMenuDockWidgets->addAction( viewEditor );
+    viewMenu->addAction( viewEditor );
 
 
     // dockable widget menu: (s60) navigation buttons
@@ -212,15 +209,11 @@ void MainWindow::createViewMenu() {
     viewButtons->setObjectName("main toggle navigationbuttons");
     viewButtons->setText( tr( "&Navigation buttons" ) );
     viewButtons->setCheckable( true );
-    viewMenuDockWidgets->addAction( viewButtons );
+    viewMenu->addAction( viewButtons );
 
-    viewMenu->addMenu( viewMenuDockWidgets );
-    viewMenu->actions().last()->setObjectName("main view widgets");
+    viewMenu->addSeparator();
 
     // object tree menu:
-
-    viewMenuObjectTree = new QMenu( "&Object tree", viewMenu );
-    viewMenuObjectTree->setObjectName("main view tree");
 
     // object tree menu: expand all
 
@@ -229,7 +222,7 @@ void MainWindow::createViewMenu() {
     viewExpandAll->setText( "&Expand all" );
     viewExpandAll->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_Right ) );
     viewExpandAll->setCheckable( false );
-    viewMenuObjectTree->addAction( viewExpandAll );
+    viewMenu->addAction( viewExpandAll );
 
     // object tree menu: collapse all
 
@@ -238,10 +231,7 @@ void MainWindow::createViewMenu() {
     viewCollapseAll->setText( "&Collapse all" );
     viewCollapseAll->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_Left ) );
     viewCollapseAll->setCheckable( false );
-    viewMenuObjectTree->addAction( viewCollapseAll );
-
-    viewMenu->addMenu( viewMenuObjectTree );
-    viewMenu->actions().last()->setObjectName("main view tree");
+    viewMenu->addAction( viewCollapseAll );
 
     viewMenu->addSeparator();
 

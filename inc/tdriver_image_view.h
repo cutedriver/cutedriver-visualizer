@@ -102,6 +102,7 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent *);
     virtual void mouseMoveEvent(QMouseEvent *);
     virtual void contextMenuEvent(QContextMenuEvent *);
+    virtual void resizeEvent(QResizeEvent *);
 
 private slots:
     void hoverTimeout();

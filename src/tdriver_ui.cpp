@@ -24,7 +24,8 @@
 
 #include "../common/version.h"
 
-#include <tdriver_tabbededitor.h>
+#include "flowlayout.h"
+#include "tdriver_tabbededitor.h"
 
 #include <QUrl>
 
@@ -92,9 +93,7 @@ void MainWindow::showContextVisualizerAssistant(const QString& page)
 
 void MainWindow::createUi()
 {
-
-    createGridLayout();
-
+    setDockOptions(AnimatedDocks|AllowNestedDocks);
     createImageViewDockWidget();
     createTreeViewDockWidget();
     createPropertiesDockWidget();
@@ -106,11 +105,9 @@ void MainWindow::createUi()
     createTopMenuBar();
 
     // layout of main window: add objecttree to central and set it, add menubar as menu
-    gridLayout->addWidget( objectTree );
     statusBar()->setObjectName("main");
     setCentralWidget( objectTree );
     setMenuBar( menubar );
-    gridLayoutWidget->setLayout( gridLayout );
 
     updateWindowTitle();
 
@@ -121,18 +118,6 @@ void MainWindow::createUi()
 
     createFindDialogShortcuts();
 }
-
-// create it as a gridLayOutWidget
-void MainWindow::createGridLayout()
-{
-    gridLayoutWidget = new QWidget( this );
-    gridLayoutWidget->setObjectName("main tree");
-
-    gridLayout = new QVBoxLayout( gridLayoutWidget );
-    gridLayout->setObjectName("main tree");
-}
-
-
 
 
 void MainWindow::updateWindowTitle() {
@@ -245,7 +230,7 @@ void MainWindow::changeImageLeftClick(int index) {
 void MainWindow::createTreeViewDockWidget()
 {
 
-    objectTree = new QTreeWidget( gridLayoutWidget );
+    objectTree = new QTreeWidget();
     objectTree->setObjectName("tree");
 
     //    objectTree->header()->setStretchLastSection(false);
@@ -275,12 +260,11 @@ void MainWindow::createPropertiesDockWidget() {
     propertiesDock = new QDockWidget(tr(" Properties "), this);
     propertiesDock->setObjectName("properties");
 
-    propertiesDock->setFeatures( QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable );
+    propertiesDock->setFeatures( DOCK_FEATURES_DEFAULT );
 
     //propertiesDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    propertiesDock->setAllowedAreas(Qt::RightDockWidgetArea);
 
-    tabWidget = new QTabWidget(gridLayoutWidget);
+    tabWidget = new QTabWidget();
     tabWidget->setObjectName("properties");
 
     createPropertiesDockWidgetPropertiesTabWidget();
@@ -410,8 +394,8 @@ void MainWindow::createImageViewDockWidget()
     imageViewDock = new QDockWidget( tr(" Image View "), this );
     imageViewDock->setObjectName("imageview");
 
-    imageViewDock->setFeatures( QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable );
-    imageViewDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
+    imageViewDock->setFeatures( DOCK_FEATURES_DEFAULT );
+    //imageViewDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
 
     QGroupBox * imageViewBox = new QGroupBox();
     imageViewBox->setObjectName("imageview");
@@ -434,29 +418,35 @@ void MainWindow::createImageViewDockWidget()
     //    imageScrollArea->setHorizontalScrollBarPolicy( Qt::ScrollBarAsNeeded );
     //    layout->addWidget( imageScrollArea );
 
-    layout->addWidget( imageWidget );
+    layout->addWidget( imageWidget, 1);
 
     // image
     {
-        QHBoxLayout *subLayout = new QHBoxLayout();
+        QWidget *container = new QWidget();
+        FlowLayout *subLayout = new FlowLayout();
 
         checkBoxResize = new QCheckBox( tr( "Resi&ze image " ), this );
         checkBoxResize->setObjectName("imageview resize");
         checkBoxResize->show();
-        subLayout->addWidget(checkBoxResize, 0, Qt::AlignLeft);
-
-        subLayout->addWidget(new QLabel(tr("Left Click Action:")), 0, Qt::AlignRight);
+        subLayout->addWidget(checkBoxResize);
+        //subLayout->addWidget(checkBoxResize, 0, Qt::AlignLeft);
+        subLayout->addWidget(new QLabel(tr("Left Click Action:")));
+        //subLayout->addWidget(new QLabel(tr("Left Click Action:")), 0, Qt::AlignRight);
 
         imageLeftClickChooser = new QComboBox();
+        imageLeftClickChooser->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         imageLeftClickChooser->addItem(tr("Inspect (no hover)"), TDriverImageView::VISUALIZER_INSPECT);
         imageLeftClickChooser->addItem(tr("Send tap to SUT"), TDriverImageView::SUT_DEFAULT_TAP);
         imageLeftClickChooser->setCurrentIndex(1);
-        imageLeftClickChooser->addItem(tr("Insert coordinates to Code Editor"), TDriverImageView::ED_COORD_INSERT);
+        imageLeftClickChooser->addItem(tr("Insert coords to Code Editor"), TDriverImageView::ED_COORD_INSERT);
         imageLeftClickChooser->addItem(tr("Insert tap to Code Editor"), TDriverImageView::ED_TESTOBJ_INSERT);
 
-        subLayout->addWidget(imageLeftClickChooser, 0, Qt::AlignLeft);
+        //subLayout->addWidget(imageLeftClickChooser, 0, Qt::AlignLeft);
+        subLayout->addWidget(imageLeftClickChooser);
 
-        layout->addLayout(subLayout);
+
+        container->setLayout(subLayout);
+        layout->addWidget(container);
     }
 
 

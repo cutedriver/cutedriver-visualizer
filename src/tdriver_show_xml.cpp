@@ -21,6 +21,8 @@
 
 #include "tdriver_main_window.h"
 
+#include <QGridLayout>
+
 void MainWindow::showXMLDialog() {
 
     sourceEdit->setPlainText( xmlDocument.toString() );
@@ -47,7 +49,6 @@ void MainWindow::createXMLFileDataWindow() {
     xmlView->setWindowTitle( "TDriver Visualizer XML" );
 
     QVBoxLayout *layout = new QVBoxLayout( xmlView );
-    //QGridLayout *layout = new QGridLayout( xmlView );
     layout->setObjectName("xmlview");
 
     QGroupBox *xmlBox = new QGroupBox( xmlView );

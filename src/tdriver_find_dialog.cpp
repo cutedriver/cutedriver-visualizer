@@ -22,6 +22,7 @@
 #include "tdriver_main_window.h"
 #include <tdriver_debug_macros.h>
 
+#include <QGridLayout>
 #include <QShortcut>
 
 bool MainWindow::containsWords( QHash<QString, QString> itemData, QString text, bool caseSensitive, bool entireWords ) {

@@ -25,6 +25,7 @@
 #include <QtGui/QTextBlock>
 #include <QtGui/QProgressDialog>
 #include <QtGui/QMessageBox>
+#include <QtGui/QGridLayout>
 
 #include "tdriver_recorder.h"
 

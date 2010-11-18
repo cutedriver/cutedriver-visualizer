@@ -28,7 +28,7 @@ void MainWindow::createKeyboardCommands() {
 
     keyboardCommandsDock = new QDockWidget( tr( " keyboardCommandsDock commands " ), this);
     keyboardCommandsDock->setObjectName("kbcommands");
-    keyboardCommandsDock->setAllowedAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
+    //keyboardCommandsDock->setAllowedAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
 
     QGroupBox * horizontalBottomButtonGroupBox2 = new QGroupBox();
     horizontalBottomButtonGroupBox2->setObjectName("kbcommands");
@@ -41,7 +41,7 @@ void MainWindow::createKeyboardCommands() {
 
     for (int i = 0; i < allowCommands.size() ; ++i)
     {
-        deviceActionButtons[i] = new QPushButton(gridLayoutWidget);
+        deviceActionButtons[i] = new QPushButton();
         deviceActionButtons[i]->setObjectName("kbcommands "+allowCommands.at(i));
         // TODO: commented code on next line may be unnecessary, remove when confirmed
         deviceActionButtons[i]->setText(allowCommands.at(i)/*.toLocal8Bit().constData()*/);

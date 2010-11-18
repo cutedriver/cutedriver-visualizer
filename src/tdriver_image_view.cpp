@@ -394,6 +394,13 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
 }
 
 
+void TDriverImageView::resizeEvent(QResizeEvent *ev)
+{
+    updatePixmap = true;
+    update();
+}
+
+
 // Function called when hover timer times out. If same global positions then emit signal to mainWindow
 void TDriverImageView::hoverTimeout()
 {

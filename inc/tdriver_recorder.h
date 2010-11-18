@@ -26,7 +26,6 @@
 
 #include <QtGui/QDialog>
 #include <QtGui/QTextEdit>
-#include <QtGui/QGridLayout>
 #include <QtGui/QPushButton>
 #include <QtGui/QStatusBar>
 

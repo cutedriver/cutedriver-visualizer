@@ -327,6 +327,7 @@ bool MainWindow::setup()
     connectSignals();
 
     // xml/screen capture output path depending on OS
+    outputPath = QDir::tempPath();
 #if (defined(Q_OS_WIN32))
     outputPath = QString( getenv( "TEMP" ) ) + "/";
 #else
