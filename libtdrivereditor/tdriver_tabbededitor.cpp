@@ -763,7 +763,7 @@ bool TDriverTabbedEditor::syntaxCheck()
     args << "-cw" << editor->fileName();
     if (!execDialog.isNull() && execDialog.data()->autoClose()) execDialog->close();
 
-    execDialog = new TDriverExecuteDialog::TDriverExecuteDialog("ruby", args, this);
+    execDialog = new TDriverExecuteDialog("ruby", args, this);
     execDialog->setAttribute(Qt::WA_DeleteOnClose, true);
     connect(execDialog, SIGNAL(anchorClicked(QUrl)), this, SLOT(gotoLine(QUrl)));
     execDialog->show();
