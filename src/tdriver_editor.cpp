@@ -23,44 +23,44 @@
 
 #include <tdriver_util.h>
 
-QFile *out;
+#include <QDateTime>
 
-void output(QtMsgType type, const char *msg)
+static QFile *debugOutFile;
+
+static void output(QtMsgType type, const char *msg)
 {
+    if (msg == NULL || *msg == 0) return;
 
-    QString message( msg );
+    // ?? if (message.contains("Event type")) return;
 
-    if ( message.length() <= 0 ) { return; }
-
-    if ( message.contains( "Event type" ) ) { return; }
-
-    out->write("Visualizer<>");
+    QByteArray msgBuf;
+    msgBuf.reserve(strlen(msg)+20);
 
     switch ( type ) {
 
         case QtDebugMsg:
-            out->write("Debug: ");
+            msgBuf.append("Debug: ");
             break;
 
         case QtWarningMsg:
-            out->write("Warning: ");
+            msgBuf.append("Warning: ");
             break;
 
         case QtCriticalMsg:
-            out->write("Critical: ");
+            msgBuf.append("Critical: ");
             break;
 
         case QtFatalMsg:
-            out->write("Fatal: ");
+            msgBuf.append("Fatal: ");
             break;
-
     }
 
-    out->write( msg );
-    out->write( "\n" );
+    msgBuf.append( msg );
+    if (!msgBuf.endsWith('\n'))
+        msgBuf.append('\n');
 
-    out->flush();
-
+    debugOutFile->write(msgBuf);
+    debugOutFile->flush();
 }
 
 
@@ -68,14 +68,15 @@ int main(int argc, char *argv[])
 {
 
     QApplication app(argc, argv);
-    out = new QFile(QDir::tempPath() + "/tdriver_visualizer_main.log" );
+    debugOutFile = new QFile(QDir::tempPath() + "/tdriver_visualizer_main.log" );
 
     // ignore errors in remove and rename
-    QFile::remove(out->fileName()+".1");
-    QFile::rename(out->fileName(), out->fileName()+".1");
+    QFile::remove(debugOutFile->fileName()+".1");
+    QFile::rename(debugOutFile->fileName(), debugOutFile->fileName()+".1");
 
-    out->open( QIODevice::WriteOnly | QIODevice::Text );
+    debugOutFile->open( QIODevice::WriteOnly | QIODevice::Text );
     qInstallMsgHandler(output);
+    qDebug(qPrintable("Log opened: " + QDateTime::currentDateTime().toString()));
 
     qRegisterMetaType<BAList>("BAList");
     qRegisterMetaType<BAListMap>("BAListMap");

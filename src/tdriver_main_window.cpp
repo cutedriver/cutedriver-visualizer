@@ -71,7 +71,7 @@ void MainWindow::tdriverMsgSetTitleText()
     tdriverMsgBox->setWindowTitle(tr("TDriver Notification %1/%2").
                                   arg(qMin(tdriverMsgShown, tdriverMsgTotal)).
                                   arg(tdriverMsgTotal));
-    qDebug() << FCFL << "set tdriverMsgBox title to" << tdriverMsgBox->windowTitle();
+    //qDebug() << FCFL << "set tdriverMsgBox title to" << tdriverMsgBox->windowTitle();
 }
 
 
@@ -765,17 +765,6 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
 
     if ( !result && !(resultEnum & SILENT) ) {
         tdriverMsgAppend(fullError);
-#if 0
-        QMessageBox msgBox(this);
-        msgBox.setSizeGripEnabled(true); // wont work...
-        msgBox.setWindowFlags(Qt::Window); // wont work...
-        msgBox.setIcon( QMessageBox::Critical );
-        msgBox.setWindowTitle( "Error" );
-        msgBox.setText( clearError + "\n\n" + shortError );
-        if (!fullError.isEmpty()) msgBox.setDetailedText(fullError);
-        msgBox.setStandardButtons( QMessageBox::Ok );
-        msgBox.exec();
-#endif
     }
 
     return result;

@@ -33,9 +33,6 @@ void MainWindow::createShortcuts() {
     shortcutsDock->setFeatures( DOCK_FEATURES_DEFAULT );
     //shortcutsDock->setAllowedAreas( Qt::BottomDockWidgetArea );
 
-    int i=5;
-    i=6;
-
     horizontalBottomButtonGroupBox = new QGroupBox();
     horizontalBottomButtonGroupBox->setObjectName("shortcuts");
 

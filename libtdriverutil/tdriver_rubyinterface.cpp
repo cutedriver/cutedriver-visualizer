@@ -226,10 +226,11 @@ void TDriverRubyInterface::resetProcess()
     initState = Closed;
 }
 
+
 void TDriverRubyInterface::recreateProcess()
 {
+    qDebug() << FCFL << "ENTRY";
     VALIDATE_THREAD;
-    qDebug() << FCFL;
     // reset or create QProcess instance
     if (process) {
         initState = Closing;
@@ -237,7 +238,6 @@ void TDriverRubyInterface::recreateProcess()
         Q_ASSERT(initState == Closed);
     }
     else {
-        qDebug() << FCFL;
         process = new QProcess(this);
 
         // set RUBYOPT env. setting if system doesn't have it already
@@ -249,17 +249,15 @@ void TDriverRubyInterface::recreateProcess()
     Q_ASSERT(process && process->state() == QProcess::NotRunning && process->bytesAvailable() == 0);
 
     // (re)connect signals
-    qDebug() << FCFL;
-
     connect(process, SIGNAL(finished(int,QProcess::ExitStatus)), this, SIGNAL(rubyProcessFinished()));
-    qDebug() << FCFL;
+    qDebug() << FCFL << "EXIT";
 }
 
 
 void TDriverRubyInterface::resetRubyConnection(int counter)
 {
     VALIDATE_THREAD;
-    qDebug() << FCFL << "#" << counter;
+    qDebug() << FCFL << "with counter value" << counter;
 
     QMutexLocker lock(syncMutex);
     recreateConn();
