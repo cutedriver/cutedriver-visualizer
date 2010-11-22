@@ -274,22 +274,30 @@ end
 ############################################################################
 
 
-#class TDriver
-#  class << self
-#    alias __original_connect_sut__ connect_sut
-#  end
-#  def self.connect_sut( sut_attributes = {} )
-#    $lg.info "Setting timeout to 0 for #{sut_attributes[ :Id ].to_sym}"
-#    begin
-#      sut=self.__original_connect_sut__(sut_attributes)
-#      sut.instance_eval{ @_testObjectFactory.timeout = 0 }
-#      return sut
-#    rescue => ex
-#      $lg.error "EXCEPTION IN CUSTOMIZED CONNECT_SUT: " +  ex.message
-#      raise
-#    end
-#  end
-#end
+module TDriver
+  class << self
+    alias __original_connect_sut__ connect_sut
+  end
+  def self.connect_sut( sut_attributes = {} )
+
+    begin
+      sut=self.__original_connect_sut__(sut_attributes)
+    rescue => ex
+      $lg.error "Custom connect_sut: raising __original_connect_sut__ exception: " +  ex.message
+      raise
+    end
+
+    begin
+      $lg.info "Setting timeout to 0 for #{sut_attributes[ :Id ].to_sym}"
+      sut.instance_eval{ @test_object_factory.timeout = 0 }
+    rescue => ex
+      $lg.error "Custom connect_sut: ignoring @test_object_factory.timeout= exception: " +  ex.message
+    end
+
+    return sut
+
+  end
+end
 
 
 class Code_evaluation_sandbox
