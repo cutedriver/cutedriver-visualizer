@@ -6,7 +6,7 @@ Feature: Basic appearance and visible features
 @pass
 	Scenario: Start and close tdriver_visualizer
  		Given the sut "sut_qt" exists in tdriver parameters
-    When I run visualizer binary
+		When I run visualizer binary
 		Then "tdriver_visualizer" is running
 		#And application has custom fixture
 		When I close the application

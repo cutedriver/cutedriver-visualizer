@@ -54,8 +54,14 @@ end
 When /^I make dockwidget "([^\"]*)" visible$/ do |arg1|
   if ! @app.test_object_exists?( "QDockWidget", {:name => arg1.to_s, :__timeout => 0 })
     @app.QMenuBar(:name => "main menubar").QAction( :name => "main view").trigger
-    @app.MainWindow.QMenu( :name => 'main view' ).QAction( :name => 'main view widgets' ).trigger
-    @app.MainWindow.QMenu( :name => 'main view' ).QMenu( :name => 'main view dockwidgets' ).QAction( :name => 'main toggle editor' ).trigger
+    @app.MainWindow.QMenu( :name => 'main view' ).QAction( :name => 'main toggle editor' ).trigger
+  end
+end
+
+When /^I make dockwidget "([^\"]*)" hidden$/ do |arg1|
+  if @app.test_object_exists?( "QDockWidget", {:name => arg1.to_s, :__timeout => 0 })
+    @app.QMenuBar(:name => "main menubar").QAction( :name => "main view").trigger
+    @app.MainWindow.QMenu( :name => 'main view' ).QAction( :name => 'main toggle editor' ).trigger
   end
 end
 

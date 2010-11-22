@@ -4,9 +4,10 @@ Feature: Basic text typing in Visualizer Editor
 
 @pass
 	Scenario: Edit new document
-    Given visualizer application is ready
-    When I make dockwidget "editor" visible
-    Then dockwidget "editor" visibility is "true"
+		Given visualizer application is ready
+		When I make dockwidget "editor" hidden
+		And I make dockwidget "editor" visible
+		Then dockwidget "editor" visibility is "true"
 		And dockwidget title "Code Editor" visibility is "true"
 		And editor stuff is ok
 		When I trigger menubar "editor" action "editor file"
@@ -17,14 +18,14 @@ Feature: Basic text typing in Visualizer Editor
 		When I trigger menubar "editor" action "editor edit"
 		And I trigger menu "editor edit" action "editor undo"
 		Then editor contains ""
-		
 
 @pass
 @fixture
 	Scenario: Edit new document, save, close, load
-    Given visualizer application is ready
+		Given visualizer application is ready
 		Then application has custom fixture
-		When I make dockwidget "editor" visible
+		When I make dockwidget "editor" hidden
+		And I make dockwidget "editor" visible
 		Then dockwidget "editor" visibility is "true"
 		And dockwidget title "Code Editor" visibility is "true"
 		And editor stuff is ok
@@ -42,4 +43,3 @@ Feature: Basic text typing in Visualizer Editor
 		When I load temporary file "tmp_feature.txt"
 		Then temporary file "tmp_feature.txt" is shown in editor
 		And editor contains "Hello"
-				
