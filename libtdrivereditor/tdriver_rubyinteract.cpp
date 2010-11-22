@@ -240,7 +240,7 @@ bool TDriverRubyInteract::evalStatement(QByteArray statement)
 
 void TDriverRubyInteract::rbiMessage(quint32 seqNum, QByteArray name, BAListMap message)
 {
-    qDebug() << FCFL << "<<<<<<<<<<" << seqNum << name;
+    //qDebug() << FCFL << "ENTRY for" << seqNum << name;
     if (queryQueue.isEmpty()) return; // no pending queries
 
     struct QueryQueueItem &query = queryQueue.first();
@@ -262,13 +262,13 @@ void TDriverRubyInteract::rbiMessage(quint32 seqNum, QByteArray name, BAListMap 
                         completionLines << QString::fromLocal8Bit(line.constData(), line.size());
                     }
                 }
-                qDebug() << FCFL << completionLines;
+                //qDebug() << FCFL << completionLines;
                 emit completionResult(query.client, query.statement, completionLines);
             }
             break;
 
         case QueryQueueItem::EVALUATION:
-            qDebug() << FCFL << "EVALUATION RESULT" << message;
+            //qDebug() << FCFL << "EVALUATION RESULT" << message;
             //emit evaluationResult(query.client, query.statement, resultLines); // sent by rbiStdoutText/rbiStderrText
             emit evaluationResult(query.client, query.statement, QStringList()); // sent by rbiStdoutText/rbiStderrText
             break;
@@ -276,7 +276,7 @@ void TDriverRubyInteract::rbiMessage(quint32 seqNum, QByteArray name, BAListMap 
         }
     }
     else {
-        qDebug() << FCFL << "name" << name << "with received seqNum" << seqNum << "vs. removed queue seqNum" << query.rbiSeqNum;
+        //qDebug() << FCFL << "name" << name << "with received seqNum" << seqNum << "vs. removed queue seqNum" << query.rbiSeqNum;
         // NOTE: assert below assumes overlapping queries won't be send, so all except first item in queue have seqNum 0
         Q_ASSERT(queryQueue.length() < 2 || queryQueue.at(1).rbiSeqNum == 0);
     }

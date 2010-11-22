@@ -71,7 +71,7 @@ void MainWindow::tdriverMsgSetTitleText()
     tdriverMsgBox->setWindowTitle(tr("TDriver Notification %1/%2").
                                   arg(qMin(tdriverMsgShown, tdriverMsgTotal)).
                                   arg(tdriverMsgTotal));
-    qDebug() << FCFL << "set tdriverMsgBox title to" << tdriverMsgBox->windowTitle();
+    //qDebug() << FCFL << "set tdriverMsgBox title to" << tdriverMsgBox->windowTitle();
 }
 
 
@@ -155,7 +155,6 @@ bool MainWindow::setup()
     QTime t;  // for performance debugging, can be removed
 
     // read visualizer settings from visualizer.ini file
-    //applicationSettings = new QSettings( QApplication::applicationDirPath() + "/visualizer.ini", QSettings::IniFormat );
     applicationSettings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "Nokia", "TDriver_Visualizer");
 
     TDriverRubyInterface::startGlobalInstance();
@@ -267,7 +266,6 @@ bool MainWindow::setup()
 
     /* initialize help, context sensitivity needs watch for events */
     installEventFilter( this );
-    //tdriverAssistant = new Assistant;
 
     // create tdriver recorder
     mRecorder = new TDriverRecorder( this );
@@ -329,6 +327,7 @@ bool MainWindow::setup()
     connectSignals();
 
     // xml/screen capture output path depending on OS
+    outputPath = QDir::tempPath();
 #if (defined(Q_OS_WIN32))
     outputPath = QString( getenv( "TEMP" ) ) + "/";
 #else
@@ -493,7 +492,7 @@ void MainWindow::closeEvent( QCloseEvent *event )
     TDriverRubyInterface::globalInstance()->requestClose();
 }
 
-// Event filter, catches F1/HELP key events and processes them, calling Assistant to display the corresponding help page.
+// Event filter, catches F1/HELP key events and processes them
 bool MainWindow::eventFilter(QObject * object, QEvent *event) {
 
     Q_UNUSED( object );
@@ -508,8 +507,10 @@ bool MainWindow::eventFilter(QObject * object, QEvent *event) {
 
             //QWidget *widget = 0;
             QString page = "qdoc-temp/index.html";
-            /* Context sensitivity disabled for now
-                You need to also remove the line "visualizerAssistant->setShortcut(tr("F1"));" from the createTopMenuBar method to enable processing of F1 ket events in this event handler
+#if 0
+            // Context sensitivity disabled for now
+            // You need to also remove the line "visualizerAssistant->setShortcut(tr("F1"));"
+            // from the createTopMenuBar method to enable processing of F1 ket events in this event handler
             if (object->isWidgetType()) {
 
                 widget = static_cast<QWidget *>(object)-> focusWidget();
@@ -518,7 +519,7 @@ bool MainWindow::eventFilter(QObject * object, QEvent *event) {
                 }else {
                     page = "devices.html";
                 }
-            */
+#endif
             showContextVisualizerAssistant(page);
 
             return true;
@@ -764,17 +765,6 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
 
     if ( !result && !(resultEnum & SILENT) ) {
         tdriverMsgAppend(fullError);
-#if 0
-        QMessageBox msgBox(this);
-        msgBox.setSizeGripEnabled(true); // wont work...
-        msgBox.setWindowFlags(Qt::Window); // wont work...
-        msgBox.setIcon( QMessageBox::Critical );
-        msgBox.setWindowTitle( "Error" );
-        msgBox.setText( clearError + "\n\n" + shortError );
-        if (!fullError.isEmpty()) msgBox.setDetailedText(fullError);
-        msgBox.setStandardButtons( QMessageBox::Ok );
-        msgBox.exec();
-#endif
     }
 
     return result;

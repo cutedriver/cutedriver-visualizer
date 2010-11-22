@@ -84,10 +84,6 @@ void MainWindow::createEditorDocks() {
     debugDock->setWidget(debugConsole);
     irDock->setWidget(irConsole);
 
-    // for future reference, settings from another dockwidget
-    //shortcutsDock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
-    //shortcutsDock->setAllowedAreas(Qt::BottomDockWidgetArea);
-
     addDockWidget(Qt::BottomDockWidgetArea, editorDock, Qt::Horizontal);
     addDockWidget(Qt::BottomDockWidgetArea, runDock, Qt::Vertical);
     addDockWidget(Qt::BottomDockWidgetArea, debugDock, Qt::Vertical);

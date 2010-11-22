@@ -39,14 +39,12 @@ LIBS += -l$$EDITOR_LIB
 QT += network
 
 # Input
-HEADERS += ../inc/assistant.h \
-    ../inc/tdriver_main_types.h
+HEADERS += ../inc/tdriver_main_types.h
 HEADERS += ../inc/tdriver_behaviour.h
 HEADERS += ../inc/tdriver_image_view.h
 HEADERS += ../inc/tdriver_main_window.h
 HEADERS += ../inc/tdriver_recorder.h
-SOURCES += ../src/assistant.cpp \
-    ../src/tdriver_libeditor_ui.cpp
+SOURCES += ../src/tdriver_libeditor_ui.cpp
 SOURCES += ../src/tdriver_editor.cpp
 SOURCES += ../src/tdriver_main_window.cpp
 SOURCES += ../src/tdriver_image_view.cpp
@@ -92,7 +90,6 @@ unix: {
     tdriver_editor_standalone.path = /usr/bin
 
     tdriver_editor_standalone_share.files = $$EDITORLIBDIR/templates/* $$EDITORLIBDIR/completions/*
-
     tdriver_editor_standalone_share.path = /etc/tdriver/visualizer
 
 # Pending new documentation

@@ -36,7 +36,8 @@ SOURCES += tdriver_translationdb.cpp \
     tdriver_util.cpp \
     tdriver_rubyinterface.cpp \
     tdriver_rbiprotocol.cpp \
-    tdriver_executedialog.cpp
+    tdriver_executedialog.cpp \
+    flowlayout.cpp
 
 HEADERS += tdriver_translationdb.h \
     libtdriverutil_global.h \
@@ -44,7 +45,8 @@ HEADERS += tdriver_translationdb.h \
     tdriver_rubyinterface.h \
     tdriver_rbiprotocol.h \
     tdriver_debug_macros.h \
-    tdriver_executedialog.h
+    tdriver_executedialog.h \
+    flowlayout.h
 
 FORMS += \
     tdriver_executedialog.ui
@@ -65,4 +67,3 @@ rbfiles.files += tdriver_interface.rb
 
 
 INSTALLS += target rbfiles
-

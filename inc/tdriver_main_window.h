@@ -35,7 +35,6 @@
 #include <QtGui/QFileDialog>
 #include <QtGui/QFont>
 #include <QtGui/QFontDialog>
-#include <QtGui/QGridLayout>
 #include <QtGui/QGroupBox>
 #include <QtGui/QHeaderView>
 #include <QtGui/QLineEdit>
@@ -80,6 +79,8 @@ class TDriverRubyInteract;
 class TDriverComboLineEdit;
 
 #include "tdriver_main_types.h"
+
+#define DOCK_FEATURES_DEFAULT (QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetClosable)
 
 class MainWindow : public QMainWindow {
 
@@ -163,7 +164,6 @@ private:
     bool offlineMode;
 
     TDriverRecorder *mRecorder;
-    //Assistant *tdriverAssistant;
 
     QSettings *applicationSettings;
     QString outputPath;
@@ -202,10 +202,6 @@ private:
 
     QGroupBox *horizontalBottomButtonGroupBox;
     QGroupBox *verticalNavigationButtonGroupBox;
-
-    QWidget *gridLayoutWidget;
-    QVBoxLayout *gridLayout;
-
 
     // helper functions
     static QByteArray cleanDoneResult(QByteArray output);
@@ -364,7 +360,6 @@ private:
     // setup
 
     void createUi();
-    void createGridLayout();
     void createTopMenuBar();
     void createDock();
 
@@ -384,8 +379,6 @@ private:
 
     QMenu *fileMenu;
     QMenu *viewMenu;
-    QMenu *viewMenuDockWidgets;
-    QMenu *viewMenuObjectTree;
     QMenu *searchMenu;
     QMenu *deviceMenu;
     QMenu *appsMenu;

@@ -11,9 +11,10 @@ static inline QString prettyFile(const char *file) {
     return temp.join("/");
 }
 
-#define FFL (QString("%1/%2:%3:").arg(prettyFile(__FILE__)).arg(__FUNCTION__ ).arg(__LINE__ ).toAscii().constData())
-//#define FCFL (QString("%1/%2::%3:%4:").arg(prettyFile(__FILE__)).arg(metaObject()->className()).arg(__FUNCTION__ ).arg(__LINE__ ).toAscii().constData())
-#define FCFL ((QString("%1:%2:").arg(__PRETTY_FUNCTION__).arg(__LINE__ )).toAscii().constData())
+//#define FFL (QString("%1/%2:%3:").arg(prettyFile(__FILE__)).arg(__FUNCTION__ ).arg(__LINE__ ).toLocal8Bit().constData())
+#define FFL (QString("%1:%3 (%2):").arg(prettyFile(__FILE__)).arg(__FUNCTION__ ).arg(__LINE__ ).toLocal8Bit().constData())
+#define FCFL (QString("%1:%4 (%2::%3):").arg(prettyFile(__FILE__)).arg(metaObject()->className()).arg(__FUNCTION__ ).arg(__LINE__ ).toLocal8Bit().constData())
+//#define FCFL ((QString("%1:%2:").arg(__PRETTY_FUNCTION__).arg(__LINE__ )).toLocal8Bit().constData())
 
 #include <QTime>
 
