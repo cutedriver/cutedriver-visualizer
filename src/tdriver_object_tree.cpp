@@ -44,7 +44,7 @@ bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, float & x, float &
 
     while ( x == -1 && y == -1 && item != NULL ) {
         // retrieve selected items attributes
-        QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( ( TestObjectKey )( item ) );
+        QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( ptr2TestObjectKey( item ) );
         x = attributes.value( "x" ).value( "value", "-1" ).toFloat();
         y = attributes.value( "y" ).value( "value", "-1" ).toFloat();
         item = item->parent();
@@ -62,7 +62,7 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, QStringList & geomet
     QString geometry;
 
     if ( item != NULL ) {
-        TestObjectKey itemPtr = ( TestObjectKey )( item );
+        TestObjectKey itemPtr = ptr2TestObjectKey( item );
 
         if ( geometriesMap.contains( itemPtr ) ) {
             // retrieve geometries list from cache
@@ -109,7 +109,7 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, QStringList & geomet
                     collectGeometries( item->child( childIndex ), childGeometries );
                     QStringList tmp = geometriesMap.value( itemPtr );
                     // store current items and its childs geometries to cache
-                    geometriesMap.insert( itemPtr, tmp << geometriesMap.value( ( TestObjectKey )( item->child( childIndex ) ) ) );
+                    geometriesMap.insert( itemPtr, tmp << geometriesMap.value( ptr2TestObjectKey( item->child( childIndex ) ) ) );
                 }
             }
         }
@@ -125,7 +125,7 @@ void MainWindow::objectTreeItemChanged()
     propertyTabLastTimeUpdated.clear();
     // update current properties table
     updatePropetriesTable();
-    drawHighlight( ( TestObjectKey )( objectTree->currentItem() ) );
+    drawHighlight( ptr2TestObjectKey( objectTree->currentItem() ) );
 }
 
 
@@ -157,7 +157,7 @@ void MainWindow::storeItemToObjectTreeMap( QTreeWidgetItem *item, QString type, 
 
     //qDebug() << "storeItemToObjectTreeMap";
 
-    TestObjectKey itemPtr = ( TestObjectKey )( item );
+    TestObjectKey itemPtr = ptr2TestObjectKey( item );
 
     QHash<QString, QString> treeItemData;
 
@@ -167,10 +167,6 @@ void MainWindow::storeItemToObjectTreeMap( QTreeWidgetItem *item, QString type, 
 
     // store object tree data
     objectTreeData.insert( itemPtr, treeItemData );
-
-    // store object tree pointer
-    objectTreeMap.insert( itemPtr, item );
-
 }
 
 void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement )
@@ -185,7 +181,7 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 
     QTreeWidgetItem *childItem = 0;
     QDomNode node = parentElement.firstChild();
-    TestObjectKey parentPtr = ( TestObjectKey )( parentItem );
+    TestObjectKey parentPtr = ptr2TestObjectKey( parentItem );
     QDomElement element;
 
     while ( !node.isNull() ) {
@@ -237,7 +233,7 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 
             // create child item
             childItem = createObjectTreeItem( parentItem, type, name, id );
-            TestObjectKey childPtr = ( TestObjectKey )( childItem );
+            TestObjectKey childPtr = ptr2TestObjectKey( childItem );
 
             // iterate the node recursively if child nodes exists
             if ( node.hasChildNodes() ) { buildObjectTree( childItem, element ); }
@@ -280,9 +276,6 @@ void MainWindow::clearObjectTreeMappings()
     // empty status of last updated properties table tab
     propertyTabLastTimeUpdated.clear();
 
-    // empty pointer mappings to object tree items
-    objectTreeMap.clear();
-
     // empty object tree data mappings (eg. type, name & id)
     objectTreeData.clear();
 }
@@ -298,7 +291,7 @@ void MainWindow::updateObjectTree( QString filename )
     QDomNode node;
 
     // store id value of focused node in object tree
-    QString currentFocusId = objectTreeData.value( ( TestObjectKey )( objectTree->currentItem() ) ).value( "id" );
+    QString currentFocusId = objectTreeData.value( ptr2TestObjectKey( objectTree->currentItem() ) ).value( "id" );
 
     clearObjectTreeMappings();
     // empty object tree
@@ -328,7 +321,7 @@ void MainWindow::updateObjectTree( QString filename )
 
                 objectTree->addTopLevelItem ( sutItem );
 
-                TestObjectKey itemPtr = ( TestObjectKey )( sutItem );
+                TestObjectKey itemPtr = ptr2TestObjectKey( sutItem );
 
                 QHash<QString, QString> treeItemData;
 
@@ -363,7 +356,7 @@ void MainWindow::updateObjectTree( QString filename )
 
             if ( objectTreeIterator.value().value( "id" ) == currentFocusId ) {
                 // select item that was focused before refresh
-                objectTree->setCurrentItem( objectTreeMap.value( objectTreeIterator.key() ) );
+                objectTree->setCurrentItem(testObjectKey2Ptr(objectTreeIterator.key()));
                 itemFocusChanged = true;
                 // item found, no need to iterate the list
                 break;
@@ -375,7 +368,7 @@ void MainWindow::updateObjectTree( QString filename )
     if ( !itemFocusChanged ) { objectTree->setCurrentItem( sutItem ); }
 
     // highlight current object
-    drawHighlight( ( TestObjectKey )( objectTree->currentItem() ) );
+    drawHighlight( ptr2TestObjectKey( objectTree->currentItem() ) );
     updatePropetriesTable();
 }
 
@@ -622,16 +615,16 @@ void MainWindow::objectViewItemAction( QTreeWidgetItem * item, int column, Conte
 
     if ( action > cancelAction ) {
 
-        TestObjectKey sutItemPtr = ( TestObjectKey )objectTree->topLevelItem(0);
-        const bool fullPath = ((TestObjectKey)item == sutItemPtr) || isPathAction(action) ;
+        TestObjectKey sutItemPtr = ptr2TestObjectKey(objectTree->topLevelItem(0));
+        const bool fullPath = (ptr2TestObjectKey(item) == sutItemPtr) || isPathAction(action) ;
 
         // TODO: use XPath to determine if object is unique, and eg. insert line in comments if it's not unique
         QString result;
 
         do {
             result = TDriverUtil::smartJoin(
-                        treeObjectRubyId((TestObjectKey)item, sutItemPtr), '.', result);
-        } while (fullPath && (TestObjectKey)item != sutItemPtr && (item = item->parent()));
+                        treeObjectRubyId(ptr2TestObjectKey(item), sutItemPtr), '.', result);
+        } while (fullPath && ptr2TestObjectKey(item) != sutItemPtr && (item = item->parent()));
 
         switch (action) {
 
@@ -671,7 +664,7 @@ void MainWindow::objectViewItemClicked( QTreeWidgetItem * item, int column) {
 // Store last collapsed objectTreeWidgetItem - Note: value will be set to NULL when focus is changed
 void MainWindow::collapseTreeWidgetItem( QTreeWidgetItem * item ) {
 
-    collapsedObjectTreeItemPtr = (TestObjectKey)( item );
+    collapsedObjectTreeItemPtr = ptr2TestObjectKey( item );
     expandedObjectTreeItemPtr = 0;
 
     resizeObjectTree();
@@ -682,14 +675,14 @@ void MainWindow::collapseTreeWidgetItem( QTreeWidgetItem * item ) {
 void MainWindow::expandTreeWidgetItem(QTreeWidgetItem * item) {
 
     collapsedObjectTreeItemPtr = 0;
-    expandedObjectTreeItemPtr = (TestObjectKey)( item );
+    expandedObjectTreeItemPtr = ptr2TestObjectKey( item );
 
     resizeObjectTree();
 }
 
 void MainWindow::objectTreeExpandAll() {
 
-    TestObjectKey currentItem = (TestObjectKey)( objectTree->currentItem() );
+    TestObjectKey currentItem = ptr2TestObjectKey( objectTree->currentItem() );
 
     // exit if object tree is empty
     if ( currentItem == 0 ) { return; }
@@ -701,7 +694,7 @@ void MainWindow::objectTreeExpandAll() {
 
 void MainWindow::objectTreeCollapseAll() {
 
-    TestObjectKey currentItem = (TestObjectKey)( objectTree->currentItem() );
+    TestObjectKey currentItem = ptr2TestObjectKey( objectTree->currentItem() );
 
     // exit if object tree is empty
     if ( currentItem == 0 ) { return; }
@@ -714,7 +707,7 @@ void MainWindow::objectTreeCollapseAll() {
 
 void MainWindow::objectTreeKeyPressEvent( QKeyEvent * event ) {
 
-    TestObjectKey currentItem = (TestObjectKey)( objectTree->currentItem() );
+    TestObjectKey currentItem = ptr2TestObjectKey( objectTree->currentItem() );
 
     // exit if object tree is empty
     if ( currentItem == 0 ) { return; }

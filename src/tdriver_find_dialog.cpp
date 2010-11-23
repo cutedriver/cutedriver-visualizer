@@ -184,7 +184,7 @@ bool MainWindow::compareTreeItem(QTreeWidgetItem *item, const QString &findStrin
 {
     if (!item) return false;
 
-    TestObjectKey itemIndex = (TestObjectKey)item;
+    TestObjectKey itemIndex = ptr2TestObjectKey(item);
     Q_ASSERT(objectTreeData.contains( itemIndex) );
 
     // check values in itemData

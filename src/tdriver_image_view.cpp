@@ -486,11 +486,11 @@ void TDriverImageView::dragAction()
 
 static TestObjectKey idFromActionData(QObject *sender)
 {
-    ulong idNum = 0;
+    TestObjectKey ret = 0;
     QAction *senderAct = qobject_cast<QAction*>(sender);
     if (senderAct)
-        idNum = senderAct->data().toUInt();
-    return (TestObjectKey)idNum;
+        ret = str2TestObjectKey(senderAct->data().toString());
+    return ret;
 }
 
 

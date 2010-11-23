@@ -329,7 +329,7 @@ bool MainWindow::getSmallestObjectFromMatches( QList<TestObjectKey> *matchingObj
 
 bool MainWindow::highlightById( TestObjectKey id, bool selectItem, QString insertMethodToEditor )
 {
-    QTreeWidgetItem *item = objectTreeMap.value( id );
+    QTreeWidgetItem *item = testObjectKey2Ptr(id);
     if (item == NULL) {
         return false;
     }
