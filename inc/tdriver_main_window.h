@@ -62,7 +62,7 @@
 #include <QtXml/QXmlStreamReader>
 
 class QErrorMessage;
-
+class QScrollArea;
 
 #include "tdriver_behaviour.h"
 #include <tdriver_util.h>
@@ -171,6 +171,7 @@ private:
     QFont *defaultFont;
     QString parametersFile;
 
+    QScrollArea *imageScroller;
     TDriverImageView *imageWidget;
 
     QMap<QString, QHash<QString, QString> > deviceList;
@@ -549,7 +550,6 @@ private slots:
     void showVisualizerHelp();
     void showAboutVisualizer();
 
-    void resizeEvent( QResizeEvent *event );
     void closeEvent( QCloseEvent *event );
 
     // clipboard
@@ -605,7 +605,7 @@ private slots:
     void imageTapFromId(TestObjectKey id);
 
 
-    void changeImageResize();
+    void changeImageResize(bool resize);
     void changeImageLeftClick(int index);
 
     // menu: applications

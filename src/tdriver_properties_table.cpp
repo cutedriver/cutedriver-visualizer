@@ -58,7 +58,7 @@ void MainWindow::updatePropetriesTable()
 
     if ( objectTree->currentItem() != NULL ) {
         // retrieve pointer of current item selected in object tree
-        TestObjectKey currentItemPtr = ( TestObjectKey )(objectTree->currentItem());
+        TestObjectKey currentItemPtr = ptr2TestObjectKey(objectTree->currentItem());
 
         // retrieve current table index
         int currentTab = tabWidget->currentIndex();
@@ -117,7 +117,7 @@ void MainWindow::getClassSignals(QString objectType, QString objectId)
 
 void MainWindow::updateApiTableContent() {
 
-    TestObjectKey currentItemPtr = ( TestObjectKey )( objectTree->currentItem() );
+    TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
 
     // clear methods table contents
     apiTable->clearContents();
@@ -217,7 +217,7 @@ void MainWindow::updateMethodsTableContent() {
 
     // qDebug() << "updateMethodsTableContent";
 
-    TestObjectKey currentItemPtr = ( TestObjectKey )( objectTree->currentItem() );
+    TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
 
     Behaviour behaviour;
 
@@ -288,7 +288,7 @@ void MainWindow::updateSignalsTableContent() {
 
     // qDebug() << "updateSignalsTableContent";
 
-    TestObjectKey currentItemPtr = ( TestObjectKey )( objectTree->currentItem() );
+    TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
 
     // clear signals table contents
     signalsTable->clearContents();
@@ -302,7 +302,7 @@ void MainWindow::updateSignalsTableContent() {
 
         if (currentItemObjectType == "sut" || currentItemObjectType == "application") return;
 
-        TestObjectKey currentItemPtr = ( TestObjectKey )( objectTree->currentItem() );
+        TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
         QHash<QString, QString> treeItemData = objectTreeData.value( currentItemPtr );
         QString objectId   = treeItemData.value( "id" );
 
@@ -352,7 +352,7 @@ void MainWindow::updateAttributesTableContent() {
                         this, SLOT( changePropertiesTableValue( QTableWidgetItem* ) ) );
 
     // retrieve pointer of currently selected objectTree item
-    TestObjectKey currentItemPtr = ( TestObjectKey )( objectTree->currentItem() );
+    TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
 
     QMap<QString, QHash<QString, QString> > attributeMap;
     QHash<QString, QString> attributeHash;
@@ -440,7 +440,7 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
     // this feature is not supported in with s60 devices
     if ( activeDevice.value( "type" ).toLower() != "s60" ) {
 
-        TestObjectKey currentItemPtr = ( TestObjectKey )( objectTree->currentItem() );
+        TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
 
         QTableWidgetItem *currentItem = propertiesTable->item( propertiesTable->row( item ), 0 );
         QString attributeName = currentItem->text();
@@ -491,11 +491,11 @@ void MainWindow::methodItemPressed( QTableWidgetItem * item ) {
 
             if (fullPath) {
                 QTreeWidgetItem * treeItem = objectTree->currentItem();
-                TestObjectKey sutItemPtr = ( TestObjectKey )objectTree->topLevelItem(0);
+                TestObjectKey sutItemPtr = ptr2TestObjectKey(objectTree->topLevelItem(0));
                 do {
                     text = TDriverUtil::smartJoin(
-                                treeObjectRubyId(( TestObjectKey )treeItem, sutItemPtr), '.', text);
-                } while (( TestObjectKey )treeItem != sutItemPtr && (treeItem = treeItem->parent()));
+                                treeObjectRubyId(ptr2TestObjectKey(treeItem), sutItemPtr), '.', text);
+                } while (ptr2TestObjectKey(treeItem) != sutItemPtr && (treeItem = treeItem->parent()));
             }
 
             switch (action) {
@@ -557,10 +557,10 @@ void MainWindow::propertiesItemPressed ( QTableWidgetItem * item )
             objRubyId += ")";
 
             if (fullPath) {
-                TestObjectKey sutItemPtr = ( TestObjectKey )objectTree->topLevelItem(0);
-                while (( TestObjectKey )treeItem != sutItemPtr && (treeItem = treeItem->parent())) {
+                TestObjectKey sutItemPtr = ptr2TestObjectKey(objectTree->topLevelItem(0));
+                while (ptr2TestObjectKey(treeItem) != sutItemPtr && (treeItem = treeItem->parent())) {
                     objRubyId = TDriverUtil::smartJoin(
-                                treeObjectRubyId(( TestObjectKey )treeItem, sutItemPtr), '.', objRubyId);
+                                treeObjectRubyId(ptr2TestObjectKey(treeItem), sutItemPtr), '.', objRubyId);
                 }
             }
 

@@ -202,8 +202,6 @@ bool MainWindow::setup()
     QPoint windowPosition = applicationSettings->value( "window/pos", QPoint( 200, 200 ) ).toPoint();
     QSize windowSize = applicationSettings->value( "window/size", QSize( 950, 600 ) ).toSize();
 
-    // image resize
-    bool resizeImage = applicationSettings->value( "image/resize", true ).toBool();
     // read dock visibility settings
     bool imageVisible = applicationSettings->value( "view/image", true ).toBool();
     bool clipboardVisible = applicationSettings->value( "view/clipboard", true ).toBool();
@@ -302,8 +300,6 @@ bool MainWindow::setup()
     updateWindowTitle();
 
     // set image view resize checkbox setting
-    checkBoxResize->setCheckState( resizeImage ? Qt::Checked : Qt::Unchecked  );
-    changeImageResize();
 
     connect( clipboardDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedClipboard( bool ) ) );
     connect( imageViewDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedImage( bool ) ) );

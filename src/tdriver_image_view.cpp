@@ -68,20 +68,18 @@ TDriverImageView::TDriverImageView( MainWindow *tdriverMainWindow, QWidget* pare
 
 TDriverImageView::~TDriverImageView()
 {
-    if (image) {
-        delete image;
-        image=NULL;
-    }
-    if (pixmap) {
-        delete pixmap;
-        pixmap=NULL;
-    }
+    delete image;
+    image=NULL;
+    delete pixmap;
+    pixmap=NULL;
 }
 
 
 
-void TDriverImageView::changeImageResized(int state) {
-    scaleImage = (state != Qt::Unchecked);
+void TDriverImageView::changeImageResized(bool checked) {
+    scaleImage = checked;
+    if (image && !scaleImage)
+        resize(image->size());
     updatePixmap = true;
 }
 
@@ -96,23 +94,20 @@ void TDriverImageView::clearImage()
 {
     if ( image ) delete image;
     image = new QImage();
+    if (!scaleImage)
+        resize(image->size());
     updatePixmap = true;
     update();
 }
 
-void TDriverImageView::paintEvent( QPaintEvent *event )
+void TDriverImageView::paintEvent(QPaintEvent *)
 {
-    //qDebug() << "paintEvent";
-
-    Q_UNUSED( event );
-
+    //qDebug() << FCFL;
     QPainter painter( this );
 
     if( !pixmap || updatePixmap) {
-        if ( pixmap ) {
-            delete pixmap;
-            pixmap = NULL;
-        }
+
+        delete pixmap;
 
         if ( scaleImage && !image->isNull() ) {
             pixmap = new QPixmap( QPixmap::fromImage( image->scaled( size(), Qt::KeepAspectRatio, Qt::SmoothTransformation) ) );
@@ -396,6 +391,7 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
 
 void TDriverImageView::resizeEvent(QResizeEvent *ev)
 {
+    QFrame::resizeEvent(ev);
     updatePixmap = true;
     update();
 }
@@ -490,11 +486,11 @@ void TDriverImageView::dragAction()
 
 static TestObjectKey idFromActionData(QObject *sender)
 {
-    ulong idNum = 0;
+    TestObjectKey ret = 0;
     QAction *senderAct = qobject_cast<QAction*>(sender);
     if (senderAct)
-        idNum = senderAct->data().toUInt();
-    return (TestObjectKey)idNum;
+        ret = str2TestObjectKey(senderAct->data().toString());
+    return ret;
 }
 
 
@@ -523,8 +519,10 @@ void TDriverImageView::forwardInsertObjectById()
 
 void TDriverImageView::refreshImage(QString imagePath)
 {
-    if ( image ) delete image;
+    delete image;
     image = new QImage( imagePath );
+    if (!scaleImage)
+        resize(image->size());
     updatePixmap = true;
     update();
 }
