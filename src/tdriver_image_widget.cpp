@@ -40,18 +40,6 @@ void MainWindow::connectImageWidgetSignals() {
 }
 
 
-// This function is called always when main Window is resize. The image size is
-// controlled by setting a minimum allowed size to it: properties/method widget
-// adjusts itself according to it
-void  MainWindow::resizeEvent( QResizeEvent *event ) {
-
-    Q_UNUSED( event );
-
-    imageWidget->setMinimumSize( QSize( width() / 5, height() / 4 ) );
-}
-
-
-
 // This is triggered from ImageWidget when hoovering on image - gets x,y from imagewidget and searches for item.
 // If an item is found it is higlighted
  void MainWindow::imageInspectFindItem()
@@ -147,6 +135,7 @@ void MainWindow::tapScreen( QString target )
         refreshData();
     }
 }
+
 
 // Image has been clicked - fetch X, Y from imageWidget, and
 // if S60 without Qt, send tap_screen command to coordinates,

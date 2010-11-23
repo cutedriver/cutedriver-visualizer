@@ -74,7 +74,7 @@ public:
         return pos;
     }
 
-    void changeImageResized(int state);
+    void changeImageResized(bool checked);
     void setLeftClickAction (int action);
     void clearImage();
 

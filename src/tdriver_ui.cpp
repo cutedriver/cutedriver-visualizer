@@ -28,6 +28,9 @@
 #include "tdriver_tabbededitor.h"
 
 #include <QUrl>
+#include <QScrollArea>
+
+#include "tdriver_debug_macros.h"
 
 void MainWindow::setupTableWidgetHeader( QString headers, QTableWidget * table)
 {
@@ -211,11 +214,11 @@ void MainWindow::changeImagesVisibility() {
 }
 
 
-void MainWindow::changeImageResize() {
-
-    imageWidget->changeImageResized(checkBoxResize->checkState());
+void MainWindow::changeImageResize(bool resize)
+{
+    imageScroller->setWidgetResizable(resize);
+    imageWidget->changeImageResized(resize);
     imageWidget->update();
-
 }
 
 
@@ -389,6 +392,8 @@ void MainWindow::createPropertiesDockWidgetApiTabWidget() {
 
 void MainWindow::createImageViewDockWidget()
 {
+    // image resize setting
+    bool resizeSetting = applicationSettings->value( "image/resize", true ).toBool();
 
     // Add imagewidged and resize checkbox
     imageViewDock = new QDockWidget( tr(" Image View "), this );
@@ -407,18 +412,11 @@ void MainWindow::createImageViewDockWidget()
     imageWidget = new TDriverImageView( this, this );
     imageWidget->setObjectName("imageview");
     connect(imageWidget, SIGNAL(statusBarMessage(QString,int)), this, SLOT(statusbar(QString,int)));
-    imageWidget->show();
 
-    //    imageScrollArea = new QScrollArea;
-    //  imageScrollArea->setObjectName("imageview");
-    //    imageScrollArea->setBackgroundRole( QPalette::Dark );
-    //    imageScrollArea->setWidget( imageWidget );
-    //    imageScrollArea->setWidgetResizable( true );
-    //    imageScrollArea->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
-    //    imageScrollArea->setHorizontalScrollBarPolicy( Qt::ScrollBarAsNeeded );
-    //    layout->addWidget( imageScrollArea );
-
-    layout->addWidget( imageWidget, 1);
+    imageScroller = new QScrollArea;
+    imageScroller->setObjectName("imagescroller");
+    imageScroller->setWidget(imageWidget);
+    layout->addWidget( imageScroller, 1);
 
     // image
     {
@@ -426,8 +424,8 @@ void MainWindow::createImageViewDockWidget()
         FlowLayout *subLayout = new FlowLayout();
 
         checkBoxResize = new QCheckBox( tr( "Resi&ze image " ), this );
+        checkBoxResize->setChecked(resizeSetting);
         checkBoxResize->setObjectName("imageview resize");
-        checkBoxResize->show();
         subLayout->addWidget(checkBoxResize);
         //subLayout->addWidget(checkBoxResize, 0, Qt::AlignLeft);
         subLayout->addWidget(new QLabel(tr("Left Click Action:")));
@@ -449,9 +447,11 @@ void MainWindow::createImageViewDockWidget()
         layout->addWidget(container);
     }
 
+    imageWidget->changeImageResized(resizeSetting);
+    imageScroller->setWidgetResizable(resizeSetting);
+    connect(checkBoxResize, SIGNAL(toggled(bool)), this, SLOT(changeImageResize(bool)));
 
-    connect( checkBoxResize, SIGNAL( stateChanged( int ) ), this, SLOT( changeImageResize() ) );
-    connect( imageLeftClickChooser, SIGNAL(activated(int)), this, SLOT( changeImageLeftClick(int) ) );
+    connect(imageLeftClickChooser, SIGNAL(activated(int)), this, SLOT( changeImageLeftClick(int) ) );
 
     imageViewBox->setLayout( layout );
     imageViewDock->setWidget( imageViewBox );
