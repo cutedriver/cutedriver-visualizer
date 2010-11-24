@@ -167,14 +167,68 @@ void MainWindow::storeItemToObjectTreeMap( QTreeWidgetItem *item, QString type, 
 
     // store object tree data
     objectTreeData.insert( itemPtr, treeItemData );
+    objectIdMap.insert(id, itemPtr);
 }
+
+void MainWindow::refreshScreenshotObjectList()
+{
+    screenshotObjects.clear();
+    if (imageWidget) {
+        buildScreenshotObjectList();
+        imageWidget->update();
+    }
+}
+
+
+void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
+{
+    // first call
+    if (!parentKey) {
+        QString id = imageWidget->tasIdString();
+        if (id.isEmpty()) {
+            // image metadata didn't have id, so find first object included in attributesMap
+            QTreeWidgetItem *item = objectTree->invisibleRootItem();
+            parentKey = ptr2TestObjectKey(item);
+
+            while (item) {
+                if (attributesMap.contains(parentKey)) break; // found!
+                item = item->child(0);
+                parentKey = ptr2TestObjectKey(item);
+            }
+        }
+        else {
+            // get parent based on id received in image metadata
+            parentKey = objectIdMap.value(id);
+        }
+    }
+    // check validity
+    if ( !parentKey || !attributesMap.contains(parentKey) )
+        return;
+
+    const QMap<QString, QHash<QString, QString> > &attributeContainer = attributesMap.value(parentKey);
+
+    if ( attributeContainer.value( "visible" ).value( "value" ).toLower() == "true"  ||
+            attributeContainer.value( "isvisible" ).value( "value" ).toLower() == "true" ||
+            attributeContainer.value( "iswindow" ).value( "value" ).toLower() == "true" )
+    {
+        // sometimes object has visible and visibleOnScreen attribute, make sure that object is really visible also on screen
+        if ( attributeContainer.value("visibleonscreen").value("value").toLower() != "false" ) {
+            screenshotObjects << parentKey;
+        }
+    }
+
+    // recurse into all children
+    QTreeWidgetItem *parentItem = testObjectKey2Ptr(parentKey);
+    for (int ii=0; ii < parentItem->childCount(); ++ii) {
+        buildScreenshotObjectList(ptr2TestObjectKey(parentItem->child(ii)));
+    }
+}
+
 
 void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement )
 {
     //qDebug() << "buildObjectTree";
 
-    // create attributes container for each QTreeWidgetItem
-    QMap<QString, QHash<QString, QString> > attributeContainer;
 
     // create attribute hash for each attribute
     QHash<QString, QString> attributeHash;
@@ -197,10 +251,12 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
             element = node.toElement();
 
             // empty attributes container
-            attributeContainer.clear();
 
             // empty attribute hash
             attributeHash.clear();
+
+            // create attributes container for each QTreeWidgetItem
+            QMap<QString, QHash<QString, QString> > attributeContainer;
 
             // retrieve container if already exists
             if ( attributesMap.contains( parentPtr ) ) { attributeContainer = attributesMap.value( parentPtr ); }
@@ -233,28 +289,15 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 
             // create child item
             childItem = createObjectTreeItem( parentItem, type, name, id );
-            TestObjectKey childPtr = ptr2TestObjectKey( childItem );
 
             // iterate the node recursively if child nodes exists
-            if ( node.hasChildNodes() ) { buildObjectTree( childItem, element ); }
+            if ( node.hasChildNodes() ) {
+                buildObjectTree( childItem, element );
+            }
 
             // store current item data to object tree map
             storeItemToObjectTreeMap( childItem, type, name, id );
 
-            // is visible?
-            if ( attributesMap.contains( childPtr ) ) {
-                attributeContainer = attributesMap.value( childPtr );
-
-                if ( attributeContainer.value( "visible" ).value( "value" ).toLower() == "true"  ||
-                        attributeContainer.value( "isvisible" ).value( "value" ).toLower() == "true" ||
-                        attributeContainer.value( "iswindow" ).value( "value" ).toLower() == "true" )
-                {
-                    // sometimes object has visible and visibleOnScreen attribute, make sure that object is really visible also on screen
-                    if ( attributeContainer.value("visibleonscreen").value("value").toLower() != "false" ) {
-                        visibleObjectsList << childPtr;
-                    }
-                }
-            }
         } // end if node is element and node name is "object"
 
         node = node.nextSibling();
@@ -265,7 +308,7 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 void MainWindow::clearObjectTreeMappings()
 {
     // empty visible objects list
-    visibleObjectsList.clear();
+    screenshotObjects.clear();
 
     // empty attributes of each object tree item
     attributesMap.clear();
@@ -278,6 +321,7 @@ void MainWindow::clearObjectTreeMappings()
 
     // empty object tree data mappings (eg. type, name & id)
     objectTreeData.clear();
+    objectIdMap.clear();
 }
 
 
@@ -310,16 +354,19 @@ void MainWindow::updateObjectTree( QString filename )
             if ( node.isElement() && node.nodeName() == "tasInfo" ) {
                 element = node.toElement();
 
+                QString sutId = element.attribute( "id" );
+
                 // add sut to the top of the object tree
                 sutItem->setData( 0, Qt::DisplayRole, "sut" );
                 sutItem->setData( 1, Qt::DisplayRole, element.attribute( "name" ) );
-                sutItem->setData( 2, Qt::DisplayRole, element.attribute( "id" ) );
+                sutItem->setData( 2, Qt::DisplayRole, sutId );
 
                 sutItem->setFont( 0, *defaultFont );
                 sutItem->setFont( 1, *defaultFont );
                 sutItem->setFont( 2, *defaultFont );
 
                 objectTree->addTopLevelItem ( sutItem );
+                objectIdMap.insert(sutId, ptr2TestObjectKey(sutItem));
 
                 TestObjectKey itemPtr = ptr2TestObjectKey( sutItem );
 
@@ -345,27 +392,25 @@ void MainWindow::updateObjectTree( QString filename )
     // collect geometries for item and its childs
     collectGeometries( sutItem );
 
+    refreshScreenshotObjectList();
+
     bool itemFocusChanged = false;
 
     // restore focus if object is still visible/available
     if ( !currentFocusId.isEmpty() ) {
 
-        QMap<TestObjectKey, QHash<QString, QString> >::const_iterator objectTreeIterator;
+        TestObjectKey currentFocusKey = objectIdMap.value(currentFocusId);
 
-        for ( objectTreeIterator = objectTreeData.constBegin(); objectTreeIterator != objectTreeData.constEnd(); ++objectTreeIterator ) {
-
-            if ( objectTreeIterator.value().value( "id" ) == currentFocusId ) {
-                // select item that was focused before refresh
-                objectTree->setCurrentItem(testObjectKey2Ptr(objectTreeIterator.key()));
-                itemFocusChanged = true;
-                // item found, no need to iterate the list
-                break;
-            }
+        if (currentFocusKey) {
+            objectTree->setCurrentItem(testObjectKey2Ptr(currentFocusKey));
+            itemFocusChanged = true;
         }
     }
 
     // set focus to SUT item unless previously focused item visible
-    if ( !itemFocusChanged ) { objectTree->setCurrentItem( sutItem ); }
+    if ( !itemFocusChanged ) {
+        objectTree->setCurrentItem( sutItem );
+    }
 
     // highlight current object
     drawHighlight( ptr2TestObjectKey( objectTree->currentItem() ) );

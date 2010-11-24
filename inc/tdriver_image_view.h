@@ -56,6 +56,7 @@ public:
 
     int imageWidth() { return image->width(); }
     int imageHeight() { return image->height(); }
+    const QString &tasIdString() { return imageTasId; }
 
     QPoint getPosInImage(const QPoint &pos) {
         return QPoint(float(pos.x()) / zoomFactor, float(pos.y()) / zoomFactor);
@@ -88,6 +89,8 @@ signals:
     void imageInsertObjectAtClick();
     void imageInsertCoordsAtClick();
 
+    void imageTasIdChanged(QString tasId);
+
     void imageTapById(TestObjectKey id);
     void imageInspectById(TestObjectKey id);
     void imageInsertObjectById(TestObjectKey id);
@@ -115,6 +118,7 @@ private:
 
     QTimer * hoverTimer;
     QImage *image;
+    QString imageTasId;
     QPixmap *pixmap;
 
     bool highlightEnabled;

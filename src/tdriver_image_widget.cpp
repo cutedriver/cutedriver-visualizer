@@ -24,6 +24,7 @@
 
 #include "tdriver_main_window.h"
 #include "tdriver_image_view.h"
+#include "tdriver_debug_macros.h"
 
 void MainWindow::connectImageWidgetSignals() {
 
@@ -37,6 +38,8 @@ void MainWindow::connectImageWidgetSignals() {
     connect( imageWidget, SIGNAL( imageInsertObjectById(TestObjectKey)), this, SLOT(imageInsertObjectFromId(TestObjectKey)));
     connect( imageWidget, SIGNAL( imageInspectById(TestObjectKey)), this, SLOT(imageInspectFromId(TestObjectKey)));
     connect( imageWidget, SIGNAL( imageTapById(TestObjectKey)), this, SLOT(imageTapFromId(TestObjectKey)));
+
+    connect( imageWidget, SIGNAL(imageTasIdChanged(QString)), this, SLOT(refreshScreenshotObjectList()));
 }
 
 
@@ -93,26 +96,26 @@ void MainWindow::imageInsertCoords()
 
 void MainWindow::imageInsertObjectFromId(TestObjectKey id)
 {
-    qDebug() << __FUNCTION__ << id;
-    highlightById(id, true, "");
+    //qDebug() << __FUNCTION__ << id;
+    highlightByKey(id, true, "");
 }
 
 
 void MainWindow::imageInspectFromId(TestObjectKey id)
 {
-    qDebug() << __FUNCTION__ << id;
-    highlightById(id, true);
+    //qDebug() << __FUNCTION__ << id;
+    highlightByKey(id, true);
 }
 
 
 void MainWindow::imageTapFromId(TestObjectKey id)
 {
-    qDebug() << __FUNCTION__ << id;
+    //qDebug() << __FUNCTION__ << id;
 
-    if ( highlightById( id, false ) && lastHighlightedObjectPtr != 0 ) {
-        QHash<QString, QString> treeItemData = objectTreeData.value( lastHighlightedObjectPtr );
+    if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 ) {
+        QHash<QString, QString> treeItemData = objectTreeData.value( lastHighlightedObjectKey );
         tapScreen( "tap " + treeItemData.value( "type" ) + "(:id=>" + treeItemData.value( "id" ) + ") " + currentApplication.value("id") );
-        highlightById( id, true );
+        highlightByKey( id, true );
     }
     else {
         QMessageBox::critical( 0, "Tap to screen", "No object found with id " + testObjectKey2Str(id));
@@ -150,8 +153,8 @@ void MainWindow::clickedImage()
     }
 
     else {
-        if ( highlightAtCoords( pos, false ) && lastHighlightedObjectPtr != 0 ) {
-            QHash<QString, QString> treeItemData = objectTreeData.value( lastHighlightedObjectPtr );
+        if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
+            QHash<QString, QString> treeItemData = objectTreeData.value( lastHighlightedObjectKey );
             tapScreen( "tap " + treeItemData.value( "type" ) + "(:id=>" + treeItemData.value( "id" ) + ") " + currentApplication.value("id") );
             highlightAtCoords( pos, true );
         }
@@ -163,54 +166,50 @@ void MainWindow::clickedImage()
 }
 
 
-void MainWindow::drawHighlight( TestObjectKey itemPtr ) {
+void MainWindow::drawHighlight( TestObjectKey itemKey )
+{
+    if ( itemKey && itemKey != lastHighlightedObjectKey) {
 
-    //qDebug() << "drawHighlight";
+        bool valid = false;
 
-    if ( itemPtr != 0 && itemPtr != lastHighlightedObjectPtr ) {
+        if (screenshotObjects.contains(itemKey)) {
+            QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( itemKey );
 
-        QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( itemPtr );
+            // collect geometries for item and its childs
+            QStringList geometries = geometriesMap.value( itemKey );
 
-        // collect geometries for item and its childs
-        QStringList geometries = geometriesMap.value( itemPtr );
+            if ( !geometries.isEmpty() ) {
 
-        if ( !geometries.isEmpty() ) {
+                if ( geometries.size() > 1 ) {
 
-            lastHighlightedObjectPtr = itemPtr;
+                    imageWidget->drawMultipleHighlights( geometries, 0, 0 );
+                    valid = true;
 
-            if ( geometries.size() > 1 ) {
+                } else if ( geometries.size() == 1 ) {
 
-                imageWidget->drawMultipleHighlights( geometries, 0, 0 );
+                    QStringList geometry = geometries[ 0 ].split( "," );
 
-            } else if ( geometries.size() == 1 ) {
+                    float x      = geometry[ 0 ].toFloat();
+                    float y      = geometry[ 1 ].toFloat();
+                    float width  = geometry[ 2 ].toFloat();
+                    float height = geometry[ 3 ].toFloat();
 
-                QStringList geometry = geometries[ 0 ].split( "," );
-
-                float x      = geometry[ 0 ].toFloat();
-                float y      = geometry[ 1 ].toFloat();
-                float width  = geometry[ 2 ].toFloat();
-                float height = geometry[ 3 ].toFloat();
-
-                imageWidget->drawHighlight( x, y, width, height );
-
-            } else {
-
-                // no geometries, disable highlighting
-                imageWidget->disableDrawHighlight();
-                lastHighlightedObjectPtr = 0;
-
+                    imageWidget->drawHighlight( x, y, width, height );
+                    valid = true;
+                }
             }
-
-        } else {
-
-            //qDebug() << "no geometry for object: " << itemPtr;
-            imageWidget->disableDrawHighlight();
-            lastHighlightedObjectPtr = 0;
-
         }
 
+        if (valid) {
+            lastHighlightedObjectKey = itemKey;
+        }
+        else {
+            // nothing valid to highlight
+            //qDebug() << FCFL << "not on screenshot:" << testObjectKey2Str(itemKey);
+            imageWidget->disableDrawHighlight();
+            lastHighlightedObjectKey = 0;
+        }
     }
-
 }
 
 
@@ -251,9 +250,9 @@ bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey>
 
     matchingObjects.clear();
 
-    QList<TestObjectKey>::const_iterator visibleObject;
+    QSet<TestObjectKey>::const_iterator visibleObject;
 
-    for ( visibleObject = visibleObjectsList.constBegin(); visibleObject != visibleObjectsList.constEnd(); ++visibleObject ) {
+    for ( visibleObject = screenshotObjects.constBegin(); visibleObject != screenshotObjects.constEnd(); ++visibleObject ) {
 
         QStringList geometries = geometriesMap.value( *visibleObject );
 
@@ -327,27 +326,27 @@ bool MainWindow::getSmallestObjectFromMatches( QList<TestObjectKey> *matchingObj
 }
 
 
-bool MainWindow::highlightById( TestObjectKey id, bool selectItem, QString insertMethodToEditor )
+bool MainWindow::highlightByKey( TestObjectKey itemKey, bool selectItem, QString insertMethodToEditor )
 {
-    QTreeWidgetItem *item = testObjectKey2Ptr(id);
-    if (item == NULL) {
+    if (!itemKey) {
         return false;
     }
-    else {
-        drawHighlight( ( TestObjectKey )( item ) );
 
-        // select item from object tree if selectItem is true
-        if ( selectItem ) {
-            objectTree->scrollToItem( item );
-            objectTree->setCurrentItem( item );
-        }
+    drawHighlight( itemKey );
 
-        if (!insertMethodToEditor.isNull()) {
-            objectViewItemAction(item, 0, insertAction, insertMethodToEditor);
-        }
+    QTreeWidgetItem *item = testObjectKey2Ptr(itemKey);
 
-        return true;
+    // select item from object tree if selectItem is true
+    if ( selectItem ) {
+        objectTree->scrollToItem( item );
+        objectTree->setCurrentItem( item );
     }
+
+    if (!insertMethodToEditor.isNull()) {
+        objectViewItemAction(item, 0, insertAction, insertMethodToEditor);
+    }
+
+    return true;
 }
 
 bool MainWindow::highlightAtCoords( QPoint pos, bool selectItem, QString insertMethodToEditor ) {
@@ -366,7 +365,7 @@ bool MainWindow::highlightAtCoords( QPoint pos, bool selectItem, QString insertM
 
         if ( getSmallestObjectFromMatches( &matchingObjects, matchingObject ) ) {
 
-            result = highlightById(matchingObject, selectItem, insertMethodToEditor);
+            result = highlightByKey(matchingObject, selectItem, insertMethodToEditor);
         }
     }
 

@@ -75,13 +75,13 @@ TDriverImageView::~TDriverImageView()
 }
 
 
-
 void TDriverImageView::changeImageResized(bool checked) {
     scaleImage = checked;
     if (image && !scaleImage)
         resize(image->size());
     updatePixmap = true;
 }
+
 
 void TDriverImageView::setLeftClickAction(int action){
     leftClickAction = action;
@@ -90,10 +90,13 @@ void TDriverImageView::setLeftClickAction(int action){
     }
 }
 
+
 void TDriverImageView::clearImage()
 {
-    if ( image ) delete image;
+    delete image;
     image = new QImage();
+    imageTasId.clear();
+
     if (!scaleImage)
         resize(image->size());
     updatePixmap = true;
@@ -523,6 +526,10 @@ void TDriverImageView::refreshImage(QString imagePath)
     image = new QImage( imagePath );
     if (!scaleImage)
         resize(image->size());
+    //qDebug() << FCFL << image->text();
+    imageTasId  = image->text("tas_id");
+    emit imageTasIdChanged(imageTasId);
+
     updatePixmap = true;
     update();
 }
