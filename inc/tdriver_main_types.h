@@ -30,11 +30,12 @@ static inline TestObjectKey ptr2TestObjectKey(TestObjectPtrType ptr) {
 }
 
 static inline QString testObjectKey2Str(TestObjectKey key) {
-    return QString::number((ulong)key);
+    return QString::number((quintptr)(key));
 }
 
 static inline TestObjectKey str2TestObjectKey(const QString &str) {
-    return ptr2TestObjectKey(reinterpret_cast<TestObjectPtrType >(str.toULong()));
+    return ptr2TestObjectKey(reinterpret_cast<TestObjectPtrType >(
+                                 static_cast<quintptr>(str.toULongLong())));
 }
 
 #endif // TDRIVER_MAIN_TYPES_H

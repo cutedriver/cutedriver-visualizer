@@ -147,6 +147,7 @@ public:    // methods to access test object data by object id
     const QHash<QString, QString> &testobjTreeData(TestObjectKey id) { return objectTreeData[id]; }
 
 public slots:
+    void refreshScreenshotObjectList();
     void statusbar( QString text, int currentProgressValue, int maxProgressValue, int timeout = 0 );
     void statusbar( QString text, int timeout = 0 );
     void handleRbiError(QString title, QString text, QString details);
@@ -189,10 +190,10 @@ private:
     QMap<QString, Behaviour> behavioursMap;
 
     QMap<TestObjectKey, QStringList> geometriesMap;
-    QList<TestObjectKey> visibleObjectsList;
+    QSet<TestObjectKey> screenshotObjects;
 
-    QMap<TestObjectKey, QTreeWidgetItem *> objectTreeMap;
     QMap<TestObjectKey, QHash<QString, QString> > objectTreeData;
+    QHash<QString, TestObjectKey> objectIdMap;
     QHash<QString, QMap<QString, QString> > objectMethods;
     QHash<QString, QMap<QString, QString> > objectSignals;
 
@@ -287,6 +288,7 @@ private:
     void updateObjectTree( QString filename );
 
     bool parseObjectTreeXml( QString filename, QDomDocument &resultDomTree );
+    void buildScreenshotObjectList(TestObjectKey parentKey=0);
     void buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement );
     void storeItemToObjectTreeMap( QTreeWidgetItem *item, QString type, QString name, QString id );
 
@@ -430,11 +432,11 @@ private:
 
     // highlight
 
-    TestObjectKey lastHighlightedObjectPtr;
-    void drawHighlight( TestObjectKey itemPtr );
+    TestObjectKey lastHighlightedObjectKey;
+    void drawHighlight( TestObjectKey itemKey );
 
 
-    bool highlightById( TestObjectKey id, bool selectItem, QString insertMethodToEditor = QString() );
+    bool highlightByKey( TestObjectKey itemKey, bool selectItem, QString insertMethodToEditor = QString() );
     bool highlightAtCoords( QPoint pos, bool selectItem, QString insertMethodToEditor = QString() );
     // insertMethodToEditor.isNull means don't insert,
     // insertMethodToEditor.isEmpty means insert without method name
