@@ -63,6 +63,7 @@
 
 class QErrorMessage;
 class QScrollArea;
+class QToolBar;
 
 #include "tdriver_behaviour.h"
 #include <tdriver_util.h>
@@ -81,6 +82,8 @@ class TDriverComboLineEdit;
 #include "tdriver_main_types.h"
 
 #define DOCK_FEATURES_DEFAULT (QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetClosable)
+
+#define DEVICE_BUTTONS_ENABLED 0
 
 class MainWindow : public QMainWindow {
 
@@ -181,8 +184,8 @@ private:
 
     QMap<QString, QString> tdriverXmlParameters;
 
-    QHash<QString, QString> applicationsHash;
-    QMap<ProcessKey, QString> applicationsProcessIdMap;
+    QMap<QString, QString> applicationsNamesMap;
+    QMap<QAction*, QString> applicationsActionMap;
 
     QMap<TestObjectKey, QMap<QString, QHash<QString, QString> > > attributesMap;
     QHash<QString, QMap<QString, QHash<QString, QString> > > apiMethodsMap;
@@ -197,17 +200,9 @@ private:
     QHash<QString, QMap<QString, QString> > objectMethods;
     QHash<QString, QMap<QString, QString> > objectSignals;
 
-    //QString strActiveAppName;
-    //QString strCurrentApplication;
-
-    // ui
-
-    QGroupBox *horizontalBottomButtonGroupBox;
-    QGroupBox *verticalNavigationButtonGroupBox;
 
     // helper functions
     static QByteArray cleanDoneResult(QByteArray output);
-
 
     void updateWindowTitle();
 
@@ -278,7 +273,7 @@ private:
 
     QMap<QString, TestObjectKey> propertyTabLastTimeUpdated;
 
-    QMap<QString, QString> currentApplication;
+    ApplicationInfo currentApplication;
 
     bool foregroundApplication;
 
@@ -362,6 +357,7 @@ private:
 
     // setup
 
+    void createActions();
     void createUi();
     void createTopMenuBar();
     void createDock();
@@ -384,7 +380,7 @@ private:
     QMenu *viewMenu;
     QMenu *searchMenu;
     QMenu *deviceMenu;
-    QMenu *appsMenu;
+    QMenu *appsMenu; // must be kept in sync with appsBar!
     QMenu *recordMenu;
     QMenu *helpMenu;
 
@@ -399,20 +395,13 @@ private:
     QAction *saveStateAction;
     QAction *fontAction;
     QAction *refreshAction;
+    QAction *delayedRefreshAction;
     QAction *disconnectCurrentSUT;
     QAction *exitAction;
 
-    // view
-    QAction *viewButtons;
-    QAction *viewImage;
-    QAction *viewProperties;
-    QAction *viewShortcuts;
-    QAction *viewEditor;
-    QAction *viewClipboard;
     QAction *viewExpandAll;
     QAction *viewCollapseAll;
     QAction *showXmlAction;
-
     // search
     QAction *findAction;
 
@@ -443,34 +432,29 @@ private:
 
     bool getSmallestObjectFromMatches( QList<TestObjectKey> *matchingObjects, TestObjectKey &objectPtr );
 
-    // shortcuts widget
 
-    void createShortcuts();
-
-    QPushButton *refreshButton;
-    QPushButton *delayedRefreshButton;
-    QPushButton *loadFileButton;
-    QPushButton *showXMLButton;
-    QPushButton *quitButton;
-
+#if DEVICE_BUTTONS_ENABLED
     // s60 keyboard widget
-
     void createKeyboardCommands();
+#endif
 
-    // docks
+    // toolbars
 
-    // clipboard
-    QDockWidget *clipboardDock;
+    QToolBar *appsBar; // must be kept in sync with appsMenu!
+    QToolBar *shortcutsBar;
+
+    // clipboard toolbar
+    QToolBar *clipboardBar;
     QLineEdit *objectAttributeLineEdit;
 
     // image
     QDockWidget *imageViewDock;
 
-    // shortcuts
-    QDockWidget *shortcutsDock;
 
+#if DEVICE_BUTTONS_ENABLED
     // buttons / keyboard commands
     QDockWidget *keyboardCommandsDock;
+#endif
 
     // properties
     QDockWidget *propertiesDock;
@@ -554,9 +538,11 @@ private slots:
 
     void closeEvent( QCloseEvent *event );
 
-    // clipboard
+    // toolBar methods
 
-    void createClipboardDock();
+    void createAppsBar();
+    void createShortcutsBar();
+    void createClipboardBar();
 
     void updateClipboardText( QString text, bool appendText );
     void changePropertiesTableValue( QTableWidgetItem *item );
@@ -620,27 +606,14 @@ private slots:
 
     // menu: view
 
-    void changeKeyboardCommandsVisibility();
-    void changeShortcutsVisibility();
-    void changeEditorVisibility();
-    void changePropertiesVisibility();
-    void changeImagesVisibility();
-    void changeClipboardVisibility();
-
-    void visiblityChangedClipboard( bool state );
-    void visiblityChangedImage( bool state );
-    void visiblityChangedProperties( bool state );
-    void visiblityChangedShortcuts( bool state );
-    void visiblityChangedEditor( bool state );
-    void visiblityChangedButtons( bool state );
-
     // menu: record
 
     void openRecordWindow();
 
+#if DEVICE_BUTTONS_ENABLED
     // dock: keyboard commands
-
     void deviceActionButtonPressed();
+#endif
 
     // show xml
 

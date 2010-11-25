@@ -22,6 +22,8 @@
 #include "tdriver_main_window.h"
 
 
+#include <QToolBar>
+#include <QMenu>
 
 bool MainWindow::updateBehaviourXml()
 {
@@ -171,83 +173,72 @@ void MainWindow::buildBehavioursMap() {
 
 }
 
-void MainWindow::updateApplicationsList() {
+void MainWindow::updateApplicationsList()
+{
+    resetApplicationsList();
 
-    // qDebug() << "MainWindow::updateApplicationsList()";
-
-    bool found = false;
-
-    appsMenu->clear();
-
-    QHashIterator<QString, QString> iterator( applicationsHash );
-
-    applicationsProcessIdMap.clear();
-
+    QMap<QString, QString>::const_iterator iterator;
     int count = 0;
 
     // foreground application selection
-    QAction * appAction = new QAction( appsMenu );
-    appAction->setObjectName("main foregroundapp");
-    appAction->setText( "Foreground application" );
-    appAction->setCheckable( true );
+    QAction * fgAction = new QAction(this);
+    fgAction->setObjectName("main foregroundapp");
+    fgAction->setText( "Foreground application" );
+    fgAction->setCheckable( true );
 
-    appAction->setShortcut( QKeySequence( "ALT+" + QString::number( 0 ) ) );
-    applicationsProcessIdMap.insert( (ProcessKey)(appAction), "0" );
-    connect( appAction, SIGNAL( triggered() ), this, SLOT( appSelected() ) );
-    appsMenu->addAction( appAction );
+    fgAction->setShortcut( QKeySequence( "ALT+" + QString::number( 0 ) ) );
+
+    applicationsActionMap.insert( fgAction, "0" );
+    appsMenu->addAction( fgAction );
+    appsBar->addAction( fgAction );
+
+    connect( fgAction, SIGNAL( triggered() ), this, SLOT( appSelected() ) );
 
     if ( foregroundApplication ) {
-        appAction->setChecked( true );
+        fgAction->setChecked( true );
     }
 
-    // add separator to menu
-    appsMenu->addSeparator();
+    for (iterator = applicationsNamesMap.constBegin();
+         iterator != applicationsNamesMap.constEnd();
+         ++iterator) {
 
-    while ( iterator.hasNext() ) {
-
-        iterator.next();
-
-        QAction * appAction = new QAction( appsMenu );
+        QAction * appAction = new QAction(this);
         appAction->setObjectName("main app "+iterator.value());
-        appAction->setText( QString( iterator.value() ) + "  (" + QString( iterator.key() ) + ")" );
+        appAction->setText( iterator.value() + "  (" + iterator.key() + ")" );
         appAction->setCheckable( true );
 
-        appAction->setShortcut( QKeySequence( "ALT+" + QString::number( count + 1 ) ) );
+        if (count < 9)
+            appAction->setShortcut( QKeySequence( "ALT+" + QString::number( count + 1 ) ) );
 
-        if ( iterator.key() == currentApplication.value( "id" ) && !foregroundApplication ) {
-
+        if ( iterator.key() == currentApplication.id && !foregroundApplication ) {
             appAction->setChecked( true );
-
-            currentApplication.clear();
-            currentApplication.insert( "id", iterator.key() );
-            currentApplication.insert( "name", iterator.value() );
-
-            found = true;
-
+            currentApplication.set(iterator.key(), iterator.value() );
         }
 
-        applicationsProcessIdMap.insert( (ProcessKey)(appAction), iterator.key() );
+        applicationsActionMap.insert(appAction, iterator.key() );
+        appsMenu->addAction( appAction );
+        appsBar->addAction( appAction );
 
         connect( appAction, SIGNAL( triggered() ), this, SLOT( appSelected() ) );
-        appsMenu->addAction( appAction );
         count++;
-
     }
-
-    if ( !found ) {
-
-        // no current application found from list - clear it...
-        currentApplication.clear();
-
-    }
-
 }
 
-void MainWindow::resetApplicationsList() {
+void MainWindow::resetApplicationsList()
+{
+    // clear previous list of actions
+    // assumes that appsBar and appsMenu are kept in sync!
+    QList<QAction*> keyList(applicationsActionMap.keys());
 
-    applicationsHash.clear();
-    appsMenu->clear();
+    while(!keyList.isEmpty()) {
+        QAction *delAct = keyList.takeLast();
+        appsMenu->removeAction(delAct);
+        appsBar->removeAction(delAct);
+        applicationsActionMap.remove(delAct);
+        delAct->deleteLater();
+    }
 
+    Q_ASSERT(applicationsActionMap.isEmpty());
 }
 
 void MainWindow::parseApiMethodsXml( QString filename ) {
@@ -356,6 +347,7 @@ void MainWindow::parseApplicationsXml( QString filename ) {
 
     QDomDocument appDocument;
 
+    applicationsNamesMap.clear();
     resetApplicationsList();
 
     if ( parseXml( filename, appDocument ) ) {
@@ -385,7 +377,7 @@ void MainWindow::parseApplicationsXml( QString filename ) {
 
                             if ( application.isElement() ) {
                                 QDomElement appElement = application.toElement();
-                                applicationsHash.insert( appElement.attribute( QString( "id" ) ), appElement.attribute( QString( "name" ) ) );
+                                applicationsNamesMap.insert( appElement.attribute( QString( "id" ) ), appElement.attribute( QString( "name" ) ) );
                             }
                         }
 
@@ -398,16 +390,14 @@ void MainWindow::parseApplicationsXml( QString filename ) {
 
     updateApplicationsList();
 
-    //if ( !applicationsHash.contains( strActiveAppName ) ) {    strActiveAppName = ""; }
-    if ( !applicationsHash.contains( currentApplication.value( "id" ) ) ) { currentApplication.clear(); }
+    if ( !applicationsNamesMap.contains( currentApplication.id ) ) { currentApplication.clear(); }
 
     // Disable menu if it has no applications
-    appsMenu->setEnabled(!applicationsHash.empty());
+    appsMenu->setEnabled(!applicationsNamesMap.empty());
 
-    // Disable record menu if active device type is S60
-    if ( !activeDevice.value( "type" ).contains( "s60", Qt::CaseInsensitive ) ) {
-        recordMenu->setEnabled( !applicationsHash.empty() );
-    }
+    // enable recording menu if if device type is 'kind of' qt
+    recordMenu->setEnabled( !activeDevice.value( "type" ).contains( "s60", Qt::CaseInsensitive )
+                           && !applicationsNamesMap.empty() );
 
 }
 

@@ -8,9 +8,16 @@ class QTreeWidgetItem;
 
 // types meant to be used in other code
 
-typedef void* ProcessKey;
 typedef void* TestObjectKey;
 
+
+struct ApplicationInfo {
+    QString id;
+    QString name;
+    void set(const QString &id, const QString &name = QString()) { this->id=id; this->name=name; }
+    bool isNull() { return id.isEmpty(); }
+    void clear() { id.clear(); name.clear(); }
+};
 
 
 // internal convenience type, not really intended to be used outside this header
