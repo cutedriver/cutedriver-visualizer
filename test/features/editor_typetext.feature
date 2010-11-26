@@ -5,8 +5,8 @@ Feature: Basic text typing in Visualizer Editor
 @pass
 	Scenario: Edit new document
 		Given visualizer application is ready
-		When I make dockwidget "editor" hidden
-		And I make dockwidget "editor" visible
+		When I make dockwidget "Code Editor" hidden
+		And I make dockwidget "Code Editor" visible
 		Then dockwidget "editor" visibility is "true"
 		And dockwidget title "Code Editor" visibility is "true"
 		And editor stuff is ok
@@ -24,8 +24,8 @@ Feature: Basic text typing in Visualizer Editor
 	Scenario: Edit new document, save, close, load
 		Given visualizer application is ready
 		Then application has custom fixture
-		When I make dockwidget "editor" hidden
-		And I make dockwidget "editor" visible
+		When I make dockwidget "Code Editor" hidden
+		And I make dockwidget "Code Editor" visible
 		Then dockwidget "editor" visibility is "true"
 		And dockwidget title "Code Editor" visibility is "true"
 		And editor stuff is ok

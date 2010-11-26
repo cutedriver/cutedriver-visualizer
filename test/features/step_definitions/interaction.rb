@@ -52,16 +52,18 @@ Then("dockwidget title \"$windowtitle\" visibility is \"$visibility\"") do |$win
 end
 
 When /^I make dockwidget "([^\"]*)" visible$/ do |arg1|
-  if ! @app.test_object_exists?( "QDockWidget", {:name => arg1.to_s, :__timeout => 0 })
+  if not @app.test_object_exists?( "QDockWidget", {:windowTitle => arg1.to_s, :__timeout => 0 })
     @app.QMenuBar(:name => "main menubar").QAction( :name => "main view").trigger
-    @app.MainWindow.QMenu( :name => 'main view' ).QAction( :name => 'main toggle editor' ).trigger
+    @app.MainWindow.QMenu( :name => 'main view' ).QAction(:text => 'Docks and toolbars').trigger
+    @app.MainWindow.QMenu( :title => 'Docks and toolbars').QAction(:text => arg1.to_s).trigger
   end
 end
 
 When /^I make dockwidget "([^\"]*)" hidden$/ do |arg1|
-  if @app.test_object_exists?( "QDockWidget", {:name => arg1.to_s, :__timeout => 0 })
+  if @app.test_object_exists?( "QDockWidget", {:windowTitle => arg1.to_s, :__timeout => 0 })
     @app.QMenuBar(:name => "main menubar").QAction( :name => "main view").trigger
-    @app.MainWindow.QMenu( :name => 'main view' ).QAction( :name => 'main toggle editor' ).trigger
+    @app.MainWindow.QMenu( :name => 'main view' ).QAction(:text => 'Docks and toolbars').trigger
+    @app.MainWindow.QMenu(:title => 'Docks and toolbars').QAction(:text => arg1.to_s).trigger
   end
 end
 
