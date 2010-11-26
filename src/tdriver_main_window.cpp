@@ -30,15 +30,18 @@
 #include <QDialog>
 #include <QErrorMessage>
 #include <QThread>
+#include <QToolBar>
+#include <QLabel>
 
 #include <tdriver_debug_macros.h>
 
 
 MainWindow::MainWindow() :
-        QMainWindow(),
-        tdriverMsgBox(new QErrorMessage(this)),
-        tdriverMsgTotal(0),
-        tdriverMsgShown(1)
+    QMainWindow(),
+    foregroundApplication(false),
+    tdriverMsgBox(new QErrorMessage(this)),
+    tdriverMsgTotal(0),
+    tdriverMsgShown(1)
 {
     // ugly hack to disable the "don't show again" checkbox,
     // may not work in future Qt versions, and may not work on all platforms
@@ -206,8 +209,11 @@ bool MainWindow::setup()
     bool imageVisible = applicationSettings->value( "view/image", true ).toBool();
     bool clipboardVisible = applicationSettings->value( "view/clipboard", true ).toBool();
     bool propertiesVisible = true; //applicationSettings->value( "view/properties", true ).toBool();
+#if DEVICE_BUTTONS_ENABLED
     bool buttonVisible = applicationSettings->value( "view/buttons", false ).toBool();
+#endif
     bool shortcutsVisible = applicationSettings->value( "view/shortcuts", false ).toBool();
+    bool appsVisible = applicationSettings->value( "view/applications", false ).toBool();
     bool editorVisible = applicationSettings->value( "view/editor", false ).toBool();
 
     // default sut
@@ -250,18 +256,6 @@ bool MainWindow::setup()
     expandedObjectTreeItemPtr = 0;
     lastHighlightedObjectKey = 0;
 
-    // clear application process id list, used when selecting application from menu
-    applicationsProcessIdMap.clear();
-
-    // clear object attributes map
-    attributesMap.clear();
-
-    // clear current application map
-    currentApplication.clear();
-
-    // clear behaviours cache
-    behavioursMap.clear();
-
     /* initialize help, context sensitivity needs watch for events */
     installEventFilter( this );
 
@@ -270,6 +264,8 @@ bool MainWindow::setup()
 
     // create show xml dialog
     createXMLFileDataWindow();
+
+    createActions();
 
     // create user interface
     createUi();
@@ -284,7 +280,7 @@ bool MainWindow::setup()
         if ( !offlineMode && deviceList.count() > 0 ) {
             deviceMenu->setEnabled( true );
             disconnectCurrentSUT->setEnabled( true );
-            refreshAction->setEnabled( true );
+            delayedRefreshAction->setEnabled( true );
             parseSUT->setEnabled( true );
         }
         tabEditor->setParamMap(tdriverXmlParameters);
@@ -301,19 +297,24 @@ bool MainWindow::setup()
 
     // set image view resize checkbox setting
 
-    connect( clipboardDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedClipboard( bool ) ) );
+    connect( clipboardBar, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedClipboard( bool ) ) );
     connect( imageViewDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedImage( bool ) ) );
     connect( propertiesDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedProperties( bool ) ) );
-    connect( shortcutsDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedShortcuts( bool ) ) );
+    connect( shortcutsBar, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedShortcuts( bool ) ) );
     connect( editorDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedEditor( bool ) ) );
+#if DEVICE_BUTTONS_ENABLED
     connect( keyboardCommandsDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedButtons( bool ) ) );
+#endif
 
     // set visibilities
-    clipboardDock->setVisible( clipboardVisible );
+    clipboardBar->setVisible( clipboardVisible );
     imageViewDock->setVisible( imageVisible );
     propertiesDock->setVisible( propertiesVisible );
+#if DEVICE_BUTTONS_ENABLED
     keyboardCommandsDock->setVisible( buttonVisible );
-    shortcutsDock->setVisible( shortcutsVisible );
+#endif
+    shortcutsBar->setVisible( shortcutsVisible );
+    appsBar->setVisible( appsVisible );
     editorDock->setVisible( editorVisible );
 
     // resize window
@@ -353,10 +354,9 @@ void MainWindow::setActiveDevice( QString deviceName )
         activeDevice["type"] = sut.value( "type" );
         activeDevice["default_timeout"] = sut.value( "default_timeout" );
 
-        // Eisable record menu if active device type is kind of QT
-        if ( sut.value( "type" ).contains( "qt", Qt::CaseInsensitive ) ) {
-            recordMenu->setEnabled( !applicationsHash.empty() );
-        }
+        // enable recording menu if if device type is 'kind of' qt
+        recordMenu->setEnabled( sut.value( "type" ).contains( "qt", Qt::CaseInsensitive )
+                               && !applicationsNamesMap.empty() );
     }
 }
 
@@ -455,6 +455,8 @@ void MainWindow::closeEvent( QCloseEvent *event )
         return;
     }
 
+    TDriverRubyInterface::globalInstance()->requestClose();
+
     // close show xml window if still visible
     //if ( xmlView->isVisible() ) { xmlView->close();    }
 
@@ -476,16 +478,21 @@ void MainWindow::closeEvent( QCloseEvent *event )
     applicationSettings->setValue("image/resize", checkBoxResize->isChecked());
 
     // clipboard contents
-    applicationSettings->setValue( "view/clipboard", viewClipboard->isChecked() );
-    applicationSettings->setValue( "view/image", viewImage->isChecked() );
-    applicationSettings->setValue( "view/properties", viewProperties->isChecked() );
+
+    // view visiblity settings
+    applicationSettings->setValue( "view/clipboard", clipboardBar->isVisible());
+    applicationSettings->setValue( "view/applications", appsBar->isVisible());
+    applicationSettings->setValue( "view/image", imageViewDock->isVisible());
+    applicationSettings->setValue( "view/properties", propertiesDock->isVisible() );
+#if DEVICE_BUTTONS_ENABLED
     applicationSettings->setValue( "view/buttons", viewButtons->isChecked() );
-    applicationSettings->setValue( "view/shortcuts", viewShortcuts->isChecked() );
-    applicationSettings->setValue( "view/editor", viewEditor->isChecked() );
+#else
+    applicationSettings->remove("view/buttons");
+#endif
+    applicationSettings->setValue( "view/shortcuts", shortcutsBar->isVisible());
+    applicationSettings->setValue( "view/editor", editorDock->isVisible());
 
     applicationSettings->setValue( "font/settings", defaultFont->toString() );
-
-    TDriverRubyInterface::globalInstance()->requestClose();
 }
 
 // Event filter, catches F1/HELP key events and processes them
@@ -766,3 +773,183 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
     return result;
 }
 
+
+void MainWindow::createActions()
+{
+
+    parseSUT = new QAction( tr("&Parse TDriver parameters xml file..." ), this);
+    parseSUT->setObjectName("main parsesut");
+    parseSUT->setShortcuts(QList<QKeySequence>() <<
+                           QKeySequence(tr("Ctrl+M, P")) <<
+                           QKeySequence(tr("Ctrl+M, Ctrl+P")));
+    parseSUT->setDisabled( true );
+
+    connect( parseSUT, SIGNAL( triggered() ), this, SLOT(getParameterXML()));
+
+    loadXmlAction = new QAction( this );
+    loadXmlAction->setObjectName("main loadxml");
+    loadXmlAction->setText( "&Load state XML file" );
+    loadXmlAction->setShortcuts(QList<QKeySequence>() <<
+                                QKeySequence(tr("Ctrl+M, L")) <<
+                                QKeySequence(tr("Ctrl+M, Ctrl+L")));
+
+    connect( loadXmlAction, SIGNAL( triggered() ), this, SLOT(loadFileData()));
+
+
+    saveStateAction = new QAction( this );
+    saveStateAction->setObjectName("main savestate");
+    saveStateAction->setText( "&Save current state to folder..." );
+    saveStateAction->setShortcuts(QList<QKeySequence>() <<
+                                  QKeySequence(tr("Ctrl+M, S")) <<
+                                  QKeySequence(tr("Ctrl+M, Ctrl+S")));
+
+    connect( saveStateAction, SIGNAL( triggered() ), this, SLOT(saveStateAsArchive()));
+
+    fontAction = new QAction(tr( "Select default f&ont..." ), this);
+    fontAction->setObjectName("main font");
+    //fontAction->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_T ) );
+
+    connect( fontAction, SIGNAL( triggered() ), this, SLOT(openFontDialog()));
+
+    refreshAction = new QAction(tr("&Refresh"), this);
+    refreshAction->setObjectName("main refresh");
+    refreshAction->setShortcut(QKeySequence(tr("Ctrl+R")));
+    // note: QKeySequence(QKeySequence::Refresh) is F5 in some platforms, Ctrl+R in others
+    //refreshAction->setDisabled( true );
+
+    connect( refreshAction, SIGNAL( triggered() ), this, SLOT(forceRefreshData()));
+
+    delayedRefreshAction = new QAction(tr("Refresh in 5 secs"), this );
+    delayedRefreshAction->setObjectName("main delayed delayedRefresh");
+    delayedRefreshAction->setShortcut(QKeySequence(tr("Ctrl+Alt+R")));
+    //delayedRefreshAction->setDisabled( true );
+
+    connect( delayedRefreshAction, SIGNAL(triggered()), this, SLOT(delayedRefreshData()));
+
+    disconnectCurrentSUT = new QAction( tr( "Dis&connect SUT" ), this );
+    disconnectCurrentSUT->setObjectName("main disconnectsut");
+    disconnectCurrentSUT->setShortcuts(QList<QKeySequence>() <<
+                                       QKeySequence(tr("Ctrl+M, C")) <<
+                                       QKeySequence(tr("Ctrl+M, Ctrl+C")));
+    disconnectCurrentSUT->setDisabled( true );
+
+    connect( disconnectCurrentSUT, SIGNAL( triggered() ), this, SLOT(disconnectSUT()));
+
+    exitAction = new QAction(tr("E&xit"), this);
+    exitAction->setObjectName("main exit");
+    exitAction->setShortcut( QKeySequence( tr("Alt+X")));
+
+    connect( exitAction, SIGNAL( triggered() ), this, SLOT(close()));
+
+    findAction = new QAction(tr("&Find"), this);
+    findAction->setObjectName("main find");
+    //findAction->setShortcut( QKeySequence(tr("Ctrl+F")));
+
+    connect( findAction, SIGNAL( triggered() ), this, SLOT( showFindDialog() ) );
+
+    viewExpandAll = new QAction( this );
+    viewExpandAll->setObjectName("main tree expand");
+    viewExpandAll->setText( "&Expand all" );
+    viewExpandAll->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_Right ) );
+    viewExpandAll->setCheckable( false );
+
+    connect( viewExpandAll, SIGNAL( triggered() ), this, SLOT( objectTreeExpandAll() ) );
+
+    viewCollapseAll = new QAction( this );
+    viewCollapseAll->setObjectName("main tree collapse");
+    viewCollapseAll->setText( "&Collapse all" );
+    viewCollapseAll->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_Left ) );
+    viewCollapseAll->setCheckable( false );
+
+    connect( viewCollapseAll, SIGNAL( triggered() ), this, SLOT( objectTreeCollapseAll() ) );
+
+    showXmlAction = new QAction( this );
+    showXmlAction->setObjectName("main showxml");
+    showXmlAction->setText( tr( "&Show source XML" ) );
+    showXmlAction->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_U ) );
+
+    connect( showXmlAction, SIGNAL( triggered() ), this, SLOT( showXMLDialog() ) );
+
+    recordAction = new QAction( this );
+    recordAction->setObjectName("main record");
+    recordAction->setText( tr( "&Open Recorder Dialog" ) );
+    recordAction->setShortcut( tr( "F6" ) );
+
+    connect( recordAction, SIGNAL( triggered() ), this, SLOT( openRecordWindow() ) );
+
+    visualizerAssistant = new QAction( this );
+    visualizerAssistant->setObjectName("main help assistant");
+    visualizerAssistant->setText( tr( "TDriver &Help" ) );
+    // Remove the next line if F1 presses are to be handled in the custom event handler ( for context sensitivity ).
+    visualizerAssistant->setShortcut( tr( "F1" ) );
+
+    connect( visualizerAssistant, SIGNAL( triggered() ), this, SLOT( showMainVisualizerAssistant() ) );
+
+    visualizerHelp = new QAction( this );
+    visualizerHelp->setObjectName("main help visualizer");
+    visualizerHelp->setText( tr( "&Visualizer Help" ) );
+
+    connect( visualizerHelp, SIGNAL( triggered() ), this, SLOT( showVisualizerHelp() ) );
+
+    aboutVisualizer = new QAction(this);
+    aboutVisualizer->setObjectName("main help about");
+    aboutVisualizer->setText( tr( "About Visualizer" ));
+
+    connect( aboutVisualizer, SIGNAL( triggered() ), this, SLOT( showAboutVisualizer() ) );
+
+}
+
+
+void MainWindow::createAppsBar()
+{
+    appsBar = new QToolBar( tr( "Applications" ));
+    appsBar->setObjectName("apps");
+    //appsBar->addAction(exitAction);
+
+    addToolBar(Qt::LeftToolBarArea, appsBar);
+}
+
+
+void MainWindow::createShortcutsBar()
+{
+    shortcutsBar = new QToolBar( tr( "Shortcuts" ));
+    shortcutsBar->setObjectName("shortcuts");
+
+    shortcutsBar->addAction(refreshAction);
+    shortcutsBar->addAction(delayedRefreshAction);
+    shortcutsBar->addAction(showXmlAction);
+    shortcutsBar->addAction(loadXmlAction);
+
+    //shortcutsBar->addAction(exitAction);
+
+    addToolBar(shortcutsBar);
+}
+
+void MainWindow::createClipboardBar()
+{
+
+    clipboardBar = new QToolBar( tr("Clipboard contents"));
+    clipboardBar->setObjectName("clipboard");
+
+    //clipboardBar->setFloating( false );
+    clipboardBar->setVisible( true );
+
+    objectAttributeLineEdit = new QLineEdit;
+    objectAttributeLineEdit->setObjectName("clipboard");
+
+    clipboardBar->addWidget( new QLabel(tr("Clipboard: ")) );
+    clipboardBar->addWidget( objectAttributeLineEdit );
+
+    addToolBar(Qt::TopToolBarArea, clipboardBar);
+}
+
+void MainWindow::updateClipboardText( QString text, bool appendText ) {
+
+    QClipboard *clipboard = QApplication::clipboard();
+
+    if ( appendText ) { text.prepend( clipboard->text().append(".") ); }
+
+    clipboard->setText( text );
+    objectAttributeLineEdit->setText( text );
+
+}

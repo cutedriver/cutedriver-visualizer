@@ -22,7 +22,10 @@
 #include "tdriver_image_view.h"
 #include "tdriver_recorder.h"
 
+#include <QSharedPointer>
 #include <QShortcut>
+#include <QMenu>
+#include <QAction>
 
 void MainWindow::createTopMenuBar() {
 
@@ -46,91 +49,43 @@ void MainWindow::createFileMenu() {
     fileMenu = new QMenu( tr( " &File " ), this );
     fileMenu->setObjectName("main file");
 
-    // parse tdriver parameters xml
 
-    parseSUT = fileMenu->addAction( "&Parse TDriver parameters xml file..." );
-    parseSUT->setObjectName("main parsesut");
-    parseSUT->setShortcuts(QList<QKeySequence>() <<
-                           QKeySequence(tr("Ctrl+M, P")) <<
-                           QKeySequence(tr("Ctrl+M, Ctrl+P")));
-    parseSUT->setDisabled( true );
+    // parse tdriver parameters xml
+    fileMenu->addAction(parseSUT);
+
     fileMenu->addSeparator();
 
     // Load state xml file
-
-    loadXmlAction = new QAction( this );
-    loadXmlAction->setObjectName("main loadxml");
-    loadXmlAction->setText( "&Load state XML file" );
-    loadXmlAction->setShortcuts(QList<QKeySequence>() <<
-                                QKeySequence(tr("Ctrl+M, L")) <<
-                                QKeySequence(tr("Ctrl+M, Ctrl+L")));
     fileMenu->addAction( loadXmlAction );
 
     // save state xml
-
-    saveStateAction = new QAction( this );
-    saveStateAction->setObjectName("main savestate");
-    saveStateAction->setText( "&Save current state to folder..." );
-    saveStateAction->setShortcuts(QList<QKeySequence>() <<
-                                  QKeySequence(tr("Ctrl+M, S")) <<
-                                  QKeySequence(tr("Ctrl+M, Ctrl+S")));
     fileMenu->addAction( saveStateAction );
 
     // font
 
     fileMenu->addSeparator();
-    fontAction = new QAction( this );
-    fontAction->setObjectName("main font");
-    fontAction->setText( "Select default f&ont..." );
-    //fontAction->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_T ) );
     fileMenu->addAction( fontAction );
-    fileMenu->addSeparator();
 
+    fileMenu->addSeparator();
     // refresh
 
-    refreshAction = new QAction( this );
-    refreshAction->setObjectName("main refresh");
-    refreshAction->setText( "&Refresh" );
-    refreshAction->setShortcut(QKeySequence(tr("Ctrl+R")));
-    // this is F5 in some platforms, Ctrl+R in some: QKeySequence(QKeySequence::Refresh);
-    refreshAction->setDisabled( true );
     fileMenu->addAction( refreshAction );
+    fileMenu->addAction( delayedRefreshAction );
 
     // tap and auto-refresh on Image View click
     //note:  action constructed in MainWindow::createImageViewDockWidget()
 
     // disconnect
 
-    disconnectCurrentSUT = new QAction( this );
-    disconnectCurrentSUT->setObjectName("main disconnectsut");
-    disconnectCurrentSUT->setText( "Dis&connect SUT" );
-    disconnectCurrentSUT->setShortcuts(QList<QKeySequence>() <<
-                                       QKeySequence(tr("Ctrl+M, C")) <<
-                                       QKeySequence(tr("Ctrl+M, Ctrl+C")));
-    disconnectCurrentSUT->setDisabled( true );
     fileMenu->addAction( disconnectCurrentSUT );
     fileMenu->addSeparator();
 
     // exit
 
-    exitAction = fileMenu->addAction( "E&xit" );
-    exitAction->setObjectName("main exit");
-    exitAction->setShortcut( QKeySequence( tr("Alt+X")));
+    fileMenu->addAction(exitAction);
 
     menubar->addMenu( fileMenu );
     menubar->actions().last()->setObjectName("main file");
-
-
-    // signals
-
-    connect( parseSUT, SIGNAL( triggered() ), this, SLOT( getParameterXML() ) );
-    connect( loadXmlAction, SIGNAL( triggered() ), this, SLOT( loadFileData() ) );
-    connect( saveStateAction, SIGNAL( triggered() ), this, SLOT( saveStateAsArchive() ) );
-    connect( fontAction, SIGNAL( triggered() ), this, SLOT( openFontDialog() ) );
-    connect( refreshAction, SIGNAL( triggered() ), this, SLOT( forceRefreshData() ) );
-    connect( disconnectCurrentSUT, SIGNAL( triggered() ), this, SLOT( disconnectSUT() ) );
-    connect( exitAction, SIGNAL( triggered() ), this, SLOT( close() ) );
-
 }
 
 void MainWindow::createSearchMenu() {
@@ -140,16 +95,11 @@ void MainWindow::createSearchMenu() {
 
     // dockable widget menu: clipboard
 
-    findAction = new QAction( this );
-    findAction->setObjectName("main find");
-    findAction->setText( "&Find" );
-    //findAction->setShortcut( QKeySequence(tr("Ctrl+F")));
     searchMenu->addAction( findAction );
 
     menubar->addMenu( searchMenu );
     menubar->actions().last()->setObjectName("main search");
 
-    connect( findAction, SIGNAL( triggered() ), this, SLOT( showFindDialog() ) );
 }
 
 void MainWindow::createViewMenu() {
@@ -158,107 +108,27 @@ void MainWindow::createViewMenu() {
 
     viewMenu = new QMenu( " &View ", this );
     viewMenu->setObjectName("main view");
-    // dockable widget menu
 
-    // dockable widget menu: clipboard
+    // dock and toolbar submenu will be inserted as the first element of this menu
 
-    viewClipboard = new QAction( this );
-    viewClipboard->setObjectName("main toggle clipboard");
-    viewClipboard->setText( "&Clipboard" );
-    viewClipboard->setCheckable( true );
-    viewMenu->addAction( viewClipboard );
-
-    // dockable widget menu: view images
-
-    viewImage = new QAction( this );
-    viewImage->setObjectName("main toggle imageview");
-    viewImage->setText( tr( "&Image" ) );
-    viewImage->setCheckable( true );
-    viewMenu->addAction( viewImage );
-
-    // dockable widget menu: properties view
-
-    viewProperties = new QAction( this );
-    viewProperties->setObjectName("main toggle properties");
-    viewProperties->setText( tr( "&Properties" ) );
-    viewProperties->setEnabled( false );
-    viewProperties->setCheckable( true );
-    viewMenu->addAction( viewProperties );
-    viewProperties->setVisible( false );
-
-    // dockable widget menu: shortcuts
-
-    viewShortcuts = new QAction( this );
-    viewShortcuts->setObjectName("main toggle shortcuts");
-    viewShortcuts->setText( tr( "&Shortcuts" ) );
-    viewShortcuts->setCheckable( true );
-    viewMenu->addAction( viewShortcuts );
-
-    // dockable widget menu: editor
-
-    viewEditor = new QAction( this );
-    viewEditor->setObjectName("main toggle editor");
-    viewEditor->setText( tr( "Code &Editor" ) );
-    viewEditor->setCheckable( true );
-    viewMenu->addAction( viewEditor );
-
-
-    // dockable widget menu: (s60) navigation buttons
-
-    viewButtons = new QAction( this );
-    viewButtons->setObjectName("main toggle navigationbuttons");
-    viewButtons->setText( tr( "&Navigation buttons" ) );
-    viewButtons->setCheckable( true );
-    viewMenu->addAction( viewButtons );
-
-    viewMenu->addSeparator();
-
-    // object tree menu:
+    //viewMenu->addSeparator();
 
     // object tree menu: expand all
 
-    viewExpandAll = new QAction( this );
-    viewExpandAll->setObjectName("main tree expand");
-    viewExpandAll->setText( "&Expand all" );
-    viewExpandAll->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_Right ) );
-    viewExpandAll->setCheckable( false );
     viewMenu->addAction( viewExpandAll );
 
     // object tree menu: collapse all
 
-    viewCollapseAll = new QAction( this );
-    viewCollapseAll->setObjectName("main tree collapse");
-    viewCollapseAll->setText( "&Collapse all" );
-    viewCollapseAll->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_Left ) );
-    viewCollapseAll->setCheckable( false );
     viewMenu->addAction( viewCollapseAll );
 
     viewMenu->addSeparator();
 
     // Show XML
 
-    showXmlAction = new QAction( this );
-    showXmlAction->setObjectName("main showxml");
-    showXmlAction->setText( tr( "&Show source XML" ) );
-    showXmlAction->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_U ) );
     viewMenu->addAction( showXmlAction );
 
     menubar->addMenu( viewMenu );
     menubar->actions().last()->setObjectName("main view");
-
-    // signals
-
-    connect( viewClipboard, SIGNAL( triggered() ), this, SLOT( changeClipboardVisibility() ) );
-    connect( viewImage, SIGNAL( triggered() ), this, SLOT( changeImagesVisibility() ) );
-    connect( viewProperties, SIGNAL( triggered() ), this, SLOT( changePropertiesVisibility() ) );
-    connect( viewShortcuts, SIGNAL( triggered() ), this, SLOT( changeShortcutsVisibility() ) );
-    connect( viewEditor, SIGNAL( triggered() ), this, SLOT( changeEditorVisibility() ) );
-    connect( viewButtons, SIGNAL( triggered() ), this, SLOT( changeKeyboardCommandsVisibility() ) );
-
-    connect( viewExpandAll, SIGNAL( triggered() ), this, SLOT( objectTreeExpandAll() ) );
-    connect( viewCollapseAll, SIGNAL( triggered() ), this, SLOT( objectTreeCollapseAll() ) );
-
-    connect( showXmlAction, SIGNAL( triggered() ), this, SLOT( showXMLDialog() ) );
 
 }
 
@@ -283,7 +153,6 @@ void MainWindow::createApplicationsMenu() {
     appsMenu->setDisabled( true );
     menubar->addMenu( appsMenu );
     menubar->actions().last()->setObjectName("main applications");
-
 }
 
 void MainWindow::createRecordMenu() {
@@ -296,19 +165,9 @@ void MainWindow::createRecordMenu() {
 
     // open record dialog
 
-    recordAction = new QAction( this );
-    recordAction->setObjectName("main record");
-    recordAction->setText( tr( "&Open Recorder Dialog" ) );
-    recordAction->setShortcut( tr( "F6" ) );
-
     recordMenu->addAction( recordAction );
     menubar->addMenu( recordMenu );
     menubar->actions().last()->setObjectName("main record");
-
-    // signals
-
-    connect( recordAction, SIGNAL( triggered() ), this, SLOT( openRecordWindow() ) );
-
 }
 
 
@@ -320,32 +179,17 @@ void MainWindow::createHelpMenu()
     helpMenu->setObjectName("main help");
 
     // TDriver help
-    visualizerAssistant = new QAction( this );
-    visualizerAssistant->setObjectName("main help assistant");
-    visualizerAssistant->setText( tr( "TDriver &Help" ) );
-    // Remove the next line if F1 presses are to be handled in the custom event handler ( for context sensitivity ).
-    visualizerAssistant->setShortcut( tr( "F1" ) );
     helpMenu->addAction( visualizerAssistant );
+    helpMenu->addAction( visualizerHelp );
 
     // Visualizer Help
-    visualizerHelp = new QAction( this );
-    visualizerHelp->setObjectName("main help visualizer");
-    visualizerHelp->setText( tr( "&Visualizer Help" ) );
-    helpMenu->addAction( visualizerHelp );
     helpMenu->addSeparator();
 
     // About TDriver
-    aboutVisualizer = new QAction( this );
-    aboutVisualizer->setObjectName("main help about");
-    aboutVisualizer->setText( tr( "About Visualizer" ) );
     helpMenu->addAction( aboutVisualizer );
+
     menubar->addMenu( helpMenu );
     menubar->actions().last()->setObjectName("main help");
-
-    // signals
-    connect( visualizerAssistant, SIGNAL( triggered() ), this, SLOT( showMainVisualizerAssistant() ) );
-    connect( visualizerHelp, SIGNAL( triggered() ), this, SLOT( showVisualizerHelp() ) );
-    connect( aboutVisualizer, SIGNAL( triggered() ), this, SLOT( showAboutVisualizer() ) );
 }
 
 
@@ -444,14 +288,14 @@ void MainWindow::openRecordWindow()
 {
     if ( recordMenu->isEnabled() ) {
 
-        if ( currentApplication.value( "id" ).isEmpty() ) {
+        if (currentApplication.isNull()) {
 
             QMessageBox::warning( this, tr( "TDriver Visualizer Recorder" ), "In order to start recording a target application must be selected\nfrom applications menu.\n\nPlease select one and try again." );
 
         } else {
 
             mRecorder->setOutputPath( outputPath );
-            mRecorder->setActiveDevAndApp( activeDevice.value("name"), currentApplication.value( "id" ) );
+            mRecorder->setActiveDevAndApp( activeDevice.value("name"), currentApplication.id );
             mRecorder->show();
 
             mRecorder->activateWindow();
@@ -468,32 +312,20 @@ void MainWindow::appSelected() {
 
     QAction *action = qobject_cast<QAction *>( sender() );
 
-    if ( action ) {
+    if ( action && applicationsActionMap.contains(action)) {
 
-        if( action->isChecked() == true ) {
-            // if the action is not already checked, check it and uncheck all other actions
-            QList<QAction *> menuActions;
-
-            menuActions = appsMenu->actions();
-
-            for ( int i = 0; i < menuActions.size(); i++ ) {
-                menuActions.at( i )->setChecked( false );
-            }
-
-            QString processId = applicationsProcessIdMap.value( (ProcessKey)( action ) );
-            currentApplication.clear();
-            currentApplication.insert( "name", applicationsHash.value( processId ) );
-            currentApplication.insert( "id",   processId );
-            action->setChecked( true );
-            foregroundApplication = ( processId == "0" ) ? true : false;
-            // application changed, perform refresh
-            refreshData();
-
-        } else {
-            // item already selected - keep as checked
-            action->setChecked( true );
-            updateWindowTitle();
+        QList<QAction *> menuActions(appsMenu->actions());
+        for ( int i = 0; i < menuActions.size(); i++ ) {
+            menuActions.at( i )->setChecked( menuActions.at(i) == action );
         }
+
+        QString processId = applicationsActionMap.value( action );
+        currentApplication.set(processId, applicationsNamesMap.value( processId ));
+
+        action->setChecked( true );
+        foregroundApplication = ( processId == "0" ) ? true : false;
+        updateWindowTitle();
+        refreshData();
     }
 }
 
@@ -511,10 +343,9 @@ void MainWindow::deviceSelected() {
 
         if ( strOldDevice != activeDevice.value("name") ) {
 
-            // clear application menu
+            // clear applications
             resetApplicationsList();
-
-            // clear current application hash
+            applicationsNamesMap.clear();
             currentApplication.clear();
 
             // disable applications menu
@@ -538,8 +369,10 @@ void MainWindow::deviceSelected() {
 
     QString deviceType = activeDevice.value("type");
 
+#if DEVICE_BUTTONS_ENABLED
     // enable s60 buttons selection if device type is 'kind of' s60
     viewButtons->setEnabled( deviceType.contains( "s60", Qt::CaseInsensitive ) );
+#endif
 
     // enable api tab if if device type is 'kind of' qt
     tabWidget->setTabEnabled( tabWidget->indexOf( apiTab ), deviceType.contains( "qt", Qt::CaseInsensitive ) );
@@ -547,7 +380,8 @@ void MainWindow::deviceSelected() {
     apiFixtureChecked = false;
 
     // enable recording menu if if device type is 'kind of' qt
-    recordMenu->setEnabled( deviceType.contains( "qt", Qt::CaseInsensitive ) && !applicationsHash.empty() );
+    recordMenu->setEnabled( deviceType.contains( "qt", Qt::CaseInsensitive )
+                           && !applicationsNamesMap.empty() );
 
     // update window title
     updateWindowTitle();
@@ -613,34 +447,31 @@ void MainWindow::getParameterXML() {
 
 void MainWindow::updateDevicesList(const QMap<QString, QHash<QString, QString> > &newDeviceList)
 {
-    int count = 0;
-    deviceMenu->clear();
+    // clear previous list of actions
+    while(!deviceMenu->isEmpty()) {
+        QAction *delAct = deviceMenu->actions().first();
+        deviceMenu->removeAction(delAct);
+        delAct->deleteLater();
+    }
 
     deviceList = newDeviceList;
-    QAction *deviceActionList[ deviceList.size() ];
+    for ( QMap<QString, QHash<QString, QString> >::const_iterator iterator(newDeviceList.constBegin());
+         iterator != newDeviceList.constEnd();
+         ++iterator) {
 
-    QMapIterator<QString, QHash<QString, QString> > iterator( deviceList );
+        QAction *devAction = new QAction(this);
+        devAction->setObjectName("main device "+iterator.key());
+        devAction->setText( iterator.key() );
+        devAction->setToolTip( iterator.value().value( "type" ) );
 
-    while ( iterator.hasNext() ) {
+        connect( devAction, SIGNAL( triggered() ), this, SLOT( deviceSelected() ) );
 
-        iterator.next();
-
-        deviceActionList[ count ] = new QAction( deviceMenu );
-        deviceActionList[ count ]->setObjectName("main device "+iterator.key());
-        deviceActionList[ count ]->setText( iterator.key() );
-        deviceActionList[ count ]->setToolTip( iterator.value().value( "type" ) );
-
-        connect( deviceActionList[ count ], SIGNAL( triggered() ), this, SLOT( deviceSelected() ) );
-
-        deviceMenu->addAction( deviceActionList[ count ] );
-
-        count += 1;
+        deviceMenu->addAction( devAction );
     }
 
     // disable devices menu, disconnect sut etc if no devices found
-    deviceMenu->setEnabled( count != 0 );
-    disconnectCurrentSUT->setEnabled( count != 0 );
-
+    deviceMenu->setDisabled(deviceMenu->isEmpty());
+    disconnectCurrentSUT->setEnabled(deviceMenu->isEmpty());
 }
 
 

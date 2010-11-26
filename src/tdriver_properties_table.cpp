@@ -102,7 +102,7 @@ void MainWindow::getClassSignals(QString objectType, QString objectId)
         if (!apiSignalsMap.contains(objectType)) {
             if ( executeTDriverCommand(commandSignalList,
                                        activeDevice.value( "name" )
-                                       + " list_signals " + currentApplication.value("name")
+                                       + " list_signals " + currentApplication.name
                                        + " " + objectId
                                        + " " + objectType )) {
                 apiSignalsMap.insert(objectType,

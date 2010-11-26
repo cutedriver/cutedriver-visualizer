@@ -402,7 +402,4 @@ void MainWindow::createFindDialogShortcuts()
 
     findSC = new QShortcut(QKeySequence("Ctrl+F"), propertiesDock, 0, 0, Qt::WidgetWithChildrenShortcut);
     connect(findSC, SIGNAL(activated()), findAction, SLOT(trigger()));
-
-    findSC = new QShortcut(QKeySequence("Ctrl+F"), shortcutsDock, 0, 0, Qt::WidgetWithChildrenShortcut);
-    connect(findSC, SIGNAL(activated()), findAction, SLOT(trigger()));
 }

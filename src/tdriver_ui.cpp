@@ -29,6 +29,7 @@
 
 #include <QUrl>
 #include <QScrollArea>
+#include <QToolBar>
 
 #include "tdriver_debug_macros.h"
 
@@ -100,12 +101,14 @@ void MainWindow::createUi()
     createImageViewDockWidget();
     createTreeViewDockWidget();
     createPropertiesDockWidget();
-    createClipboardDock();
-    createShortcuts();
-    createEditorDocks();
-    createKeyboardCommands();
-
     createTopMenuBar();
+    createAppsBar();
+    createShortcutsBar();
+    createClipboardBar();
+    createEditorDocks();
+#if DEVICE_BUTTONS_ENABLED
+    createKeyboardCommands();
+#endif
 
     // layout of main window: add objecttree to central and set it, add menubar as menu
     statusBar()->setObjectName("main");
@@ -120,6 +123,11 @@ void MainWindow::createUi()
     statusBar()->clearMessage();
 
     createFindDialogShortcuts();
+
+    // create menu of togglable docks and toolbars items
+    QMenu *showMenu = createPopupMenu();
+    showMenu->setTitle(tr("Docks and toolbars"));
+    viewMenu->insertMenu(viewMenu->actions().first(), showMenu);
 }
 
 
@@ -129,11 +137,11 @@ void MainWindow::updateWindowTitle() {
             tr("TDriver Visualizer v") + VISUALIZER_VERSION +
             tr(" - ");
 
-    if ( foregroundApplication && !applicationsHash.isEmpty() ){
+    if ( foregroundApplication && !applicationsNamesMap.isEmpty() ){
         tempTitle += tr("Foreground app. - ");
     }
     else {
-        tempTitle +=  ( currentApplication.value( "name" ).isEmpty() ? "" : currentApplication.value( "name" ) + " (" + currentApplication.value( "id" ) + ") - " );
+        tempTitle +=  ( currentApplication.name.isEmpty() ? "" : currentApplication.name + " (" + currentApplication.id + ") - " );
     }
 
     tempTitle += ( offlineMode ) ?
@@ -142,76 +150,6 @@ void MainWindow::updateWindowTitle() {
     setWindowTitle( tempTitle );
 }
 
-void MainWindow::visiblityChangedClipboard( bool state ){
-
-    viewClipboard->setChecked( state );
-
-}
-
-void MainWindow::visiblityChangedImage( bool state ){
-
-    viewImage->setChecked( state );
-
-}
-
-void MainWindow::visiblityChangedProperties( bool state ){
-
-    viewProperties->setChecked( state );
-
-}
-
-void MainWindow::visiblityChangedShortcuts( bool state ){
-
-    viewShortcuts->setChecked( state );
-
-}
-
-void MainWindow::visiblityChangedEditor( bool state ){
-
-    viewEditor->setChecked( state );
-
-}
-
-void MainWindow::visiblityChangedButtons( bool state ){
-
-    viewButtons->setChecked( state );
-
-}
-
-void MainWindow::changeClipboardVisibility()
-{
-    clipboardDock->setVisible( ( clipboardDock->isVisible() ? false : true )  );
-}
-
-void MainWindow::changeShortcutsVisibility() {
-
-    shortcutsDock->setVisible( viewShortcuts->isChecked() );
-
-}
-
-void MainWindow::changeEditorVisibility() {
-
-    editorDock->setVisible( viewEditor->isChecked() );
-
-}
-
-void MainWindow::changePropertiesVisibility() {
-
-    tabWidget->setVisible( viewProperties->isChecked()  );
-
-}
-
-void MainWindow::changeKeyboardCommandsVisibility() {
-
-    keyboardCommandsDock->setVisible( viewButtons->isChecked() );
-
-}
-
-void MainWindow::changeImagesVisibility() {
-
-    imageViewDock->setVisible( viewImage->isChecked() );
-
-}
 
 
 void MainWindow::changeImageResize(bool resize)

@@ -282,9 +282,7 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 
             // store id of current application ui dump
             if ( type.toLower() == "application" ) {
-                currentApplication.clear();
-                currentApplication.insert( "name", name );
-                currentApplication.insert( "id", id );
+                currentApplication.set(id, name);
             }
 
             // create child item
@@ -437,10 +435,9 @@ void MainWindow::delayedRefreshData()
         noDeviceSelectedPopup();
     }
     else {
-        delayedRefreshButton->setDisabled(true);
-        delayedRefreshButton->setDown(true);
-        refreshButton->setDisabled(true);
-        refreshButton->setDown(true);
+
+        delayedRefreshAction->setDisabled(true);
+        refreshAction->setDisabled(true);
         QTimer::singleShot(5000, this, SLOT(forceRefreshData()));
     }
 }
@@ -452,10 +449,8 @@ void MainWindow::forceRefreshData()
         noDeviceSelectedPopup();
     }
     else {
-        delayedRefreshButton->setDisabled(false);
-        delayedRefreshButton->setDown(false);
-        refreshButton->setDisabled(false);
-        refreshButton->setDown(false);
+        delayedRefreshAction->setDisabled(false);
+        refreshAction->setDisabled(false);
         refreshData();
     }
 }
@@ -506,6 +501,7 @@ void MainWindow::refreshData()
 
     // request application list (unless s60 AVKON)
     if ( activeDevice.value( "type" ).toLower() == "s60" ) {
+        applicationsNamesMap.clear();
         resetApplicationsList();
         appsMenu->setDisabled( true );
         isS60 = true;
@@ -529,8 +525,9 @@ void MainWindow::refreshData()
     //canceled = progress->wasCanceled();
 
     // use target application if user has chosen one
-    if ( !currentApplication.value( "id" ).isEmpty() && applicationsHash.contains( currentApplication.value( "id" ) ) ) {
-        refreshCmdTemplate += " " + currentApplication.value( "id" );
+    if ( !currentApplication.isNull()
+            && applicationsNamesMap.contains( currentApplication.id )) {
+        refreshCmdTemplate += " " + currentApplication.id;
     }
 
     // request ui xml dump

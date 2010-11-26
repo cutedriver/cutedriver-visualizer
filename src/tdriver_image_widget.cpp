@@ -112,13 +112,13 @@ void MainWindow::imageTapFromId(TestObjectKey id)
 {
     //qDebug() << __FUNCTION__ << id;
 
-    if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 ) {
+    if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 && !currentApplication.isNull()) {
         QHash<QString, QString> treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-        tapScreen( "tap " + treeItemData.value( "type" ) + "(:id=>" + treeItemData.value( "id" ) + ") " + currentApplication.value("id") );
+        tapScreen( "tap " + treeItemData.value( "type" ) + "(:id=>" + treeItemData.value( "id" ) + ") " + currentApplication.id );
         highlightByKey( id, true );
     }
     else {
-        QMessageBox::critical( 0, "Tap to screen", "No object found with id " + testObjectKey2Str(id));
+        QMessageBox::critical( 0, "Tap to screen", "Bad tap attempt, object id:" + testObjectKey2Str(id) + ", app id:" + currentApplication.id);
     }
 }
 
@@ -155,7 +155,7 @@ void MainWindow::clickedImage()
     else {
         if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
             QHash<QString, QString> treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-            tapScreen( "tap " + treeItemData.value( "type" ) + "(:id=>" + treeItemData.value( "id" ) + ") " + currentApplication.value("id") );
+            tapScreen( "tap " + treeItemData.value( "type" ) + "(:id=>" + treeItemData.value( "id" ) + ") " + currentApplication.id );
             highlightAtCoords( pos, true );
         }
 

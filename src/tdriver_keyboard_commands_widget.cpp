@@ -21,6 +21,7 @@
 
 #include "tdriver_main_window.h"
 
+#if DEVICE_BUTTONS_ENABLED
 void MainWindow::createKeyboardCommands() {
 
     QHBoxLayout *layout = new QHBoxLayout;
@@ -30,10 +31,8 @@ void MainWindow::createKeyboardCommands() {
     keyboardCommandsDock->setObjectName("kbcommands");
     //keyboardCommandsDock->setAllowedAreas(Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
 
-    QGroupBox * horizontalBottomButtonGroupBox2 = new QGroupBox();
-    horizontalBottomButtonGroupBox2->setObjectName("kbcommands");
-    QStringList allowCommands;
-    allowCommands << "Up" << "Down" << "Left" << "Right" << "Left Softkey" << "Right Softkey";
+    QStringList allowCommands(
+                QStringList() << "Up" << "Down" << "Left" << "Right" << "Left Softkey" << "Right Softkey");
     layout = new QHBoxLayout;
     layout->setObjectName("kbcommands buttons");
 
@@ -49,7 +48,10 @@ void MainWindow::createKeyboardCommands() {
         layout->addWidget(deviceActionButtons[i]);
     }
 
+    QGroupBox * horizontalBottomButtonGroupBox2 = new QGroupBox();
+    horizontalBottomButtonGroupBox2->setObjectName("kbcommands");
     horizontalBottomButtonGroupBox2->setLayout( layout );
+
     keyboardCommandsDock->setWidget(horizontalBottomButtonGroupBox2);
     keyboardCommandsDock->setVisible( true ); //cmd_device_visible );
     addDockWidget(Qt::BottomDockWidgetArea, keyboardCommandsDock, Qt::Vertical);
@@ -86,4 +88,5 @@ void MainWindow::deviceActionButtonPressed()
         }
     }
 }
+#endif
 
