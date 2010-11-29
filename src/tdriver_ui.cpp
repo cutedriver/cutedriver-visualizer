@@ -24,7 +24,6 @@
 
 #include "../common/version.h"
 
-#include "flowlayout.h"
 #include "tdriver_tabbededitor.h"
 
 #include <QUrl>
@@ -203,8 +202,6 @@ void MainWindow::createPropertiesDockWidget() {
 
     propertiesDock->setFeatures( DOCK_FEATURES_DEFAULT );
 
-    //propertiesDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-
     tabWidget = new QTabWidget();
     tabWidget->setObjectName("properties");
 
@@ -338,7 +335,6 @@ void MainWindow::createImageViewDockWidget()
     imageViewDock->setObjectName("imageview");
 
     imageViewDock->setFeatures( DOCK_FEATURES_DEFAULT );
-    //imageViewDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
 
     QGroupBox * imageViewBox = new QGroupBox();
     imageViewBox->setObjectName("imageview");
@@ -358,30 +354,25 @@ void MainWindow::createImageViewDockWidget()
 
     // image
     {
-        QWidget *container = new QWidget();
-        FlowLayout *subLayout = new FlowLayout();
+        QToolBar *container = new QToolBar();
+        container->setOrientation(Qt::Vertical);
+        container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
         checkBoxResize = new QCheckBox( tr( "Resi&ze image " ), this );
+        checkBoxResize->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
         checkBoxResize->setChecked(resizeSetting);
         checkBoxResize->setObjectName("imageview resize");
-        subLayout->addWidget(checkBoxResize);
-        //subLayout->addWidget(checkBoxResize, 0, Qt::AlignLeft);
-        subLayout->addWidget(new QLabel(tr("Left Click Action:")));
-        //subLayout->addWidget(new QLabel(tr("Left Click Action:")), 0, Qt::AlignRight);
+        container->addWidget(checkBoxResize);
 
         imageLeftClickChooser = new QComboBox();
-        imageLeftClickChooser->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-        imageLeftClickChooser->addItem(tr("Inspect (no hover)"), TDriverImageView::VISUALIZER_INSPECT);
-        imageLeftClickChooser->addItem(tr("Send tap to SUT"), TDriverImageView::SUT_DEFAULT_TAP);
+        imageLeftClickChooser->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+        imageLeftClickChooser->addItem(tr("Left click inspects (no hover)"), TDriverImageView::VISUALIZER_INSPECT);
+        imageLeftClickChooser->addItem(tr("Left click sends tap to SUT"), TDriverImageView::SUT_DEFAULT_TAP);
         imageLeftClickChooser->setCurrentIndex(1);
-        imageLeftClickChooser->addItem(tr("Insert coords to Code Editor"), TDriverImageView::ED_COORD_INSERT);
-        imageLeftClickChooser->addItem(tr("Insert tap to Code Editor"), TDriverImageView::ED_TESTOBJ_INSERT);
+        imageLeftClickChooser->addItem(tr("Left click inserts coordines"), TDriverImageView::ED_COORD_INSERT);
+        imageLeftClickChooser->addItem(tr("Left click inserts object tap"), TDriverImageView::ED_TESTOBJ_INSERT);
+        container->addWidget(imageLeftClickChooser);
 
-        //subLayout->addWidget(imageLeftClickChooser, 0, Qt::AlignLeft);
-        subLayout->addWidget(imageLeftClickChooser);
-
-
-        container->setLayout(subLayout);
         layout->addWidget(container);
     }
 
