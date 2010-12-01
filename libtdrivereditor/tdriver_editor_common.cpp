@@ -232,10 +232,17 @@ int MEC::modifySelectionEnd(QTextCursor &cursor, const QString &text, int startP
 }
 
 
-QString MEC::absoluteFilePath(const QString &fileName)
+QString MEC::fileWithPath(const QString &fileName)
 {
     QFileInfo info(fileName);
-    return info.absoluteFilePath();
+    return info.canonicalFilePath();
+}
+
+
+QString MEC::pathToFile(const QString &fileName)
+{
+    QFileInfo info(fileName);
+    return info.canonicalPath();
 }
 
 
@@ -243,7 +250,7 @@ QString MEC::pathReplaced(const QString &fileName, const QString &newPath)
 {
     QFileInfo info(fileName);
     info.setFile(newPath + "/" + info.fileName());
-    return info.absoluteFilePath();
+    return info.canonicalFilePath();
 }
 
 

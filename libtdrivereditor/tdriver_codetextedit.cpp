@@ -1396,7 +1396,7 @@ void TDriverCodeTextEdit::setFileName(QString fn, bool onlySetModes)
     }
     else {
         if (!onlySetModes) {
-            fname = MEC::absoluteFilePath(fn);
+            fname = MEC::fileWithPath(fn);
             setObjectName("editor edit " + fn);
         }
         if (!isRubyMode && (fn.endsWith(".rb") || fn.endsWith(".rb.template"))) {

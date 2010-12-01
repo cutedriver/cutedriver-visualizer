@@ -295,17 +295,6 @@ bool MainWindow::setup()
     // update main window title - current sut will be shown
     updateWindowTitle();
 
-    // set image view resize checkbox setting
-
-    connect( clipboardBar, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedClipboard( bool ) ) );
-    connect( imageViewDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedImage( bool ) ) );
-    connect( propertiesDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedProperties( bool ) ) );
-    connect( shortcutsBar, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedShortcuts( bool ) ) );
-    connect( editorDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedEditor( bool ) ) );
-#if DEVICE_BUTTONS_ENABLED
-    connect( keyboardCommandsDock, SIGNAL( visibilityChanged( bool ) ), this, SLOT( visiblityChangedButtons( bool ) ) );
-#endif
-
     // set visibilities
     clipboardBar->setVisible( clipboardVisible );
     imageViewDock->setVisible( imageVisible );
@@ -916,8 +905,11 @@ void MainWindow::createShortcutsBar()
     shortcutsBar->setObjectName("shortcuts");
 
     shortcutsBar->addAction(refreshAction);
+    shortcutsBar->addSeparator();
     shortcutsBar->addAction(delayedRefreshAction);
+    shortcutsBar->addSeparator();
     shortcutsBar->addAction(showXmlAction);
+    shortcutsBar->addSeparator();
     shortcutsBar->addAction(loadXmlAction);
 
     //shortcutsBar->addAction(exitAction);
