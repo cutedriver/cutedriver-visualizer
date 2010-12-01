@@ -459,17 +459,18 @@ bool TDriverTabbedEditor::open(void)
 {
     makeDockVisible(parent());
 
-    QString dir;
-    TDriverCodeTextEdit *w = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
-    if (w && !w->fileName().isEmpty()) {
-        dir = MEC::absoluteFilePath(w->fileName());
-        //qDebug() << FFL << "GOT FROM CURRENT TAB" << dirName;
+    QString dirName;
+    TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
+
+    if (editor && !editor->fileName().isEmpty()) {
+        dirName = MEC::pathToFile(editor->fileName());
     }
-    if (dir.isEmpty()) {
-        dir = MEC::settings->value("editor/defaultdir").toString(); // empty default ok
-        //qDebug() << FFL << "GOT FROM CONFIG" << dirName;
+
+    if (dirName.isEmpty()) {
+        dirName = MEC::settings->value("editor/defaultdir").toString(); // empty default ok
     }
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open..."), dir);
+
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open..."), dirName);
     return loadFile(fileName);
 }
 
@@ -534,11 +535,18 @@ bool TDriverTabbedEditor::saveTabAs(int index, const QString &caption, const QSt
     if (!editor) return false;
 
     QString dirName;
-    if (editor && !editor->fileName().isEmpty()) {
-        dirName = MEC::absoluteFilePath(editor->fileName());
+    if (editor->fileName().isEmpty()) {
+        dirName = MEC::settings->value("editor/defaultdir").toString(); // empty default ok
+
+        // make sure dirName is not a regular file, and fix settings if it is (cleanup old bug)
+        QFileInfo dirInfo(dirName);
+        if (dirInfo.isFile()) {
+            dirName = MEC::pathToFile(dirName);
+            MEC::settings->setValue("editor/defaultdir", dirName);
+        }
     }
     else {
-        dirName = MEC::settings->value("editor/defaultdir").toString(); // empty default ok
+        dirName = MEC::fileWithPath(editor->fileName());
     }
 
     QString fileName = QFileDialog::getSaveFileName(this, caption, dirName, filter);
@@ -547,6 +555,7 @@ bool TDriverTabbedEditor::saveTabAs(int index, const QString &caption, const QSt
         return false;
     }
     else {
+        fileName = MEC::fileWithPath(fileName);
         qDebug("%s: got filename '%s'", __FUNCTION__, qPrintable(fileName));
         return saveFile(fileName, index, true); // ignore return code
     }
@@ -1050,19 +1059,19 @@ bool TDriverTabbedEditor::saveFile(QString fileName, int index, bool resetEncodi
 void TDriverTabbedEditor::recentFileUpdate(QString fileName)
 {
     QStringList files = MEC::settings->value("editor/recentFileList").toStringList();
+    fileName = MEC::fileWithPath(fileName);
     files.removeAll(fileName);
     files.prepend(fileName);
     while (files.size() > MaxRecentFiles) {
         files.removeLast();
     }
 
-    QString dirName = MEC::absoluteFilePath(fileName);
+    QString dirName = MEC::pathToFile(fileName);
     if (!dirName.isEmpty())    {
         MEC::settings->setValue("editor/defaultdir", dirName);
         //qDebug() << FFL << "STORED editor/defaultdir" << dirName;
     }
 
-    MEC::settings->remove("editor/testValue");
     MEC::settings->setValue("editor/recentFileList", files);
     updateRecentFileActions();
 }

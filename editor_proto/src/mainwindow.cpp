@@ -97,7 +97,7 @@ MainWindow::MainWindow(QStringList filelist, QWidget *parent) :
     }
     else {
         foreach (QString file, filelist) {
-            file = MEC::absoluteFilePath(file);
+            file = MEC::fileWithPath(file);
             if (!tabs->loadFile(file)) tabs->newFile(file);
         }
     }

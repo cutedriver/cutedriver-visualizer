@@ -82,11 +82,14 @@ namespace MEC {
     // replaces text in selection after startPos with text, while keeping selection
     // returns: size of new selection
 
-    QString absoluteFilePath(const QString &fileName);
-    // returns absolute path to fileName
+    QString fileWithPath(const QString &fileName);
+    // returns absolute canoncial path and filename to given filename string
+
+    QString pathToFile(const QString &fileName);
+    // returns absolute canoncial path without filename to given filename string
 
     QString pathReplaced(const QString &fileName, const QString &newPath);
-    // extracts plain file name from fileName, and returns that prepended with newPath
+    // extracts just name from fileName, and returns that prepended with canonical newPath
 
     QString textShortened(const QString &text, int left, int right);
     // if text is longer then left+5+right, returns copy with chars from middle replaced with " ... "

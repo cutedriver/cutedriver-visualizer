@@ -687,7 +687,7 @@ void TDriverDebugConsole::emitRunningPosition(QMap<QString, QStringList> &remote
     QString fileName = entry.left(colonInd); // emitted value
     if (fileName.isEmpty()) return;
 
-    fileName = MEC::absoluteFilePath(fileName);
+    fileName = MEC::fileWithPath(fileName);
     if (starting) {
         qDebug() << FCFL << "emitting runStarting(" << fileName << lineNum <<")";
         emit runStarting(fileName, lineNum);
