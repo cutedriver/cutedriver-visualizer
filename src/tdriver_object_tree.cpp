@@ -180,10 +180,13 @@ void MainWindow::refreshScreenshotObjectList()
 }
 
 
+/* Recursive function.
+   First call from outside should omit arguments, so default value for parentKey is used.
+*/
 void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
 {
-    // first call
     if (!parentKey) {
+        // first call
         QString id = imageWidget->tasIdString();
         if (id.isEmpty()) {
             // image metadata didn't have id, so find first object included in attributesMap
@@ -202,25 +205,28 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
         }
     }
     // check validity
-    if ( !parentKey || !attributesMap.contains(parentKey) )
-        return;
+    if ( parentKey && attributesMap.contains(parentKey) ) {
 
-    const QMap<QString, QHash<QString, QString> > &attributeContainer = attributesMap.value(parentKey);
+        const QMap<QString, QHash<QString, QString> > &attributeContainer = attributesMap.value(parentKey);
 
-    if ( attributeContainer.value( "visible" ).value( "value" ).toLower() == "true"  ||
-            attributeContainer.value( "isvisible" ).value( "value" ).toLower() == "true" ||
-            attributeContainer.value( "iswindow" ).value( "value" ).toLower() == "true" )
-    {
-        // sometimes object has visible and visibleOnScreen attribute, make sure that object is really visible also on screen
-        if ( attributeContainer.value("visibleonscreen").value("value").toLower() != "false" ) {
+        bool ok = (attributeContainer.contains("x") && attributeContainer.contains("y") &&
+                   attributeContainer.contains("height") && attributeContainer.contains("width"));
+
+        if (ok && 0 == attributeContainer.value( "visible" ).value( "value" ).compare("false", Qt::CaseInsensitive))
+            ok = false;
+
+        if (ok && 0 == attributeContainer.value( "visibleonscreen" ).value( "value" ).compare("false", Qt::CaseInsensitive))
+            ok = false;
+
+        if (ok) {
             screenshotObjects << parentKey;
         }
-    }
 
-    // recurse into all children
-    QTreeWidgetItem *parentItem = testObjectKey2Ptr(parentKey);
-    for (int ii=0; ii < parentItem->childCount(); ++ii) {
-        buildScreenshotObjectList(ptr2TestObjectKey(parentItem->child(ii)));
+        // recurse into all children
+        QTreeWidgetItem *parentItem = testObjectKey2Ptr(parentKey);
+        for (int ii=0; ii < parentItem->childCount(); ++ii) {
+            buildScreenshotObjectList(ptr2TestObjectKey(parentItem->child(ii)));
+        }
     }
 }
 
