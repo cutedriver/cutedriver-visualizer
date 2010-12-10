@@ -215,8 +215,14 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
         if (ok && 0 == attributeContainer.value( "visible" ).value( "value" ).compare("false", Qt::CaseInsensitive))
             ok = false;
 
+        // isVisible is only used by AVKON traverser
+        if (ok && 0 == attributeContainer.value( "isvisible" ).value( "value" ).compare("false", Qt::CaseInsensitive))
+            ok = false;
+
+        /* no need to care if object is obscured, highlight should be drawn anyway to show position
         if (ok && 0 == attributeContainer.value( "visibleonscreen" ).value( "value" ).compare("false", Qt::CaseInsensitive))
             ok = false;
+        */
 
         if (ok) {
             screenshotObjects << parentKey;
