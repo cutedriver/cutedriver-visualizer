@@ -27,6 +27,8 @@
 #include <QtGui/QMessageBox>
 #include <QtGui/QGridLayout>
 
+#include <QPlainTextEdit>
+
 #include "tdriver_recorder.h"
 
 /*!
@@ -48,11 +50,6 @@ TDriverRecorder::TDriverRecorder( QWidget* parent ) :
 TDriverRecorder::~TDriverRecorder() {
 }
 
-void TDriverRecorder::setOutputPath(  QString path ) {
-
-    outputPath = path;
-
-}
 
 void TDriverRecorder::setActiveDevAndApp( QString strActiveDevice, QString activeApp ) {
 
@@ -67,10 +64,10 @@ void TDriverRecorder::setup() {
 
     setWindowTitle( "TDriver Visualizer Recorder" );
 
-    mScriptField = new QTextEdit( this );
+    mScriptField = new QPlainTextEdit( this );
     mScriptField->setObjectName("recorder text");
 
-    mScriptField->setLineWrapMode( QTextEdit::NoWrap );
+    mScriptField->setLineWrapMode( QPlainTextEdit::NoWrap );
     mScriptField->setEnabled( false );
 
     mRecButton = new QPushButton( tr( "&Record" ) );
@@ -148,12 +145,12 @@ void TDriverRecorder::stopRecording()
     msg["input"] << mStrActiveDevice.toAscii() << "stop_record" << mActiveApp.toAscii();
     setActionsEnabled(false, false, false);
 
-    if (TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, 20000, "stop_record")) {
+    if (TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, 30000, "stop_record")) {
         mScriptField->clear();
         mScriptField->setEnabled( true );
 
-        QString path(outputPath + "/visualizer_rec_fragment.rb");
-        QFile data( path );
+        lastRecordFileName = msg.value("record_filename").value(0);
+        QFile data( lastRecordFileName );
 
         if ( data.open( QFile::ReadOnly ) ) {
             QTextStream stream( &data );
@@ -162,12 +159,13 @@ void TDriverRecorder::stopRecording()
             do {
                 line = stream.readLine();
                 if ( !line.isNull() ) {
-                    mScriptField->append( line );
+                    mScriptField->appendPlainText(line);
                 }
             } while( !line.isNull() );
 
         } else {
-            QMessageBox::critical( 0, tr( "Error" ), "Could not open recorded script file.");
+            QMessageBox::critical( 0, tr( "Error" ),
+                                   "Could not open recorded script file:\n\n  " + lastRecordFileName);
         }
     }
     else {
@@ -188,29 +186,26 @@ void TDriverRecorder::testRecording()
     mStopButton->setEnabled( false );
     mTestButton->setEnabled( false );
 
-    QFile file( outputPath + "/visualizer_rec_fragment.rb" );
+    QFile file( lastRecordFileName );
 
-    if ( !file.open( QIODevice::WriteOnly | QIODevice::Text ) ){
-        QMessageBox::critical( 0, tr( "Error" ), "Could not store recorded script file.");
+    if ( !file.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate) ){
+        QMessageBox::critical( 0, tr( "Error" ),
+                               "Could not store recorded script file:\n\n  " + lastRecordFileName);
 
     }
     else {
-        QTextDocument* doc = mScriptField->document();
+        QString data = mScriptField->toPlainText();
+        data.replace(QChar::LineSeparator, QChar::ParagraphSeparator);
+        data.replace(QChar::ParagraphSeparator, QChar('\n'));
+        file.write(data.toUtf8());
 
-        for( int i = 0 ; i < doc->lineCount(); i++ ){
-
-            file.write( doc->findBlockByLineNumber( i ).text().toUtf8().data() );
-            // file.write( doc->findBlockByLineNumber( i ).text().toAscii().data() );
-
+        if (!data.endsWith(QChar('\n')))
             file.write( "\n" );
-
-        }
 
         file.close();
 
-
         BAListMap msg;
-        msg["input"] << mStrActiveDevice.toAscii() + "test_record";
+        msg["input"] << mStrActiveDevice.toAscii() << "test_record" << file.fileName().toLocal8Bit();
         setActionsEnabled(false, false, false);
         if (TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, 15000, "test_record")) {
             QMessageBox::critical( 0, tr( "Recording test ok" ), tr("Success"));

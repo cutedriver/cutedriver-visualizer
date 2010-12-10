@@ -26,7 +26,7 @@
 void MainWindow::tabWidgetChanged( int currentTableWidget ) {
 
     Q_UNUSED( currentTableWidget );
-    updatePropetriesTable();
+    updatePropertiesTable();
 
 }
 
@@ -52,10 +52,9 @@ void MainWindow::clearPropertiesTableContents() {
 
 }
 
-void MainWindow::updatePropetriesTable()
-{
-    // qDebug() << "updatePropetriesTable()";
 
+void MainWindow::updatePropertiesTable()
+{
     if ( objectTree->currentItem() != NULL ) {
         // retrieve pointer of current item selected in object tree
         TestObjectKey currentItemPtr = ptr2TestObjectKey(objectTree->currentItem());
@@ -87,10 +86,11 @@ bool MainWindow::checkApiFixture()
 
 void MainWindow::getClassMethods( QString objectType )
 {
+    BAListMap reply;
     if ( executeTDriverCommand( commandClassMethods,
                                activeDevice.value( "name" ) + " fixture " + objectType,
-                               objectType ) ) {
-        parseApiMethodsXml( outputPath + "/visualizer_class_methods_" + activeDevice.value( "name" ) + ".xml" );
+                               objectType, &reply ) ) {
+        parseApiMethodsXml( reply.value("fixture_filename").value(0));
     }
 }
 
@@ -100,15 +100,16 @@ void MainWindow::getClassSignals(QString objectType, QString objectId)
     // list_signals
     if (activeDevice.value( "name" ).contains("qt")){
         if (!apiSignalsMap.contains(objectType)) {
+            BAListMap reply;
             if ( executeTDriverCommand(commandSignalList,
                                        activeDevice.value( "name" )
                                        + " list_signals " + currentApplication.name
                                        + " " + objectId
-                                       + " " + objectType )) {
-                apiSignalsMap.insert(objectType,
-                                     parseSignalsXml( outputPath
-                                                     + "/visualizer_class_signals_"
-                                                     + activeDevice.value( "name" ) + ".xml" ));
+                                       + " " + objectType,
+                                       QString(),
+                                       &reply)) {
+
+                apiSignalsMap.insert(objectType, parseSignalsXml( reply.value("signal_filename").value(0)));
             }
         }
     }

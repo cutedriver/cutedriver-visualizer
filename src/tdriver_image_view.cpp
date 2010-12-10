@@ -520,13 +520,16 @@ void TDriverImageView::forwardInsertObjectById()
 }
 
 
-void TDriverImageView::refreshImage(QString imagePath)
+void TDriverImageView::refreshImage(const QString &imagePath)
 {
     delete image;
     image = new QImage( imagePath );
+
+    imageFileName = (image->isNull()) ? QString() : imagePath;
     if (!scaleImage)
         resize(image->size());
     //qDebug() << FCFL << image->text();
+
     imageTasId  = image->text("tas_id");
     emit imageTasIdChanged(imageTasId);
 

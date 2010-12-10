@@ -48,7 +48,7 @@ public:
     // destructor
     ~TDriverImageView();
 
-    void refreshImage(QString imagePath);
+    void refreshImage(const QString &imagePath);
 
     void drawHighlight( float x, float y, float width, float height );
     void drawMultipleHighlights( QStringList geometries, int offset_x, int offset_y );
@@ -56,7 +56,8 @@ public:
 
     int imageWidth() { return image->width(); }
     int imageHeight() { return image->height(); }
-    const QString &tasIdString() { return imageTasId; }
+    QString tasIdString() { return imageTasId; }
+    QString lastImageFileName() const { return imageFileName; }
 
     QPoint getPosInImage(const QPoint &pos) {
         return QPoint(float(pos.x()) / zoomFactor, float(pos.y()) / zoomFactor);
@@ -118,6 +119,7 @@ private:
 
     QTimer * hoverTimer;
     QImage *image;
+    QString imageFileName;
     QString imageTasId;
     QPixmap *pixmap;
 

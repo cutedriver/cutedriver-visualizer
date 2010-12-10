@@ -51,7 +51,6 @@
 #include <QtGui/QStatusBar>
 #include <QtGui/QTableWidget>
 #include <QtGui/QTabWidget>
-#include <QtGui/QTextEdit>
 #include <QtGui/QTreeWidget>
 #include <QtGui/QTreeWidgetItem>
 #include <QtGui/QWidget>
@@ -64,6 +63,7 @@
 class QErrorMessage;
 class QScrollArea;
 class QToolBar;
+class QPlainTextEdit;
 
 #include "tdriver_behaviour.h"
 #include <tdriver_util.h>
@@ -248,7 +248,7 @@ private:
     QWidget *signalsTab;
     QWidget *apiTab;
 
-    void updatePropetriesTable();
+    void updatePropertiesTable();
     void clearPropertiesTableContents();
 
     void updateAttributesTableContent();
@@ -262,6 +262,7 @@ private:
     // object tree
 
     QTreeWidget *objectTree;
+    QString uiDumpFileName;
 
     void createTreeViewDockWidget();
 
@@ -467,7 +468,7 @@ private:
     QPoint xmlViewPos;
 
     QDialog *xmlView;
-    QTextEdit *sourceEdit;
+    QPlainTextEdit *sourceEdit;
     QComboBox *findStringComboBox;
 
     QCheckBox *showXmlMatchCase;

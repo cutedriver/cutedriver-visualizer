@@ -294,7 +294,6 @@ void MainWindow::openRecordWindow()
 
         } else {
 
-            mRecorder->setOutputPath( outputPath );
             mRecorder->setActiveDevAndApp( activeDevice.value("name"), currentApplication.id );
             mRecorder->show();
 
@@ -397,35 +396,60 @@ bool MainWindow::createStateArchive( QString targetPath )
 {
 
     QStringList sourceFiles;
+    sourceFiles << imageWidget->lastImageFileName() << uiDumpFileName;
 
-    bool filesExist( false );
+    QStringList targetFiles;
 
-    QString filename = "/visualizer_dump_" + activeDevice.value("name");
+    QStringList problemFiles;
 
-    sourceFiles << filename + ".xml" << filename + ".png";
+    int ii;
+    int count = sourceFiles.size();
 
-    foreach( QString sourceFile, sourceFiles ) { if ( QFile::exists( targetPath + "/" + sourceFile ) ) { filesExist = true; } }
+    for (ii=0; ii < count; ++ii) {
+        QString targetFile = targetPath + QFileInfo(sourceFiles.at(ii)).fileName();
+        targetFile.replace(QRegExp("_\\d+(\\.[a-zA-Z0-9_]+)$"), "\\1");
+        if ( QFile::exists(targetFile)) {
+            problemFiles << targetFile;
+        }
+        targetFiles << targetFile;
+    }
 
-    if ( filesExist ) {
+    qDebug() << sourceFiles;
+    qDebug() << targetFiles;
+
+    if ( !problemFiles.isEmpty() ) {
 
         QMessageBox::StandardButton selectedButton =
                 QMessageBox::question(
-                        this,
-                        "Overwrite?",
-                        "Files already exist in the target folder and will be overwritten, do you wish to continue?",
-                        QMessageBox::Yes | QMessageBox::No,
-                        QMessageBox::No
-                        );
-
-
-        if ( selectedButton == QMessageBox::No ) { return true; }
+                    this,
+                    "Overwrite?",
+                    "Following target files already exist, do you wish to overwrite?\n\n  " + problemFiles.join("\n  "),
+                    QMessageBox::Yes | QMessageBox::No,
+                    QMessageBox::No);
+        if ( selectedButton == QMessageBox::No ) {
+            return true;
+        }
+        problemFiles.clear();
     }
 
-    foreach( QString sourceFile, sourceFiles ) {
 
-        if ( QFile::exists( targetPath + "/" + sourceFile ) ) { QFile::remove( targetPath + "/" + sourceFile );    }
-        if ( !QFile::copy( outputPath + sourceFile, targetPath + "/" + sourceFile ) ) { return false; }
+    for (ii=0; ii < count; ++ii) {
+        if ( QFile::exists( targetFiles.at(ii))) {
+            QFile::remove( targetFiles.at(ii) );
+        }
+        if ( !QFile::copy( sourceFiles.at(ii), targetFiles.at(ii))) {
+            problemFiles << (sourceFiles.at(ii) + " => " + targetFiles.at(ii));
+        }
+    }
 
+    if ( !problemFiles.isEmpty() ) {
+
+        QMessageBox::warning(
+                    this,
+                    "Failed to copy some files!",
+                    "Following files failed to copy:\n\n  " + problemFiles.join("\n  "));
+
+        return false;
     }
 
     return true;

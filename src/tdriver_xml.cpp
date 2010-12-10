@@ -58,11 +58,14 @@ bool MainWindow::updateBehaviourXml()
         objectTypesString += "'" + objectTypes.at( index ) + "'";
     }
 
+    BAListMap reply;
     if ( executeTDriverCommand( commandBehavioursXml,
-                          activeDevice.value( "name" ) + " get_behaviours " + objectTypesString ) &&
-         objectTypes.size() > 0 ) {
-        parseXml( outputPath + "/visualizer_behaviours_" + activeDevice.value( "name" ) + ".xml" , behaviorDomDocument );
-        buildBehavioursMap();
+                                activeDevice.value( "name" ) + " get_behaviours " + objectTypesString,
+                                QString(), &reply )
+         && objectTypes.size() > 0 ) {
+        if (parseXml( reply.value("behaviour_filename").value(0) , behaviorDomDocument )) {
+            buildBehavioursMap();
+        }
     }
 
     propertyTabLastTimeUpdated.insert( "methods", 0 );
@@ -455,7 +458,6 @@ bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
     }
 
     return result;
-
 }
 
 

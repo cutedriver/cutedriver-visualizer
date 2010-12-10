@@ -22,6 +22,7 @@
 #include "tdriver_main_window.h"
 
 #include <QGridLayout>
+#include <QPlainTextEdit>
 
 void MainWindow::showXMLDialog() {
 
@@ -58,7 +59,7 @@ void MainWindow::createXMLFileDataWindow() {
     QGridLayout* gridLayout = new QGridLayout( xmlBox );
     gridLayout->setObjectName("xmlview edit");
 
-    sourceEdit = new QTextEdit;
+    sourceEdit = new QPlainTextEdit;
     sourceEdit->setObjectName("xmlview edit");
     sourceEdit->setTextInteractionFlags( Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard );
 

@@ -115,7 +115,31 @@ end
 
 
 ############################################################################
-# Ruby implementation of protocol used by C++ class TDriverRbcProtocol
+# Utility methods
+############################################################################
+
+
+def create_output_file(dir, prefix, extension)
+  index = 1
+  filename = ""
+  file = nil
+
+  begin
+    filename = File.join( @working_directory, prefix+"_#{index}."+extension )
+    file = File.open(filename, "w")
+  rescue => ex
+    $lg.error "retry after failure to create #{filename}: #{ex.message}"
+    index += 1
+    raise "Failed to create file name, last attempt was #{filename}" if index > 999
+    retry
+  end
+
+  return filename, file
+end
+
+
+############################################################################
+# Ruby implementation of protocol used by C++ class TDriverRbProtocol
 ############################################################################
 
 
@@ -495,8 +519,9 @@ def line_execution(code, seqNum)
     STDERR.puts "Evaluate: #{code.dump}"
     result = instance_eval { | | @ruby_interact_binding.eval(code) }
     rstring = (@ok_print_classes.member?(result.class) ? result.to_s : "<value hidden>")
+    rstring = rstring[0,510] + ".." + rstring[-511,511] if rstring.size > 1024 # shorten overlong rstring
     rstirng = ':' + rstring if result.class == Symbol
-    rstring = '"' + rstring + '"' if @quotable_print_classes.member?(result.class)
+    rstring = "\"" + rstring + "\"" if @quotable_print_classes.member?(result.class)
     STDERR.puts "..return: #{result.class}: #{rstring}"
   rescue => ex
     STDERR.puts("..raised: #{ex}")
@@ -557,108 +582,119 @@ end
 
 
 def @listener.get_behaviours_xml( sut, sut_id, object_types )
-  _output_filename_xml = File.join( @working_directory, "visualizer_behaviours_#{ sut_id }.xml" )
-  # remove old file first
-  File.delete( _output_filename_xml ) if File.exist?( _output_filename_xml )
-  behaviour_attributes_hash = { :input_type => ['*', sut.input.to_s ], :sut_type => [ '*', sut.ui_type.upcase ], :version => [ '*', sut.ui_version ] }
-  behaviours_xml = ""
-  object_types.each do | object_type |
-    behaviours_xml <<
-      "<behaviour object_type=\"#{ object_type.to_s }\">\n" <<
-        MobyUtil::XML::parse_string(
-          MobyBase::BehaviourFactory.instance.to_xml( behaviour_attributes_hash.merge( { :object_type => ( object_type == 'sut' ? [ 'sut' ] : [ '*', object_type ] ) } ) )
-        ).root.xpath('/behaviours/behaviour/object_methods/object_method').to_s <<
-      "\n</behaviour>\n"
-  end
+  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_behaviours_#{ sut_id }", 'xml' )
+  begin
+    behaviour_attributes_hash = { :input_type => ['*', sut.input.to_s ], :sut_type => [ '*', sut.ui_type.upcase ], :version => [ '*', sut.ui_version ] }
+    behaviours_xml = ""
+    object_types.each do | object_type |
+      behaviours_xml <<
+        "<behaviour object_type=\"#{ object_type.to_s }\">\n" <<
+          MobyUtil::XML::parse_string(
+            MobyBase::BehaviourFactory.instance.to_xml( behaviour_attributes_hash.merge( { :object_type => ( object_type == 'sut' ? [ 'sut' ] : [ '*', object_type ] ) } ) )
+          ).root.xpath('/behaviours/behaviour/object_methods/object_method').to_s <<
+        "\n</behaviour>\n"
+    end
 
-  File.open( _output_filename_xml, 'w') do | file |
-    file << MobyUtil::XML::parse_string( "<behaviours>\n#{ behaviours_xml }\n</behaviours>" ).to_s
-    file.close
-    $lg.debug this_method + " wrote #{File.size?(_output_filename_xml)/1024.0} KiB to '#{_output_filename_xml}'"
+    file_xml << MobyUtil::XML::parse_string( "<behaviours>\n#{ behaviours_xml }\n</behaviours>" ).to_s
+  rescue
+    file_xml.close
+    raise
   end
+  file_xml.close
+  $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
+
+  @listener_reply['behaviour_filename'] = [ filename_xml ]
 end
 
 
 def @listener.get_fixture_xml( sut, sut_id, object_name )
-  _output_filename_xml = File.join( @working_directory, "visualizer_class_methods_#{ sut_id }.xml" )
-  File.delete( _output_filename_xml ) if File.exist?( _output_filename_xml )
-  data = sut.application.fixture('tasqtapiaccessor', 'list_class_methods', { :class => object_name } )
-  File.open( _output_filename_xml, 'w') do | file |
-    file << data
-    file.close
-    $lg.debug this_method + " wrote #{File.size?(_output_filename_xml)/1024.0} KiB to '#{_output_filename_xml}'"
+  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_methods_#{ sut_id }", 'xml' )
+  begin
+    data = sut.application.fixture('tasqtapiaccessor', 'list_class_methods', { :class => object_name } )
+    file_xml << data
+  ensure
+    file_xml.close
   end
+
+  $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
+  @listener_reply['fixture_filename'] = [ filename_xml ]
 end
 
 
 def @listener.get_signal_xml( sut, sut_id, app_name, object_id, object_type )
-  _output_filename_xml = File.join( @working_directory, "visualizer_class_signals_#{ sut_id }.xml" )
-  File.delete( _output_filename_xml ) if File.exist?( _output_filename_xml )
-  cmd = "sut.application(:name => app_name).#{object_type}( :id => object_id ).fixture('signal', 'list_signals')"
-  $lg.debug this_method + " eval '#{cmd}'"
-  data = eval(cmd)
-  File.open( _output_filename_xml, 'w') do | file |
-    file << data
-    file.close
-    $lg.debug this_method + " wrote #{File.size?(_output_filename_xml)/1024.0} KiB to '#{_output_filename_xml}'"
+  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_signals_#{ sut_id }", 'xml' )
+  begin
+    cmd = "sut.application(:name => app_name).#{object_type}( :id => object_id ).fixture('signal', 'list_signals')"
+    $lg.debug this_method + " eval '#{cmd}'"
+    data = eval(cmd)
+
+    file_xml << data
+  ensure
+    file_xml.close
   end
+
+  $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
+  @listener_reply['signal_filename'] = [ filename_xml ]
 end
 
 
 def @listener.get_ui_dump( sut, sut_id, app_id = nil )
   MobyUtil::Parameter[ sut.id ][ :filter_type] = 'none'
   MobyUtil::Parameter[ sut.id ][ :use_find_object] = 'false'
-  _output_filename_xml = File.join( @working_directory, "visualizer_dump_#{ sut_id }.xml" )
-  File.delete( _output_filename_xml ) if File.exist?( _output_filename_xml )
-  data = sut.get_ui_dump( *[ ( { :id => app_id } unless app_id.nil? ) ].compact )
 
-  File.open( _output_filename_xml, 'w') do | file |
-    file << data
-    file.close
-    $lg.debug this_method + " wrote #{File.size?(_output_filename_xml)/1024.0} KiB to '#{_output_filename_xml}'"
+  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_dump_#{ sut_id }", 'xml' )
+  begin
+    data = sut.get_ui_dump( *[ ( { :id => app_id } unless app_id.nil? ) ].compact )
+    file_xml << data
+  ensure
+    file_xml.close
   end
+
+  $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
+  @listener_reply['ui_filename'] = [ filename_xml ]
 end
 
 
 def @listener.capture_screen( sut, sut_id, app_id = nil )
-  _output_filename_png = File.join( @working_directory, "visualizer_dump_#{ sut_id }.png" )
-  File.delete( _output_filename_png ) if File.exist?( _output_filename_png )
+  filename_png, file_png = create_output_file(@working_directory, "visualizer_dump_#{ sut_id }", 'png' )
   begin
+    file_png.close
     source = 'nowhere!'
     if app_id.nil?
-      sut.capture_screen( :Filename => _output_filename_png, :Redraw => true )
+      sut.capture_screen( :Filename => filename_png, :Redraw => true )
       source = 'sut'
     else
       begin
-        sut.application( :id => app_id ).capture_screen( "PNG", _output_filename_png, true )
+        sut.application( :id => app_id ).capture_screen( "PNG", filename_png, true )
         source = 'app'
       rescue
         app_id = nil
-        sut.capture_screen( :Filename => _output_filename_png, :Redraw => true )
+        sut.capture_screen( :Filename => filename_png, :Redraw => true )
         source = 'sut'
       end
     end
-    $lg.debug this_method + " got #{File.size?(_output_filename_png)/1024.0} KiB to '#{_output_filename_png}' from #{source}"
+    $lg.debug this_method + " got #{File.size?(filename_png)/1024.0} KiB to '#{filename_png}' from #{source}"
 
   rescue => ex
     # screen capture failed
-    File.delete(_output_filename_png) if File.exist?(_output_filename_png )
+    File.delete(filename_png) if File.exist?(filename_png )
     raise ex unless ex.message == "QtTasserver does not support the given service: screenShot"
+    filename_png = ""
   end
-
+  @listener_reply['image_filename'] = [ filename_png ]
 end
 
 
 def @listener.get_app_list( sut, sut_id )
-  _output_filename_xml = File.join( @working_directory, "visualizer_applications_#{ sut_id }.xml" )
-  File.delete( _output_filename_xml ) if File.exist?( _output_filename_xml )
-  # retrieve list of running applications
-  output = sut.list_apps
-  # write list to file
-  File.open( _output_filename_xml, 'w') do | file |
-      file << output
-      file.close
-    end
+  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_applications_#{ sut_id }", 'xml' )
+  begin
+    output = sut.list_apps
+    file_xml << output
+  ensure
+    file_xml.close
+  end
+
+  @listener_reply['applications_filename'] = [ filename_xml ]
 end
 
 
@@ -669,21 +705,25 @@ end
 
 def @listener.get_recorded_script( sut, app_id )
   application = sut.application( :id => app_id )
-  _output_filename_rb = File.join( @working_directory, 'visualizer_rec_fragment.rb' )
-  #$lg.debug this_method + " print_script next"
-  script = MobyUtil::Recorder.print_script( sut, application )
-  #$lg.debug this_method + " print_script over: \n#{script}\n-----"
-  File.open( _output_filename_rb, 'w') do | file |
-    file << script
-    file.close
-    $lg.debug this_method + " wrote #{File.size?(_output_filename_rb)/1024.0} KiB to '#{_output_filename_rb}'"
+  filename_rb, file_rb = create_output_file(@working_directory, 'visualizer_rec_fragment', 'rb')
+  begin
+    script = MobyUtil::Recorder.print_script( sut, application )
+    file_rb << script
+  ensure
+    file_rb.close
   end
+  $lg.debug this_method + " wrote #{File.size?(filename_rb)/1024.0} KiB to '#{filename_rb}'"
+  @listener_reply['record_filename'] = [ filename_rb ]
 end
 
 
-def @listener.test_script( sut )
-  _output_filename_rb = File.join( @working_directory, 'visualizer_rec_fragment.rb' )
-  File.new( _output_filename_rb ).each_line{ | line | eval( line ) }
+def @listener.test_script( sut, filename_rb )
+  #filename_rb = File.join( @working_directory, 'visualizer_rec_fragment.rb' )
+  $lg.debug this_method + "filename: '#{filename_rb}'"
+  File.new( filename_rb ).each_line { | line |
+    $lg.debug this_method + " line: '#{line}'"
+    eval( line )
+  }
 end
 
 
@@ -797,9 +837,6 @@ def @listener.main_loop (conn)
             #eval_cmd = "sut.application#{ input_array[ 2 ].downcase == 'application' ? "#{ input_array[ 3 ] }" : ".#{ input_array[ 2 ] }#{ input_array[ 3 ] }" }.fixture( 'tasqtapiaccessor', 'list_class_methods', { :class => '#{ input_array[ 2 ] }' } )"
             eval_cmd = "get_fixture_xml( sut, '#{ sut_id }', '#{ input_array[ 2 ] }' )"
 
-          when :take_screen_shot
-            eval_cmd = "sut.application.#{ input_array[ 2 ] }.capture_screen( 'PNG', '#{ File.join( @working_directory, 'visualizer_dump_#{ sut_id }.png', true) }' )"
-
           when :press_key
             eval_cmd = "sut.press_key( #{ input_array[ 2 ].to_sym } )"
 
@@ -819,7 +856,7 @@ def @listener.main_loop (conn)
             eval_cmd = "get_recorded_script(sut, #{ ( input_array.size > 2 ? "'#{ input_array[ 2 ]}'" : "nil" ) })"
 
           when :test_record
-            eval_cmd = "test_script( sut )"
+            eval_cmd = "test_script(sut, '#{ input_array[ 2 ]}' )"
 
           else
             @listener_reply['exception'] = []

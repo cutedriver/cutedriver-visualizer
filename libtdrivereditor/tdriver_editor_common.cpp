@@ -270,7 +270,7 @@ QString &MEC::replaceUnicodeSeparators(QString &str)
     // so this will hopefully avoid entire string getting shifted twice.
     return str
             .replace(QChar::LineSeparator, QChar::ParagraphSeparator)
-            .replace(QChar::ParagraphSeparator, "\n");
+            .replace(QChar::ParagraphSeparator, QChar('\n'));
 }
 
 

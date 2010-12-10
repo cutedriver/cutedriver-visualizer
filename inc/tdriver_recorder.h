@@ -22,16 +22,15 @@
 #ifndef TDRIVERRECORDER_H
 #define TDRIVERRECORDER_H
 
-#include <QtCore/QTextStream>
-
 #include <QtGui/QDialog>
-#include <QtGui/QTextEdit>
 #include <QtGui/QPushButton>
 #include <QtGui/QStatusBar>
 
 #include <QMap>
 
 #include <tdriver_rubyinterface.h>
+
+class QPlainTextEdit;
 
 class TDriverRecorder : public QDialog {
 
@@ -45,7 +44,6 @@ class TDriverRecorder : public QDialog {
     public:
 
         void setActiveDevAndApp( QString StrActiveDevice, QString activeApp );
-        void setOutputPath( QString path );
 
     protected slots:
 
@@ -58,11 +56,11 @@ class TDriverRecorder : public QDialog {
         void setActionsEnabled(bool start, bool stop, bool test);
 
     private:
-        QString outputPath;
+        QString lastRecordFileName;
 
         QString mCurrentApplication;
 
-        QTextEdit* mScriptField;
+        QPlainTextEdit* mScriptField;
 
         QPushButton* mRecButton;
         QPushButton* mStopButton;
