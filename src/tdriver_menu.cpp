@@ -394,7 +394,6 @@ void MainWindow::deviceSelected() {
 // Creates a folder containing xml and png dump using the specified file path.
 bool MainWindow::createStateArchive( QString targetPath )
 {
-
     QStringList sourceFiles;
     sourceFiles << imageWidget->lastImageFileName() << uiDumpFileName;
 
@@ -404,6 +403,9 @@ bool MainWindow::createStateArchive( QString targetPath )
 
     int ii;
     int count = sourceFiles.size();
+
+    if (!targetPath.endsWith('/'))
+        targetPath.append('/');
 
     for (ii=0; ii < count; ++ii) {
         QString targetFile = targetPath + QFileInfo(sourceFiles.at(ii)).fileName();
@@ -435,8 +437,10 @@ bool MainWindow::createStateArchive( QString targetPath )
 
     for (ii=0; ii < count; ++ii) {
         if ( QFile::exists( targetFiles.at(ii))) {
+            qDebug() << "QFile::remove('" << targetFiles.at(ii) <<"');";
             QFile::remove( targetFiles.at(ii) );
         }
+        qDebug() << "QFile::copy('" << sourceFiles.at(ii) << "', '" << targetFiles.at(ii) << "'');";
         if ( !QFile::copy( sourceFiles.at(ii), targetFiles.at(ii))) {
             problemFiles << (sourceFiles.at(ii) + " => " + targetFiles.at(ii));
         }
