@@ -108,7 +108,7 @@ bool VisualizerAccessor::execute(void * objectInstance, QString commandName, QHa
 
         else if (commandName == "editor_load") {
             if (parameters.contains("filename")) {
-                result = tabs->loadFile(parameters["filename"], QVariant(parameters.value("istemplate", false)).toBool());
+                result = tabs->loadFile(parameters["filename"], QVariant(parameters.value("istemplate", "false")).toBool());
                 resultString += ": loadFile called";
             }
             else
