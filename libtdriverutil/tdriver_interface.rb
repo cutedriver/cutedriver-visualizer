@@ -624,7 +624,7 @@ end
 def @listener.get_signal_xml( sut, sut_id, app_name, object_id, object_type )
   filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_signals_#{ sut_id }", 'xml' )
   begin
-    cmd = "sut.application(:name => app_name).#{object_type}( :id => object_id ).fixture('signal', 'list_signals')"
+    cmd = "sut.application(:name => app_name).#{object_type}( :id => #{object_id}, :__index => 0 ).fixture('signal', 'list_signals')"
     $lg.debug this_method + " eval '#{cmd}'"
     data = eval(cmd)
 
