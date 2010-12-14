@@ -89,7 +89,7 @@ namespace MEC {
     // returns absolute canoncial path without filename to given filename string
 
     QString pathReplaced(const QString &fileName, const QString &newPath);
-    // extracts just name from fileName, and returns that prepended with canonical newPath
+    // extracts just name from fileName, and returns that prepended with absolute newPath
 
     QString textShortened(const QString &text, int left, int right);
     // if text is longer then left+5+right, returns copy with chars from middle replaced with " ... "
