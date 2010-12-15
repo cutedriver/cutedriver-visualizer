@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
     debugOutFile->open( QIODevice::WriteOnly | QIODevice::Text );
     qInstallMsgHandler(output);
-    qDebug(qPrintable("Log opened: " + QDateTime::currentDateTime().toString()));
+    qDebug("%s", qPrintable("Log opened: " + QDateTime::currentDateTime().toString()));
 
     qRegisterMetaType<BAList>("BAList");
     qRegisterMetaType<BAListMap>("BAListMap");
