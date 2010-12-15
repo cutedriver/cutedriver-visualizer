@@ -257,7 +257,7 @@ private:
     void updateApiTableContent();
 
     void getClassMethods( QString objectType );
-    void getClassSignals( QString objectType, QString objectId );
+    bool getClassSignals( QString objectType, QString objectId );
 
     // object tree
 
