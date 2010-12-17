@@ -95,24 +95,32 @@ void MainWindow::getClassMethods( QString objectType )
 }
 
 
-void MainWindow::getClassSignals(QString objectType, QString objectId)
+bool MainWindow::getClassSignals(QString objectType, QString objectId)
 {
-    // list_signals
-    if (activeDevice.value( "name" ).contains("qt")){
-        if (!apiSignalsMap.contains(objectType)) {
-            BAListMap reply;
-            if ( executeTDriverCommand(commandSignalList,
-                                       activeDevice.value( "name" )
-                                       + " list_signals " + currentApplication.name
-                                       + " " + objectId
-                                       + " " + objectType,
-                                       QString(),
-                                       &reply)) {
+    if (objectType != "sut" && objectType != "application" && objectType != "QAction") {
 
-                apiSignalsMap.insert(objectType, parseSignalsXml( reply.value("signal_filename").value(0)));
+        // list_signals
+        if (activeDevice.value( "name" ).contains("qt")){
+            if (!apiSignalsMap.contains(objectType)) {
+                BAListMap reply;
+                if ( executeTDriverCommand(commandSignalList,
+                                           activeDevice.value( "name" )
+                                           + " list_signals " + currentApplication.name
+                                           + " " + objectId
+                                           + " " + objectType,
+                                           QString(),
+                                           &reply)) {
+
+                    QString fileName(reply.value("signal_filename").value(0));
+                    if (!fileName.isEmpty()) {
+                        apiSignalsMap[objectType] = parseSignalsXml( fileName );
+                        return true;
+                    }
+                }
             }
         }
     }
+    return false;
 }
 
 
@@ -291,56 +299,45 @@ void MainWindow::updateSignalsTableContent() {
 
     TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
 
+    // store pointer of current item to table, so signals table won't be updated unless item is changed on object tree
+    propertyTabLastTimeUpdated.insert( "signals", currentItemPtr );
+
     // clear signals table contents
     signalsTable->clearContents();
     signalsTable->setRowCount( 0 );
 
     // update table only if item selected in object tree
-    if ( objectTree->currentItem() != NULL ) {
+    if ( currentItemPtr != 0 ) {
 
         // retrieve current item object type
         QString currentItemObjectType = objectTree->currentItem()->data( 0, Qt::DisplayRole ).toString();
 
-        if (currentItemObjectType == "sut" || currentItemObjectType == "application") return;
-
-        TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
         QHash<QString, QString> treeItemData = objectTreeData.value( currentItemPtr );
         QString objectId   = treeItemData.value( "id" );
 
         // Retrieve the signals from the device
-        getClassSignals(currentItemObjectType, objectId);
+        if (getClassSignals(currentItemObjectType, objectId)) {
 
-        // If no signals found for the current type of object, return
-        if (!apiSignalsMap.contains(currentItemObjectType)) {return;}
-        QStringList signalsList = apiSignalsMap[currentItemObjectType];
+            QStringList signalsList = apiSignalsMap[currentItemObjectType];
 
-        for ( int signalIndex = 0; signalIndex < signalsList.size(); signalIndex++ ) {
+            for ( int signalIndex = 0; signalIndex < signalsList.size(); signalIndex++ ) {
 
-            // retrieve signal hash
-            QString signal = signalsList.at( signalIndex  );
+                // add signal name
+                QTableWidgetItem *signalName = new QTableWidgetItem( signalsList.at( signalIndex ) );
+                signalName->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEnabled );
+                signalName->setFont( *defaultFont );
 
-            // retrieve current item count
-            int rowNumber = signalsTable->rowCount();
+                // append new line to table
+                int rowNumber = signalsTable->rowCount();
+                signalsTable->insertRow( rowNumber );
+                signalsTable->setItem( rowNumber, 0, signalName );
 
-            // insert new line to table
-            signalsTable->insertRow( rowNumber );
-
-            // add signal name
-            QTableWidgetItem *signalName = new QTableWidgetItem( signalsList.at( signalIndex ) );
-            signalName->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEnabled );
-            signalName->setFont( *defaultFont );
-            signalsTable->setItem( rowNumber, 0, signalName );
-
+            }
+            // sort signals table
+            signalsTable->sortItems( 0 );
+            signalsTable->resizeColumnToContents (0);
         }
-        // sort signals table
-        signalsTable->sortItems( 0 );
-        signalsTable->resizeColumnToContents (0);
-
     }
-
-    // store pointer of current item to table, so signals table won't be updated unless item is changed on object tree
-    propertyTabLastTimeUpdated.insert( "signals", currentItemPtr );
-
 }
 
 

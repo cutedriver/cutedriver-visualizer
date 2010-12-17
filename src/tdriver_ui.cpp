@@ -65,14 +65,14 @@ void MainWindow::showVisualizerHelp()
     //showContextVisualizerAssistant("howto-visualizer.html");
     //QUrl helpUrl("https://cwiki.nokia.com/Testability/TDriverVisualizer");
 
-    QUrl helpUrl(TDriverUtil::helpUrlString("/howto-use-visualizer.html"));
+    QUrl helpUrl("https://projects.forum.nokia.com/Testabilitydriver/wiki/FeatureVisualizer");
     QDesktopServices::openUrl(helpUrl);
 }
 
 //    Shows the main TDriver Visualizer help page.
 void MainWindow::showMainVisualizerAssistant()
 {
-    QUrl helpUrl(TDriverUtil::helpUrlString("index.html"));
+    QUrl helpUrl("https://projects.forum.nokia.com/Testabilitydriver/wiki/FeatureDocumentation");
     QDesktopServices::openUrl(helpUrl);
 }
 

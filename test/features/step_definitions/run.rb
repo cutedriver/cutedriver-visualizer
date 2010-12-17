@@ -29,7 +29,7 @@ include TDriverVerify
 Before do
   $ErrorMessage=""
   # <fixtures>            <fixture name="visualizer" plugin="visualizeraccessor" />    </fixtures>
-  MobyUtil::Parameter[:sut_qt][:fixtures][:visualizer_fixture] = "visualizeraccessor"
+  MobyUtil::Parameter[:sut_qt][:fixtures][:visualizer_fixture] = { :plugin => "visualizeraccessor" }
         if /win/ =~ RUBY_PLATFORM
                 @tdriver_visualizer_path = "C:/tdriver/visualizer/tdriver_visualizer.exe"
         elsif /linux/ =~ RUBY_PLATFORM

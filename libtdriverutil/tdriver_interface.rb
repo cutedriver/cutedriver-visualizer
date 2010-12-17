@@ -312,7 +312,7 @@ module TDriver
     end
 
     begin
-      $lg.info "Setting timeout to 0 for #{sut_attributes[ :Id ].to_sym}"
+      $lg.info "Setting timeout to 0 for #{sut_attributes.inspect}"
       sut.instance_eval{ @test_object_factory.timeout = 0 }
     rescue => ex
       $lg.error "Custom connect_sut: ignoring @test_object_factory.timeout= exception: " +  ex.message
@@ -622,17 +622,17 @@ end
 
 
 def @listener.get_signal_xml( sut, sut_id, app_name, object_id, object_type )
+  $lg.debug this_method +
+    " : sut.application(:name => '#{app_name}').child( :type => '#{object_type}', :id => '#{object_id}', :__index => 0).fixture('signal', 'list_signals')"
+  obj = sut.application(:name => app_name.to_s).child( :type => object_type.to_s, :id => object_id.to_s, :__index => 0)
+
   filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_signals_#{ sut_id }", 'xml' )
   begin
-    cmd = "sut.application(:name => app_name).#{object_type}( :id => object_id, :__index => 0 ).fixture('signal', 'list_signals')"
-    $lg.debug this_method + " eval '#{cmd}'"
-    data = eval(cmd)
-
+    data = obj.fixture('signal', 'list_signals')
     file_xml << data
   ensure
     file_xml.close
   end
-
   $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
   @listener_reply['signal_filename'] = [ filename_xml ]
 end
