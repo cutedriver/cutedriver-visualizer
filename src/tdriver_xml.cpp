@@ -39,8 +39,8 @@ bool MainWindow::updateBehaviourXml()
 
     while ( (node = findDialogSubtreeNext(node, root)) ) {
         Q_ASSERT(objectTreeData.contains(ptr2TestObjectKey(node) ));
-        QHash<QString, QString> objectTreeItemData = objectTreeData.value( ptr2TestObjectKey(node));
-        QString objectType = objectTreeItemData.value( "type" );
+
+        QString objectType = objectTreeData.value(ptr2TestObjectKey(node)).type;
 
         if ( !objectTypes.contains( objectType ) && !behavioursMap.contains( objectType ) ) {
             objectTypes << objectType;

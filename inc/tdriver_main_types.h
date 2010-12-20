@@ -15,6 +15,14 @@ typedef void* TestObjectKey;
 typedef QList<QRectF> RectList;
 
 
+struct TreeItemInfo {
+    QString type;
+    QString name;
+    QString id;
+    QString env;
+};
+
+
 struct ApplicationInfo {
     QString id;
     QString name;

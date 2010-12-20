@@ -25,32 +25,26 @@
 #include <QGridLayout>
 #include <QShortcut>
 
-bool MainWindow::containsWords( QHash<QString, QString> itemData, QString text, bool caseSensitive, bool entireWords ) {
-
+bool MainWindow::containsWords( const TreeItemInfo &itemData, QString text, bool caseSensitive, bool entireWords )
+{
     bool result = false;
-
     Qt::CaseSensitivity caseSensitivity = caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive;
 
     if ( entireWords ) {
-
         result = (
-            itemData.value( "name" ).compare( text, caseSensitivity ) == 0 ||
-            itemData.value( "type" ).compare( text, caseSensitivity ) == 0 ||
-            itemData.value( "id"   ).compare( text, caseSensitivity ) == 0
-        );
+            itemData.name.compare( text, caseSensitivity ) == 0 ||
+            itemData.type.compare( text, caseSensitivity ) == 0 ||
+            itemData.id.compare( text, caseSensitivity ) == 0 );
+    }
 
-    } else {
-
+    else {
         result = (
-            itemData.value( "name" ).contains( text, caseSensitivity ) ||
-            itemData.value( "type" ).contains( text, caseSensitivity ) ||
-            itemData.value( "id"   ).contains( text, caseSensitivity )
-        );
-
+            itemData.name.contains( text, caseSensitivity ) ||
+            itemData.type.contains( text, caseSensitivity ) ||
+            itemData.id.contains( text, caseSensitivity ));
     }
 
     return result;
-
 }
 
 bool MainWindow::attributeContainsWords( TestObjectKey itemPtr, QString text, bool caseSensitive, bool entireWords )
@@ -188,8 +182,7 @@ bool MainWindow::compareTreeItem(QTreeWidgetItem *item, const QString &findStrin
     Q_ASSERT(objectTreeData.contains( itemIndex) );
 
     // check values in itemData
-    QHash<QString, QString> itemData = objectTreeData.value( itemIndex );
-    if ( containsWords( itemData, findString, matchCase, entireWords ) ) {
+    if ( containsWords( objectTreeData.value( itemIndex ), findString, matchCase, entireWords ) ) {
         return true;
     }
 

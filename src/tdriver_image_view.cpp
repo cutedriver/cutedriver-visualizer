@@ -133,7 +133,9 @@ void TDriverImageView::paintEvent(QPaintEvent *)
 
         for ( int n = 0; n < count; n++ ) {
             const QRectF &rect = rects.at(n);
-            painter.drawRect( rect.x() * zoomFactor, rect.y() * zoomFactor, rect.width() * zoomFactor, rect.height() * zoomFactor );
+            if (!rect.isNull()) {
+                painter.drawRect( rect.x() * zoomFactor, rect.y() * zoomFactor, rect.width() * zoomFactor, rect.height() * zoomFactor );
+            }
         }
     }
 
@@ -276,14 +278,14 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
 
             foreach(TestObjectKey id, matchingObjects) {
                 const QMap<QString, QHash<QString, QString> > &attrMap = objTreeOwner->testobjAttributes(id);
-                const QHash<QString, QString> &treeData = objTreeOwner->testobjTreeData(id);
+                const TreeItemInfo &treeData = objTreeOwner->testobjTreeData(id);
 
                 // create heading entry to context menu
                 QString tmpText;
                 QString idText;
                 QString sortKey;
 
-                tmpText = treeData["name"];
+                tmpText = treeData.name;
                 if ( tmpText.isEmpty())
                     tmpText = attrMap["objectname"]["value"];
                 if ( !tmpText.isEmpty()) {
@@ -304,7 +306,7 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
                 if (sortKey.isEmpty())
                     sortKey = "3" + testObjectKey2Str(id).rightJustified(11);
 
-                QString typeText = treeData["type"];
+                QString typeText = treeData.type;
                 if (typeText.isEmpty())
                     typeText = attrMap["objecttype"]["value"];
                 if (typeText.isEmpty())

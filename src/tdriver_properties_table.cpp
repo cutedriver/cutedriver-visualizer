@@ -135,7 +135,7 @@ void MainWindow::updateApiTableContent() {
     // update table only if item selected in object tree
     if ( objectTree->currentItem() != NULL && apiFixtureEnabled ) {
 
-        QString objectType = objectTreeData.value( currentItemPtr ).value( "type" );
+        QString objectType = objectTreeData.value( currentItemPtr ).type;
 
         if ( !objectType.isEmpty() ) {
 
@@ -312,8 +312,7 @@ void MainWindow::updateSignalsTableContent() {
         // retrieve current item object type
         QString currentItemObjectType = objectTree->currentItem()->data( 0, Qt::DisplayRole ).toString();
 
-        QHash<QString, QString> treeItemData = objectTreeData.value( currentItemPtr );
-        QString objectId   = treeItemData.value( "id" );
+        QString objectId   = objectTreeData.value(currentItemPtr).id;
 
         // Retrieve the signals from the device
         if (getClassSignals(currentItemObjectType, objectId)) {
@@ -443,19 +442,15 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
         QTableWidgetItem *currentItem = propertiesTable->item( propertiesTable->row( item ), 0 );
         QString attributeName = currentItem->text();
 
-        QHash<QString, QString> treeItemData = objectTreeData.value( currentItemPtr );
+        const TreeItemInfo &treeItemData = objectTreeData.value( currentItemPtr );
 
-        QString objType = treeItemData.value( "type" );
-        QString objName = treeItemData.value( "name" );
-        QString objId   = treeItemData.value( "id"   );
+        QString objRubyId = treeItemData.type;
 
-        QString objRubyId = objType;
-
-        if ( objName != "application" ) {
-            objRubyId.append("(:name=>'" + objName + "',:id=>'" + objId + "')");
+        if ( treeItemData.name != "application" ) {
+            objRubyId.append("(:name=>'" + treeItemData.name + "',:id=>'" + treeItemData.id + "')");
         }
         else {
-            objRubyId.append("(:id=>'" + objId + "')");
+            objRubyId.append("(:id=>'" + treeItemData.id + "')");
         }
 
         QString targetDataType = attributesMap.value(currentItemPtr).value(attributeName).value("datatype");

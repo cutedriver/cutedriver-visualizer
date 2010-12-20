@@ -147,7 +147,7 @@ public:    // methods to access test object data by object id
     const QMap<QString, QHash<QString, QString> > &testobjAttributes(TestObjectKey id) { return attributesMap[id]; }
     //const QStringList &testobjGeometries(AttributeKey id) { return geometriesMap[id]; }
     //const QTreeWidgetItem *testobjTreeWidget(AttributeKey id) { return objectTreeMap[id]; }
-    const QHash<QString, QString> &testobjTreeData(TestObjectKey id) { return objectTreeData[id]; }
+    const TreeItemInfo &testobjTreeData(TestObjectKey id) { return objectTreeData[id]; }
 
 public slots:
     void refreshScreenshotObjectList();
@@ -195,7 +195,7 @@ private:
     QMap<TestObjectKey, RectList> geometriesMap;
     QSet<TestObjectKey> screenshotObjects;
 
-    QMap<TestObjectKey, QHash<QString, QString> > objectTreeData;
+    QMap<TestObjectKey, TreeItemInfo > objectTreeData;
     QHash<QString, TestObjectKey> objectIdMap;
     QHash<QString, QMap<QString, QString> > objectMethods;
     QHash<QString, QMap<QString, QString> > objectSignals;
@@ -493,7 +493,7 @@ private:
     QPushButton *findDialogCloseButton;
     QTreeWidgetItem *findDialogSubtreeRoot;
 
-    bool containsWords( QHash<QString, QString> itemData, QString text, bool caseSensitive, bool entireWords  );
+    bool containsWords( const TreeItemInfo &itemData, QString text, bool caseSensitive, bool entireWords  );
     bool attributeContainsWords( TestObjectKey itemPtr, QString text, bool caseSensitive, bool entireWords );
 
     QErrorMessage *tdriverMsgBox;

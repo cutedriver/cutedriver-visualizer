@@ -160,11 +160,11 @@ void MainWindow::storeItemToObjectTreeMap( QTreeWidgetItem *item, QString type, 
 
     TestObjectKey itemPtr = ptr2TestObjectKey( item );
 
-    QHash<QString, QString> treeItemData;
-
-    treeItemData.insert( "type", type );
-    treeItemData.insert( "name", name );
-    treeItemData.insert( "id",   id   );
+    TreeItemInfo treeItemData = {
+        type: type,
+        name: name,
+        id: id,
+        env: QString() };
 
     // store object tree data
     objectTreeData.insert( itemPtr, treeItemData );
@@ -347,7 +347,7 @@ void MainWindow::updateObjectTree( QString filename )
     QDomNode node;
 
     // store id value of focused node in object tree
-    QString currentFocusId = objectTreeData.value( ptr2TestObjectKey( objectTree->currentItem() ) ).value( "id" );
+    QString currentFocusId = objectTreeData.value(ptr2TestObjectKey( objectTree->currentItem())).id;
 
     clearObjectTreeMappings();
     // empty object tree
@@ -380,11 +380,11 @@ void MainWindow::updateObjectTree( QString filename )
 
                 TestObjectKey itemPtr = ptr2TestObjectKey( sutItem );
 
-                QHash<QString, QString> treeItemData;
-
-                treeItemData.insert( "type", "sut" );
-                treeItemData.insert( "name", element.attribute( "name" ) );
-                treeItemData.insert( "id",   element.attribute( "id" )   );
+                TreeItemInfo treeItemData = {
+                    type: QString("sut"),
+                    name: element.attribute("name"),
+                    id: element.attribute("id"),
+                    env: element.attribute( "env") };
 
                 // store object tree data
                 objectTreeData.insert( itemPtr, treeItemData );
@@ -647,9 +647,9 @@ void MainWindow::objectViewCurrentItemChanged ( QTreeWidgetItem * itemCurrent, Q
 
 QString MainWindow::treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey sutItemPtr)
 {
-    QHash<QString, QString> treeItemData = objectTreeData.value( treeItemPtr );
-    QString objRubyId = treeItemData.value("type");
-    QString objName = treeItemData.value("name");
+    const TreeItemInfo &treeItemData = objectTreeData.value( treeItemPtr );
+    QString objRubyId = treeItemData.type;
+    QString objName = treeItemData.name;
     QString objText = attributesMap.value( treeItemPtr ).value("text").value("value");
 
     if ( sutItemPtr == treeItemPtr && objRubyId == "sut" ) {

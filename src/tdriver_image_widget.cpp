@@ -113,8 +113,8 @@ void MainWindow::imageTapFromId(TestObjectKey id)
     //qDebug() << __FUNCTION__ << id;
 
     if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 && !currentApplication.isNull()) {
-        QHash<QString, QString> treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-        tapScreen( "tap " + treeItemData.value( "type" ) + "(:id=>" + treeItemData.value( "id" ) + ") " + currentApplication.id );
+        const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
+        tapScreen( "tap " + treeItemData.type + "(:id=>" + treeItemData.id + ") " + currentApplication.id );
         highlightByKey( id, true );
     }
     else {
@@ -154,8 +154,8 @@ void MainWindow::clickedImage()
 
     else {
         if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
-            QHash<QString, QString> treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-            tapScreen( "tap " + treeItemData.value( "type" ) + "(:id=>" + treeItemData.value( "id" ) + ") " + currentApplication.id );
+            const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
+            tapScreen( "tap " + treeItemData.type + "(:id=>" + treeItemData.id + ") " + currentApplication.id );
             highlightAtCoords( pos, true );
         }
 
