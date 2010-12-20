@@ -52,8 +52,7 @@ TDriverImageView::TDriverImageView( MainWindow *tdriverMainWindow, QWidget* pare
     hoverTimer(new QTimer(this)),
     image(new QImage),
     pixmap(NULL),
-    highlightEnabled(false),
-    highlightMultipleObjects(false),
+    highlightEnabledMode(0),
     updatePixmap(true),
     scaleImage(true),
     leftClickAction(SUT_DEFAULT_TAP),
@@ -126,30 +125,15 @@ void TDriverImageView::paintEvent(QPaintEvent *)
     painter.drawPixmap( pixmap->rect(), *pixmap );
     painter.setOpacity(0.5);
 
-    if ( highlightEnabled ) {
-        static QPen highlightPen(QBrush(Qt::red), 2);
+    // highlightEnabledMode: 0=disabled, 1=single, 2=multiple
+    if (highlightEnabledMode) {
+        unsigned count = (highlightEnabledMode == 1) ? 1 : rects.size();
+        static const QPen highlightPen(QBrush(Qt::red), 2);
         painter.setPen( highlightPen );
 
-        if ( highlightMultipleObjects ) {
-            for ( int n = 0; n < rects.size(); n++ ) {
-                QStringList dimensions = rects[n].split(",");
-                if ( dimensions.size() == 4 && dimensions[ 0 ].size() > 0 && dimensions[ 1 ].size() > 0 && dimensions[ 2 ].size() > 0 && dimensions[ 3 ].size() > 0) {
-                    float temp_x = dimensions[ 0 ].toFloat() + highlight_offset_x;
-                    float temp_y = dimensions[ 1 ].toFloat() + highlight_offset_y;
-                    float temp_w = dimensions[ 2 ].toFloat();
-                    float temp_h = dimensions[ 3 ].toFloat();
-
-                    QRectF rectangle(temp_x * zoomFactor, temp_y * zoomFactor,
-                                     temp_w * zoomFactor, temp_h * zoomFactor);
-                    painter.drawRect( rectangle );
-                }
-            }
-
-        } else {
-            QRectF rectangle(x_rect * zoomFactor, y_rect * zoomFactor,
-                             width_rect * zoomFactor, height_rect * zoomFactor);
-            painter.drawRect( rectangle );
-
+        for ( int n = 0; n < count; n++ ) {
+            const QRectF &rect = rects.at(n);
+            painter.drawRect( rect.x() * zoomFactor, rect.y() * zoomFactor, rect.width() * zoomFactor, rect.height() * zoomFactor );
         }
     }
 
@@ -538,38 +522,19 @@ void TDriverImageView::refreshImage(const QString &imagePath)
 }
 
 
-void TDriverImageView::drawHighlight( float x, float y, float width, float height )
-{
-    x_rect = x;
-    y_rect = y;
-
-    width_rect = width;
-    height_rect = height;
-
-    highlightEnabled = true;
-    highlightMultipleObjects = false;
-
-}
-
-
 void TDriverImageView::disableDrawHighlight()
 {
-    highlightEnabled = false;
-    highlightMultipleObjects = false;
+    highlightEnabledMode = 0;
     update();
 }
 
 
-void TDriverImageView::drawMultipleHighlights( QStringList geometries, int offset_x, int offset_y )
+void TDriverImageView::drawHighlights( RectList geometries, bool multiple )
 {
 
     //qDebug() << "drawHighlight";
 
-    highlightEnabled = true;
-    highlightMultipleObjects = true;
-
-    highlight_offset_x = offset_x;
-    highlight_offset_y = offset_y;
+    highlightEnabledMode = (multiple) ? 2 : 1;
 
     rects = geometries;
 }

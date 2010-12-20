@@ -32,6 +32,9 @@
 //#include <QWaitCondition>
 #include <QPointF>
 
+#include <QRect>
+#include <QList>
+
 #include "tdriver_main_types.h"
 
 class MainWindow;
@@ -50,8 +53,7 @@ public:
 
     void refreshImage(const QString &imagePath);
 
-    void drawHighlight( float x, float y, float width, float height );
-    void drawMultipleHighlights( QStringList geometries, int offset_x, int offset_y );
+    void drawHighlights( RectList geometries, bool multiple );
     void disableDrawHighlight();
 
     int imageWidth() { return image->width(); }
@@ -123,8 +125,7 @@ private:
     QString imageTasId;
     QPixmap *pixmap;
 
-    bool highlightEnabled;
-    bool highlightMultipleObjects;
+    int highlightEnabledMode; // 0=disabled, 1=single, 2=multiple
 
     bool updatePixmap;
     bool scaleImage;
@@ -137,18 +138,9 @@ private:
     QPoint dragStart; // dragged areas first corner in *pixmap coordinates
     QPoint dragEnd; // dragged areas 2nd, moving corner in *pixmap coordinates
 
-    int highlight_offset_x;
-    int highlight_offset_y;
-
-    float x_rect;
-    float y_rect;
-
-    float width_rect;
-    float height_rect;
-
     float zoomFactor;
 
-    QStringList rects;
+    RectList rects;
 
     MainWindow *objTreeOwner;
 };

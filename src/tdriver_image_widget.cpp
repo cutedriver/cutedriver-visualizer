@@ -166,7 +166,7 @@ void MainWindow::clickedImage()
 }
 
 
-void MainWindow::drawHighlight( TestObjectKey itemKey )
+void MainWindow::drawHighlight( TestObjectKey itemKey, bool multiple )
 {
     if ( itemKey && itemKey != lastHighlightedObjectKey) {
 
@@ -176,34 +176,17 @@ void MainWindow::drawHighlight( TestObjectKey itemKey )
             QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( itemKey );
 
             // collect geometries for item and its childs
-            QStringList geometries = geometriesMap.value( itemKey );
+            const RectList &geometries = geometriesMap.value( itemKey );
 
             if ( !geometries.isEmpty() ) {
 
-                if ( geometries.size() > 1 ) {
-
-                    imageWidget->drawMultipleHighlights( geometries, 0, 0 );
-                    valid = true;
-
-                } else if ( geometries.size() == 1 ) {
-
-                    QStringList geometry = geometries[ 0 ].split( "," );
-
-                    float x      = geometry[ 0 ].toFloat();
-                    float y      = geometry[ 1 ].toFloat();
-                    float width  = geometry[ 2 ].toFloat();
-                    float height = geometry[ 3 ].toFloat();
-
-                    imageWidget->drawHighlight( x, y, width, height );
-                    valid = true;
-                }
+                imageWidget->drawHighlights( geometries, multiple );
+                lastHighlightedObjectKey = itemKey;
+                valid = true;
             }
         }
 
-        if (valid) {
-            lastHighlightedObjectKey = itemKey;
-        }
-        else {
+        if (!valid) {
             // nothing valid to highlight
             //qDebug() << FCFL << "not on screenshot:" << testObjectKey2Str(itemKey);
             imageWidget->disableDrawHighlight();
@@ -213,34 +196,6 @@ void MainWindow::drawHighlight( TestObjectKey itemKey )
 }
 
 
-bool MainWindow::splitGeometry( QString geometry, QStringList & geometryList ) {
-
-    bool result = false;
-
-    QRegExp regexp("^(.+),(.+),(.+),(.+)$");
-
-    geometryList.clear();
-
-    if ( regexp.indexIn( geometry ) != -1 )  {
-
-        geometryList << regexp.cap( 1 ) << regexp.cap( 2 ) << regexp.cap( 3 ) << regexp.cap( 4 );
-        result = true;
-
-    } else {
-
-        qDebug() << "splitGeometry: Unable to split geometry '" << geometry << "'";
-
-    }
-
-    return result;
-
-}
-
-bool MainWindow::geometryContains( QString geometry, int x, int y ) {
-
-    return convertGeometryToQRect( geometry ).contains( x, y, false );
-
-}
 
 bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey> & matchingObjects ) {
 
@@ -254,11 +209,11 @@ bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey>
 
     for ( visibleObject = screenshotObjects.constBegin(); visibleObject != screenshotObjects.constEnd(); ++visibleObject ) {
 
-        QStringList geometries = geometriesMap.value( *visibleObject );
+        const RectList &geometries = geometriesMap.value( *visibleObject );
 
         if ( !geometries.isEmpty() ) {
 
-            if ( geometryContains ( geometries.at( 0 ), pos.x(), pos.y() ) ) {
+            if (geometries.first().contains( pos.x(), pos.y() ) ) {
                 matchingObjects << (TestObjectKey)( *visibleObject );
                 result = true;
             }
@@ -271,29 +226,7 @@ bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey>
 
 }
 
-QRect MainWindow::convertGeometryToQRect( QString geometry ) {
 
-    QRect result( 0, 0, 0, 0 );
-
-    QStringList geometryList;
-
-    if ( splitGeometry( geometry, geometryList ) ) {
-
-        result = QRect( geometryList[ 0 ].toFloat(), geometryList[ 1 ].toFloat(), geometryList[ 2 ].toFloat(), geometryList[ 3 ].toFloat() );
-
-    }
-
-    return result;
-
-}
-
-int MainWindow::geometrySize( QString geometry ) {
-
-    QRect rectangle = convertGeometryToQRect( geometry );
-
-    return rectangle.size().width() * rectangle.size().height();
-
-}
 
 bool MainWindow::getSmallestObjectFromMatches( QList<TestObjectKey> *matchingObjects, TestObjectKey & objectPtr ) {
 
@@ -306,16 +239,16 @@ bool MainWindow::getSmallestObjectFromMatches( QList<TestObjectKey> *matchingObj
     QList<TestObjectKey>::const_iterator matchingObject;
     for ( matchingObject = matchingObjects->constBegin(); matchingObject != matchingObjects->constEnd(); ++matchingObject ) {
 
-        QStringList geometries = geometriesMap.value( *matchingObject );
+        RectList geometries = geometriesMap.value( *matchingObject );
 
         if ( !geometries.isEmpty() ) {
 
             // calculate size of object in pixels
-            int matchingObjectSize = geometrySize( geometries.at( 0 ) );
+            int matchingObjectArea = geometries.first().height() * geometries.first().width();
 
-            if ( ( smallestObjectPtr == 0 || matchingObjectSize < smallestObjectSize ) && matchingObjectSize > 0 ) {
+            if ( ( smallestObjectPtr == 0 || matchingObjectArea < smallestObjectSize ) && matchingObjectArea > 0 ) {
                 smallestObjectPtr = *matchingObject;
-                smallestObjectSize = matchingObjectSize;
+                smallestObjectSize = matchingObjectArea;
                 result = true;
             }
         }
@@ -332,7 +265,7 @@ bool MainWindow::highlightByKey( TestObjectKey itemKey, bool selectItem, QString
         return false;
     }
 
-    drawHighlight( itemKey );
+    drawHighlight( itemKey, false );
 
     QTreeWidgetItem *item = testObjectKey2Ptr(itemKey);
 

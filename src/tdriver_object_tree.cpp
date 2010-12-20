@@ -28,13 +28,6 @@
 #include <QTimer>
 #include <QProgressDialog>
 
-void MainWindow::collectGeometries( QTreeWidgetItem * item )
-{
-    //qDebug() << "collectGeometries";
-    QStringList geometries;
-    collectGeometries( item, geometries );
-}
-
 
 bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, float & x, float & y )
 {
@@ -44,7 +37,7 @@ bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, float & x, float &
 
     while ( x == -1 && y == -1 && item != NULL ) {
         // retrieve selected items attributes
-        QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( ptr2TestObjectKey( item ) );
+        const QMap<QString, QHash<QString, QString> > &attributes = attributesMap.value( ptr2TestObjectKey( item ) );
         x = attributes.value( "x" ).value( "value", "-1" ).toFloat();
         y = attributes.value( "y" ).value( "value", "-1" ).toFloat();
         item = item->parent();
@@ -55,11 +48,9 @@ bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, float & x, float &
 }
 
 
-void MainWindow::collectGeometries( QTreeWidgetItem * item, QStringList & geometries )
+void MainWindow::collectGeometries( QTreeWidgetItem * item, RectList & geometries )
 {
     //qDebug() << "collectGeometries";
-    float x, y, width, height;
-    QString geometry;
 
     if ( item != NULL ) {
         TestObjectKey itemPtr = ptr2TestObjectKey( item );
@@ -69,49 +60,59 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, QStringList & geomet
             geometries = geometriesMap.value( itemPtr );
         }
         else {
+
+            geometries.clear();
+            // retrieve child nodes geometries first
+            for ( int childIndex = 0; childIndex < item->childCount(); childIndex++ ) {
+                RectList childGeometries;
+                collectGeometries( item->child( childIndex ), childGeometries );
+                geometries << childGeometries;
+            }
+
             // retrieve selected items attributes
             QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( itemPtr );
-            geometry = attributes.value( "geometry" ).value( "value" );
 
-            // retrieve x, y: if value not found return -1
-            x = attributes.value( "x" ).value( "value", "-1" ).toFloat();
-            y = attributes.value( "y" ).value( "value", "-1" ).toFloat();
+            bool ok = false;
 
-            // retrieve width, height: if value not found return -1
-            width = attributes.value( "width" ).value( "value", "-1" ).toFloat();
-            height = attributes.value( "height" ).value( "value", "-1" ).toFloat();
+            // retrieve x, y, widht height, or ok=false if fail
+            float x, y, width, height;
+            x = attributes.value( "x" ).value( "value").toFloat(&ok);
+            if (ok) y = attributes.value( "y" ).value( "value").toFloat(&ok);
+            if (ok) width = attributes.value( "width" ).value( "value").toFloat(&ok);
+            if (ok) height = attributes.value( "height" ).value( "value").toFloat(&ok);
 
-            // if x, y, width, height found add, create geometry of those
-            if ( x != -1 && y != -1 && width != -1 && height != -1 ) {
-                // create geometry for object
-                geometry = QString( QString::number( x ) + "," + QString::number( y ) + "," + QString::number( width )+ "," + QString::number( height )    );
-                geometriesMap.insert( itemPtr, QStringList( geometry ) );
-            }
+            if ( !ok ) {
 
-            else if ( !geometry.isEmpty() ) {
-                // retrieve parent location as offset, looking recursively through parents until an offset is obtained
-                if ( getParentItemOffset( item, x, y) ) {
-                    QStringList geometryList = geometry.split(",");
+                // parse values from geometry attribute
+                const QString &geometry = attributes.value( "geometry" ).value( "value" );
+                QStringList geometryList = geometry.split(',');
 
-                    // create geometry for object
-                    geometry = QString(
-                                QString::number( geometryList[ 0 ].toFloat() + x ) + "," + QString::number( geometryList[ 1 ].toFloat() + y ) + "," +
-                                QString::number( geometryList[ 2 ].toFloat() )+ "," + QString::number( geometryList[ 3 ].toFloat() )
-                                );
-                    geometriesMap.insert( itemPtr, QStringList( geometry ) );
+                if ( geometryList.size() >= 4) {
+                    x = geometryList.at(0).toFloat(&ok);
+                    if (ok) y = geometryList.at(1).toFloat(&ok);
+                    if (ok) width = geometryList.at(2).toFloat(&ok);
+                    if (ok) height = geometryList.at(3).toFloat(&ok);
+
+                    if (ok) {
+                        // retrieve parent location as offset, looping down the tree for correct offset
+                        float px=-1, py=-1;
+                        ok = getParentItemOffset( item, px, py);
+                        if (ok) geometries.prepend(QRectF(px+x, py+y, width, height));
+                    }
                 }
+
+            }
+            else { // ok == true
+                // use values from separate attributes
+                geometries.prepend(QRectF(x, y, width, height));
             }
 
-            // retrieve child nodes geometries
-            if ( item->childCount() > 0 ) {
-                for ( int childIndex = 0; childIndex < item->childCount(); childIndex++ ) {
-                    QStringList childGeometries;
-                    collectGeometries( item->child( childIndex ), childGeometries );
-                    QStringList tmp = geometriesMap.value( itemPtr );
-                    // store current items and its childs geometries to cache
-                    geometriesMap.insert( itemPtr, tmp << geometriesMap.value( ptr2TestObjectKey( item->child( childIndex ) ) ) );
-                }
+            if (!ok) {
+                // not ok, prepend Null rectangle
+                geometries.prepend(QRectF());
             }
+
+            geometriesMap.insert( itemPtr, geometries);
         }
     }
 }
@@ -125,7 +126,7 @@ void MainWindow::objectTreeItemChanged()
     propertyTabLastTimeUpdated.clear();
     // update current properties table
     updatePropertiesTable();
-    drawHighlight( ptr2TestObjectKey( objectTree->currentItem() ) );
+    drawHighlight( ptr2TestObjectKey(objectTree->currentItem()), true );
 }
 
 
@@ -209,8 +210,9 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
 
         const QMap<QString, QHash<QString, QString> > &attributeContainer = attributesMap.value(parentKey);
 
-        bool ok = (attributeContainer.contains("x") && attributeContainer.contains("y") &&
-                   attributeContainer.contains("height") && attributeContainer.contains("width"));
+        bool ok = (( attributeContainer.contains("x") && attributeContainer.contains("y") &&
+                     attributeContainer.contains("height") && attributeContainer.contains("width"))
+                   || attributeContainer.contains("geometry"));
 
         if (ok && 0 == attributeContainer.value( "visible" ).value( "value" ).compare("false", Qt::CaseInsensitive))
             ok = false;
@@ -398,7 +400,8 @@ void MainWindow::updateObjectTree( QString filename )
     }
 
     // collect geometries for item and its childs
-    collectGeometries( sutItem );
+    RectList dummy;
+    collectGeometries( sutItem, dummy );
 
     refreshScreenshotObjectList();
 
@@ -421,7 +424,7 @@ void MainWindow::updateObjectTree( QString filename )
     }
 
     // highlight current object
-    drawHighlight( ptr2TestObjectKey( objectTree->currentItem() ) );
+    drawHighlight( ptr2TestObjectKey(objectTree->currentItem()), true );
     updatePropertiesTable();
 }
 

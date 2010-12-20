@@ -4,11 +4,15 @@
 #include <QString>
 
 class QTreeWidgetItem;
-
+template <class T> class QList;
+class QRectF;
 
 // types meant to be used in other code
 
 typedef void* TestObjectKey;
+
+
+typedef QList<QRectF> RectList;
 
 
 struct ApplicationInfo {

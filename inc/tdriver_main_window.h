@@ -192,7 +192,7 @@ private:
     QHash<QString, QStringList > apiSignalsMap;
     QMap<QString, Behaviour> behavioursMap;
 
-    QMap<TestObjectKey, QStringList> geometriesMap;
+    QMap<TestObjectKey, RectList> geometriesMap;
     QSet<TestObjectKey> screenshotObjects;
 
     QMap<TestObjectKey, QHash<QString, QString> > objectTreeData;
@@ -292,13 +292,7 @@ private:
 
     void objectTreeItemChanged();
 
-    void collectGeometries( QTreeWidgetItem *item );
-    void collectGeometries( QTreeWidgetItem *item, QStringList &geometries );
-
-    bool splitGeometry( QString geometry, QStringList &geometryList );
-    bool geometryContains( QString geometry, int x, int y );
-    QRect convertGeometryToQRect( QString geometry );
-    int geometrySize( QString geometry );
+    void collectGeometries( QTreeWidgetItem *item, RectList &geometries);
 
     bool getParentItemOffset( QTreeWidgetItem *item, float &x, float &y );
 
@@ -423,7 +417,7 @@ private:
     // highlight
 
     TestObjectKey lastHighlightedObjectKey;
-    void drawHighlight( TestObjectKey itemKey );
+    void drawHighlight( TestObjectKey itemKey, bool multiple );
 
 
     bool highlightByKey( TestObjectKey itemKey, bool selectItem, QString insertMethodToEditor = QString() );
