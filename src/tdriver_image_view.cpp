@@ -315,7 +315,6 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
                 // find position in menu
                 QAction *before = NULL;
                 foreach (QAction *act, menu->actions()) {
-                    //qDebug() << FCFL << "comparing" << sortKeys[act] << ">" << sortKey;
                     QString key = sortKeys[act];
                     if ( !key.isEmpty() && key > sortKey) {
                         before = act;

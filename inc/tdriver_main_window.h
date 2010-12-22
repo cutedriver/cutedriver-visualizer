@@ -412,7 +412,7 @@ private:
     QComboBox *imageLeftClickChooser;
     //QString lastScreenShotApplication;
 
-    void tapScreen( QString target );
+    void tapScreenWithRefresh( QString target );
 
     void createImageViewDockWidget();
 
@@ -588,7 +588,6 @@ private slots:
     void imageInsertObjectFromId(TestObjectKey id);
     void imageInspectFromId(TestObjectKey id);
     void imageTapFromId(TestObjectKey id);
-
 
     void changeImageResize(bool resize);
     void changeImageLeftClick(int index);

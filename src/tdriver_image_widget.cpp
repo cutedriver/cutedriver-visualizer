@@ -113,8 +113,10 @@ void MainWindow::imageTapFromId(TestObjectKey id)
     //qDebug() << __FUNCTION__ << id;
 
     if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 && !currentApplication.isNull()) {
-        const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-        tapScreen( "tap " + treeItemData.type + "(:id=>" + treeItemData.id + ") " + currentApplication.id );
+        TreeItemInfo treeItemData = objectTreeData.value( lastHighlightedObjectKey );
+        // note: tapScreenWithRefresh will invalidate id, because underneath id is a pointer to QTreeWidgetItem
+        tapScreenWithRefresh( "tap " + treeItemData.type + "(:id=>" + treeItemData.id + ") " + currentApplication.id );
+        id = objectIdMap.value(treeItemData.id);
         highlightByKey( id, true );
     }
     else {
@@ -123,7 +125,7 @@ void MainWindow::imageTapFromId(TestObjectKey id)
 }
 
 
-void MainWindow::tapScreen( QString target )
+void MainWindow::tapScreenWithRefresh( QString target )
 {
     //qDebug() << "tapScreen";
     statusbar( "Tapping...", 0, 1 );
@@ -149,13 +151,13 @@ void MainWindow::clickedImage()
 
     if ( sutName.toLower() == "s60" ) {
         imageWidget->convertS60Pos(pos);
-        tapScreen( "tap_screen " + QString::number( pos.x() ) + " " + QString::number( pos.y() ) );
+        tapScreenWithRefresh( "tap_screen " + QString::number( pos.x() ) + " " + QString::number( pos.y() ) );
     }
 
     else {
         if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
             const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-            tapScreen( "tap " + treeItemData.type + "(:id=>" + treeItemData.id + ") " + currentApplication.id );
+            tapScreenWithRefresh( "tap " + treeItemData.type + "(:id=>" + treeItemData.id + ") " + currentApplication.id );
             highlightAtCoords( pos, true );
         }
 
