@@ -331,15 +331,14 @@ bool MainWindow::setup()
 } // setup
 
 
-void MainWindow::setActiveDevice( QString deviceName )
+void MainWindow::setActiveDevice(const QString &deviceName )
 {
     activeDevice.clear();
-    QHash<QString, QString> sut;
 
     if ( deviceList.contains( deviceName ) ) {
-        sut = deviceList.value( deviceName );
-
-        activeDevice["name"] = sut.value( "name" );
+        const QHash<QString, QString> &sut = deviceList.value( deviceName );
+        sutName = sut.value( "name" );
+        activeDevice["name"] = sutName;
         activeDevice["type"] = sut.value( "type" );
         activeDevice["default_timeout"] = sut.value( "default_timeout" );
 
@@ -347,7 +346,11 @@ void MainWindow::setActiveDevice( QString deviceName )
         recordMenu->setEnabled( sut.value( "type" ).contains( "qt", Qt::CaseInsensitive )
                                && !applicationsNamesMap.empty() );
     }
+    else {
+        sutName.clear();
+    }
 }
+
 
 QString MainWindow::getDriverVersionNumber()
 {

@@ -53,7 +53,7 @@ void MainWindow::connectImageWidgetSignals() {
     if (area.isValid() && area.contains(pos)) {
         highlightAtCoords( pos, true );
         // convert to S60 coordinates
-        if ( activeDevice.value( "type" ).toLower() == "s60" ) {
+        if ( sutName.toLower() == "s60" ) {
             QPoint s60Pos(pos);
             imageWidget->convertS60Pos(s60Pos);
             statusbar( tr("Inspect: image coordinates (%1, %2) = S60 coordinates (%3, %4)")
@@ -74,7 +74,7 @@ void MainWindow::imageInsertFindItem()
 
         highlightAtCoords( pos, true, "tap" );
 
-        if ( activeDevice.value( "type" ).toLower() == "s60" ) {
+        if ( sutName.toLower() == "s60" ) {
             QPoint s60Pos(pos);
             imageWidget->convertS60Pos(s60Pos);
             statusbar( tr("Inserted: image coordinates (%1, %2) = S60 coordinates (%3, %4)")
@@ -147,7 +147,7 @@ void MainWindow::clickedImage()
 {
     QPoint pos(imageWidget->getEventPosInImage());
 
-    if ( activeDevice.value( "type" ).toLower() == "s60" ) {
+    if ( sutName.toLower() == "s60" ) {
         imageWidget->convertS60Pos(pos);
         tapScreen( "tap_screen " + QString::number( pos.x() ) + " " + QString::number( pos.y() ) );
     }
@@ -176,7 +176,8 @@ void MainWindow::drawHighlight( TestObjectKey itemKey, bool multiple )
             QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( itemKey );
 
             // collect geometries for item and its childs
-            const RectList &geometries = geometriesMap.value( itemKey );
+            RectList geometries;
+            collectGeometries( testObjectKey2Ptr(itemKey), geometries);
 
             if ( !geometries.isEmpty() ) {
 
@@ -197,33 +198,31 @@ void MainWindow::drawHighlight( TestObjectKey itemKey, bool multiple )
 
 
 
-bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey> & matchingObjects ) {
-
-    //qDebug() << "collectMatchingVisibleObjects";
-
-    bool result = false;
+bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey> & matchingObjects )
+{
+    QSet<TestObjectKey>::const_iterator visibleObject;
 
     matchingObjects.clear();
 
-    QSet<TestObjectKey>::const_iterator visibleObject;
-
     for ( visibleObject = screenshotObjects.constBegin(); visibleObject != screenshotObjects.constEnd(); ++visibleObject ) {
 
+        // add only objects that are in geometriesMap
         const RectList &geometries = geometriesMap.value( *visibleObject );
-
         if ( !geometries.isEmpty() ) {
 
+            // add only objects that contain pos
             if (geometries.first().contains( pos.x(), pos.y() ) ) {
-                matchingObjects << (TestObjectKey)( *visibleObject );
-                result = true;
+
+                // don't add Layouts and LayoutItems, they shouldn't be selectable from the image
+                QString objectType = attributesMap.value(*visibleObject).value("objecttype").value("value");
+                if (objectType != "Layout" && objectType != "LayoutItem") {
+                    matchingObjects << (TestObjectKey)( *visibleObject );
+                }
             }
-
         }
-
     }
 
-    return result;
-
+    return !matchingObjects.isEmpty();
 }
 
 
@@ -239,7 +238,7 @@ bool MainWindow::getSmallestObjectFromMatches( QList<TestObjectKey> *matchingObj
     QList<TestObjectKey>::const_iterator matchingObject;
     for ( matchingObject = matchingObjects->constBegin(); matchingObject != matchingObjects->constEnd(); ++matchingObject ) {
 
-        RectList geometries = geometriesMap.value( *matchingObject );
+        const RectList &geometries = geometriesMap.value( *matchingObject );
 
         if ( !geometries.isEmpty() ) {
 

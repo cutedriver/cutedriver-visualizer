@@ -29,7 +29,27 @@
 #include <QProgressDialog>
 
 
-bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, float & x, float & y )
+QPoint MainWindow::getItemPos(QTreeWidgetItem *item)
+{
+    const QMap<QString, QHash<QString, QString> > &attributes = attributesMap.value( ptr2TestObjectKey( item ) );
+    QPoint ret;
+
+    if (sutName.toLower() == "symbian" && objectTreeData.value(ptr2TestObjectKey( item )).env.toLower() == "qt") {
+
+        ret = QPoint(attributes.value("x_absolute").value("value", "-1").toInt(),
+                      attributes.value("y_absolute").value("value", "-1").toInt());
+    }
+    else {
+
+        ret = QPoint(attributes.value("x").value("value", "-1").toInt(),
+                      attributes.value("y").value("value", "-1").toInt());
+    }
+
+    return ret;
+}
+
+
+bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, int & x, int & y )
 {
     //qDebug() << "getParentItemOffset";
     bool result = false;
@@ -37,9 +57,9 @@ bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, float & x, float &
 
     while ( x == -1 && y == -1 && item != NULL ) {
         // retrieve selected items attributes
-        const QMap<QString, QHash<QString, QString> > &attributes = attributesMap.value( ptr2TestObjectKey( item ) );
-        x = attributes.value( "x" ).value( "value", "-1" ).toFloat();
-        y = attributes.value( "y" ).value( "value", "-1" ).toFloat();
+        QPoint pos = getItemPos(item);
+        x = pos.x();
+        y = pos.y();
         item = item->parent();
     }
 
@@ -48,7 +68,9 @@ bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, float & x, float &
 }
 
 
-void MainWindow::collectGeometries( QTreeWidgetItem * item, RectList & geometries )
+
+
+void MainWindow::collectGeometries( QTreeWidgetItem * item, RectList & geometries)
 {
     //qDebug() << "collectGeometries";
 
@@ -65,51 +87,50 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, RectList & geometrie
             // retrieve child nodes geometries first
             for ( int childIndex = 0; childIndex < item->childCount(); childIndex++ ) {
                 RectList childGeometries;
-                collectGeometries( item->child( childIndex ), childGeometries );
+                collectGeometries( item->child( childIndex ), childGeometries);
                 geometries << childGeometries;
             }
 
             // retrieve selected items attributes
             QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( itemPtr );
 
-            bool ok = false;
+            bool ok = true;
 
             // retrieve x, y, widht height, or ok=false if fail
-            float x, y, width, height;
-            x = attributes.value( "x" ).value( "value").toFloat(&ok);
-            if (ok) y = attributes.value( "y" ).value( "value").toFloat(&ok);
-            if (ok) width = attributes.value( "width" ).value( "value").toFloat(&ok);
-            if (ok) height = attributes.value( "height" ).value( "value").toFloat(&ok);
+            int x, y, width, height;
+            QPoint pos = getItemPos(item);
+            x = pos.x();
+            y = pos.y();
+            if (ok) width = attributes.value( "width" ).value( "value").toInt(&ok);
+            if (ok) height = attributes.value( "height" ).value( "value").toInt(&ok);
 
-            if ( !ok ) {
-
+            if ( ok ) {
+                // use values from separate attributes
+                geometries.prepend(QRect(x, y, width, height));
+            }
+            else {
                 // parse values from geometry attribute
                 const QString &geometry = attributes.value( "geometry" ).value( "value" );
                 QStringList geometryList = geometry.split(',');
 
                 if ( geometryList.size() >= 4) {
-                    x = geometryList.at(0).toFloat(&ok);
-                    if (ok) y = geometryList.at(1).toFloat(&ok);
-                    if (ok) width = geometryList.at(2).toFloat(&ok);
-                    if (ok) height = geometryList.at(3).toFloat(&ok);
+                    x = geometryList.at(0).toInt(&ok);
+                    if (ok) y = geometryList.at(1).toInt(&ok);
+                    if (ok) width = geometryList.at(2).toInt(&ok);
+                    if (ok) height = geometryList.at(3).toInt(&ok);
 
                     if (ok) {
                         // retrieve parent location as offset, looping down the tree for correct offset
-                        float px=-1, py=-1;
+                        int px=-1, py=-1;
                         ok = getParentItemOffset( item, px, py);
-                        if (ok) geometries.prepend(QRectF(px+x, py+y, width, height));
+                        if (ok) geometries.prepend(QRect(px+x, py+y, width, height));
                     }
                 }
-
-            }
-            else { // ok == true
-                // use values from separate attributes
-                geometries.prepend(QRectF(x, y, width, height));
             }
 
             if (!ok) {
                 // not ok, prepend Null rectangle
-                geometries.prepend(QRectF());
+                geometries.prepend(QRect());
             }
 
             geometriesMap.insert( itemPtr, geometries);
@@ -130,19 +151,24 @@ void MainWindow::objectTreeItemChanged()
 }
 
 
-QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem * parentItem, QString type, QString name, QString id ) {
+QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem, const TreeItemInfo &data)
+{
 
     //qDebug() << "createObjectTreeItem";
 
     QTreeWidgetItem *item = new QTreeWidgetItem( parentItem );
 
     // if type or id is empty...
+    QString type = data.type;
+    QString id = data.id;
     if ( type.isEmpty() ) { type = "<NoName>"; }
     if ( id.isEmpty()   ) { id = "<None>";     }
 
-    item->setData( 0, Qt::DisplayRole, type );
-    item->setData( 1, Qt::DisplayRole, name );
-    item->setData( 2, Qt::DisplayRole, id   );
+    item->setData( 0, Qt::DisplayRole, type);
+    if (!data.env.isEmpty())
+        item->setData( 0, Qt::ToolTipRole, data.env);
+    item->setData( 1, Qt::DisplayRole, data.name);
+    item->setData( 2, Qt::DisplayRole, id);
 
     item->setFont( 0, *defaultFont );
     item->setFont( 1, *defaultFont );
@@ -154,28 +180,23 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem * parentItem
 }
 
 
-void MainWindow::storeItemToObjectTreeMap( QTreeWidgetItem *item, QString type, QString name, QString id ) {
-
-    //qDebug() << "storeItemToObjectTreeMap";
-
+void MainWindow::storeItemToObjectTreeMap( QTreeWidgetItem *item, const TreeItemInfo &data)
+{
     TestObjectKey itemPtr = ptr2TestObjectKey( item );
 
-    TreeItemInfo treeItemData = {
-        type: type,
-        name: name,
-        id: id,
-        env: QString() };
-
     // store object tree data
-    objectTreeData.insert( itemPtr, treeItemData );
-    objectIdMap.insert(id, itemPtr);
+    objectTreeData.insert( itemPtr, data );
+    objectIdMap.insert(data.id, itemPtr);
 }
 
 void MainWindow::refreshScreenshotObjectList()
 {
     screenshotObjects.clear();
+
     if (imageWidget) {
+        // collect geometries for item and its childs
         buildScreenshotObjectList();
+
         imageWidget->update();
     }
 }
@@ -210,8 +231,10 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
 
         const QMap<QString, QHash<QString, QString> > &attributeContainer = attributesMap.value(parentKey);
 
-        bool ok = (( attributeContainer.contains("x") && attributeContainer.contains("y") &&
-                     attributeContainer.contains("height") && attributeContainer.contains("width"))
+        QPoint pos = getItemPos(testObjectKey2Ptr(parentKey));
+        // assuming that if height and width attributes are present, then getItemPos returned a reasonable pos
+
+        bool ok = (( attributeContainer.contains("height") && attributeContainer.contains("width") )
                    || attributeContainer.contains("geometry"));
 
         if (ok && 0 == attributeContainer.value( "visible" ).value( "value" ).compare("false", Qt::CaseInsensitive))
@@ -242,7 +265,6 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
 void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement )
 {
     //qDebug() << "buildObjectTree";
-
 
     // create attribute hash for each attribute
     QHash<QString, QString> attributeHash;
@@ -290,25 +312,26 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 
         if ( node.isElement() && node.nodeName() == "object" ) {
             element = node.toElement();
-            QString type = element.attribute( "type" );
-            QString name = element.attribute( "name" );
-            QString id   = element.attribute( "id"   );
+            TreeItemInfo data = {
+                element.attribute( "type" ),
+                element.attribute( "name" ),
+                element.attribute( "id" ),
+                element.attribute( "env" ) };
 
             // store id of current application ui dump
-            if ( type.toLower() == "application" ) {
-                currentApplication.set(id, name);
+            if ( data.type.compare("application", Qt::CaseInsensitive )==0 ) {
+                qDebug() << FCFL << "got application id" << data.id << "name" << data.name;
+                currentApplication.set(data.id, data.name);
             }
 
-            // create child item
-            childItem = createObjectTreeItem( parentItem, type, name, id );
+            childItem = createObjectTreeItem( parentItem, data);
+            storeItemToObjectTreeMap( childItem, data );
 
             // iterate the node recursively if child nodes exists
             if ( node.hasChildNodes() ) {
                 buildObjectTree( childItem, element );
             }
 
-            // store current item data to object tree map
-            storeItemToObjectTreeMap( childItem, type, name, id );
 
         } // end if node is element and node name is "object"
 
@@ -340,11 +363,7 @@ void MainWindow::clearObjectTreeMappings()
 void MainWindow::updateObjectTree( QString filename )
 {
     //qDebug() << "updateObjectTree";
-    QTreeWidgetItem *sutItem  = new QTreeWidgetItem( 0 );
-
-    // QDomDocument xmlDocument;
-    QDomElement element;
-    QDomNode node;
+    QTreeWidgetItem *sutItem  = NULL;
 
     // store id value of focused node in object tree
     QString currentFocusId = objectTreeData.value(ptr2TestObjectKey( objectTree->currentItem())).id;
@@ -353,22 +372,30 @@ void MainWindow::updateObjectTree( QString filename )
     // empty object tree
     objectTree->clear();
     uiDumpFileName.clear();
+    sutName.clear();
 
     // parse ui dump xml
     if (parseXml( filename, xmlDocument )) {
         uiDumpFileName = filename;
-        node = xmlDocument.documentElement().firstChild();
+        QDomNode node = xmlDocument.documentElement().firstChild();
 
         while ( !node.isNull() ) {
             // find tasInfo element from xmlDocument
             if ( node.isElement() && node.nodeName() == "tasInfo" ) {
-                element = node.toElement();
+                if (sutItem) {
+                    qWarning("%s:%i: Duplicate tasInfo element, ignoring remaining XML!", __FILE__, __LINE__);
+                    break;
+                }
+                sutItem = new QTreeWidgetItem(0);
 
+                QDomElement element = node.toElement();
                 QString sutId = element.attribute( "id" );
 
+                sutName = element.attribute("name");
+
                 // add sut to the top of the object tree
-                sutItem->setData( 0, Qt::DisplayRole, "sut" );
-                sutItem->setData( 1, Qt::DisplayRole, element.attribute( "name" ) );
+                sutItem->setData( 0, Qt::DisplayRole, QString("sut") );
+                sutItem->setData( 1, Qt::DisplayRole, sutName );
                 sutItem->setData( 2, Qt::DisplayRole, sutId );
 
                 sutItem->setFont( 0, *defaultFont );
@@ -381,10 +408,10 @@ void MainWindow::updateObjectTree( QString filename )
                 TestObjectKey itemPtr = ptr2TestObjectKey( sutItem );
 
                 TreeItemInfo treeItemData = {
-                    type: QString("sut"),
-                    name: element.attribute("name"),
-                    id: element.attribute("id"),
-                    env: element.attribute( "env") };
+                    QString("sut"),
+                    sutName,
+                    element.attribute("id"),
+                    element.attribute("env") };
 
                 // store object tree data
                 objectTreeData.insert( itemPtr, treeItemData );
@@ -399,10 +426,13 @@ void MainWindow::updateObjectTree( QString filename )
         }
     }
 
-    // collect geometries for item and its childs
-    RectList dummy;
-    collectGeometries( sutItem, dummy );
+    if (!sutItem) {
+        qWarning("%s:%i: got no tasInfo elements from XML, returning from method", __FILE__, __LINE__);
+        return;
+    }
 
+    RectList dummy;
+    collectGeometries(sutItem, dummy);
     refreshScreenshotObjectList();
 
     bool itemFocusChanged = false;

@@ -180,7 +180,6 @@ private:
 
     QMap<QString, QHash<QString, QString> > deviceList;
     QMap<QString, QString> activeDevice;
-    //        QString activeApplication;
 
     QMap<QString, QString> tdriverXmlParameters;
 
@@ -195,6 +194,7 @@ private:
     QMap<TestObjectKey, RectList> geometriesMap;
     QSet<TestObjectKey> screenshotObjects;
 
+    QString sutName;
     QMap<TestObjectKey, TreeItemInfo > objectTreeData;
     QHash<QString, TestObjectKey> objectIdMap;
     QHash<QString, QMap<QString, QString> > objectMethods;
@@ -206,7 +206,7 @@ private:
 
     void updateWindowTitle();
 
-    void setActiveDevice( QString deviceName );
+    void setActiveDevice( const QString &deviceName );
     QString getDeviceType( QString deviceName );
     QString getDeviceParameter( QString deviceName, QString parameter );
     QString getDriverVersionNumber();
@@ -286,15 +286,17 @@ private:
     bool parseObjectTreeXml( QString filename, QDomDocument &resultDomTree );
     void buildScreenshotObjectList(TestObjectKey parentKey=0);
     void buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement );
-    void storeItemToObjectTreeMap( QTreeWidgetItem *item, QString type, QString name, QString id );
+    void storeItemToObjectTreeMap( QTreeWidgetItem *item, const TreeItemInfo &data);
 
-    QTreeWidgetItem * createObjectTreeItem( QTreeWidgetItem *parentItem, QString type, QString name, QString id );
+    QTreeWidgetItem * createObjectTreeItem( QTreeWidgetItem *parentItem, const TreeItemInfo &data);
 
     void objectTreeItemChanged();
 
     void collectGeometries( QTreeWidgetItem *item, RectList &geometries);
 
-    bool getParentItemOffset( QTreeWidgetItem *item, float &x, float &y );
+    bool getParentItemOffset( QTreeWidgetItem *item, int &x, int &y );
+
+    QPoint getItemPos( QTreeWidgetItem *item) ;
 
     void objectTreeKeyPressEvent( QKeyEvent * event );
 

@@ -127,14 +127,14 @@ void TDriverImageView::paintEvent(QPaintEvent *)
 
     // highlightEnabledMode: 0=disabled, 1=single, 2=multiple
     if (highlightEnabledMode) {
-        unsigned count = (highlightEnabledMode == 1) ? 1 : rects.size();
+        int count = (highlightEnabledMode == 1) ? 1 : rects.size();
         static const QPen highlightPen(QBrush(Qt::red), 2);
         painter.setPen( highlightPen );
 
         for ( int n = 0; n < count; n++ ) {
-            const QRectF &rect = rects.at(n);
+            const QRect &rect = rects.at(n);
             if (!rect.isNull()) {
-                painter.drawRect( rect.x() * zoomFactor, rect.y() * zoomFactor, rect.width() * zoomFactor, rect.height() * zoomFactor );
+                painter.drawRect( float(rect.x()) * zoomFactor, float(rect.y()) * zoomFactor, float(rect.width()) * zoomFactor, float(rect.height()) * zoomFactor );
             }
         }
     }
@@ -533,7 +533,6 @@ void TDriverImageView::disableDrawHighlight()
 
 void TDriverImageView::drawHighlights( RectList geometries, bool multiple )
 {
-
     //qDebug() << "drawHighlight";
 
     highlightEnabledMode = (multiple) ? 2 : 1;

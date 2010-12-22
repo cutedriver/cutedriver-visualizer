@@ -69,8 +69,6 @@ public:
         return QPoint(float(mousePos.x()) / zoomFactor, float(mousePos.y()) / zoomFactor);
     }
 
-
-
     QPoint &convertS60Pos(QPoint &pos) {
         // rotate when in portrait mode
         if ( image->width() > image->height())
