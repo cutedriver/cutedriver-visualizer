@@ -144,7 +144,7 @@ public:
              };
 
 public:    // methods to access test object data by object id
-    const QMap<QString, QHash<QString, QString> > &testobjAttributes(TestObjectKey id) { return attributesMap[id]; }
+    const QMap<QString, AttributeInfo > &testobjAttributes(TestObjectKey id) { return attributesMap[id]; }
     //const QStringList &testobjGeometries(AttributeKey id) { return geometriesMap[id]; }
     //const QTreeWidgetItem *testobjTreeWidget(AttributeKey id) { return objectTreeMap[id]; }
     const TreeItemInfo &testobjTreeData(TestObjectKey id) { return objectTreeData[id]; }
@@ -186,7 +186,7 @@ private:
     QMap<QString, QString> applicationsNamesMap;
     QMap<QAction*, QString> applicationsActionMap;
 
-    QMap<TestObjectKey, QMap<QString, QHash<QString, QString> > > attributesMap;
+    QMap<TestObjectKey, QMap<QString, AttributeInfo > > attributesMap;
     QHash<QString, QMap<QString, QHash<QString, QString> > > apiMethodsMap;
     QHash<QString, QStringList > apiSignalsMap;
     QMap<QString, Behaviour> behavioursMap;

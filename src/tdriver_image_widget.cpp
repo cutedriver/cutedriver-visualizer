@@ -175,8 +175,6 @@ void MainWindow::drawHighlight( TestObjectKey itemKey, bool multiple )
         bool valid = false;
 
         if (screenshotObjects.contains(itemKey)) {
-            QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( itemKey );
-
             // collect geometries for item and its childs
             RectList geometries;
             collectGeometries( testObjectKey2Ptr(itemKey), geometries);
@@ -216,7 +214,7 @@ bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey>
             if (geometries.first().contains( pos.x(), pos.y() ) ) {
 
                 // don't add Layouts and LayoutItems, they shouldn't be selectable from the image
-                QString objectType = attributesMap.value(*visibleObject).value("objecttype").value("value");
+                QString objectType = attributesMap.value(*visibleObject).value("objecttype").value;
                 if (objectType != "Layout" && objectType != "LayoutItem") {
                     matchingObjects << (TestObjectKey)( *visibleObject );
                 }

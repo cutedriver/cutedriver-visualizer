@@ -52,12 +52,12 @@ bool MainWindow::attributeContainsWords( TestObjectKey itemPtr, QString text, bo
     bool result = false;
 
     Qt::CaseSensitivity caseSensitivity = caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive;
-    QMapIterator<QString, QHash<QString, QString> > iterator( attributesMap.value( itemPtr ) );
+    QMapIterator<QString, AttributeInfo > iterator( attributesMap.value( itemPtr ) );
 
     while ( iterator.hasNext() && !result ) {
 
         iterator.next();
-        QString value = iterator.value().value( "value" );
+        QString value = iterator.value().value;
 
         if ( entireWords ? ( value.compare( text, caseSensitivity ) == 0 ) : ( value.contains( text, caseSensitivity ) ) ) {
             result = true;

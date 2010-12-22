@@ -364,7 +364,7 @@ void MainWindow::updateAttributesTableContent() {
         propertiesTable->setRowCount( attributesMap.value( currentItemPtr ).size() );
 
         // retrieve current objects attributes (using pointer of QTreeWidgetItem)
-        QMapIterator<QString, QHash<QString, QString> > iterator( attributesMap.value( currentItemPtr ) );
+        QMapIterator<QString, AttributeInfo > iterator( attributesMap.value( currentItemPtr ) );
 
         int index = 0;
 
@@ -372,9 +372,9 @@ void MainWindow::updateAttributesTableContent() {
 
             iterator.next();
 
-            QString attributeName      = iterator.value().value("name");
-            QString attributeValue     = iterator.value().value("value");
-            QString attributeType      = iterator.value().value("type");
+            QString attributeName      = iterator.value().name;
+            QString attributeValue     = iterator.value().value;
+            QString attributeType      = iterator.value().type;
 
             // Attribute name
             QTableWidgetItem *attributeNameItem = new QTableWidgetItem( attributeName );
@@ -453,7 +453,7 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
             objRubyId.append("(:id=>'" + treeItemData.id + "')");
         }
 
-        QString targetDataType = attributesMap.value(currentItemPtr).value(attributeName).value("datatype");
+        QString targetDataType = attributesMap.value(currentItemPtr).value(attributeName).dataType;
 
         if (targetDataType.size() == 0) {
             QMessageBox::critical( 0, "Error", "No data type found for attribute " + attributeName );

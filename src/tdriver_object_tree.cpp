@@ -31,19 +31,25 @@
 
 QPoint MainWindow::getItemPos(QTreeWidgetItem *item)
 {
-    const QMap<QString, QHash<QString, QString> > &attributes = attributesMap.value( ptr2TestObjectKey( item ) );
+    const QMap<QString, AttributeInfo > &attributes = attributesMap[ptr2TestObjectKey( item )];
     QPoint ret;
+
+    bool xOk = false;
+    bool yOk = false;
 
     if (sutName.toLower() == "symbian" && objectTreeData.value(ptr2TestObjectKey( item )).env.toLower() == "qt") {
 
-        ret = QPoint(attributes.value("x_absolute").value("value", "-1").toInt(),
-                      attributes.value("y_absolute").value("value", "-1").toInt());
+        ret = QPoint(attributes.value("x_absolute").value.toInt(&xOk),
+                      attributes.value("y_absolute").value.toInt(&yOk));
     }
     else {
 
-        ret = QPoint(attributes.value("x").value("value", "-1").toInt(),
-                      attributes.value("y").value("value", "-1").toInt());
+        ret = QPoint(attributes.value("x").value.toInt(&xOk),
+                      attributes.value("y").value.toInt(&yOk));
     }
+
+    if (!xOk || !yOk)
+        ret = QPoint(-1, -1);
 
     return ret;
 }
@@ -92,7 +98,7 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, RectList & geometrie
             }
 
             // retrieve selected items attributes
-            QMap<QString, QHash<QString, QString> > attributes = attributesMap.value( itemPtr );
+            const QMap<QString, AttributeInfo > &attributes = attributesMap[itemPtr];
 
             bool ok = true;
 
@@ -101,8 +107,8 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, RectList & geometrie
             QPoint pos = getItemPos(item);
             x = pos.x();
             y = pos.y();
-            if (ok) width = attributes.value( "width" ).value( "value").toInt(&ok);
-            if (ok) height = attributes.value( "height" ).value( "value").toInt(&ok);
+            if (ok) width = attributes.value( "width" ).value.toInt(&ok);
+            if (ok) height = attributes.value( "height" ).value.toInt(&ok);
 
             if ( ok ) {
                 // use values from separate attributes
@@ -110,7 +116,7 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, RectList & geometrie
             }
             else {
                 // parse values from geometry attribute
-                const QString &geometry = attributes.value( "geometry" ).value( "value" );
+                const QString &geometry = attributes.value( "geometry" ).value;
                 QStringList geometryList = geometry.split(',');
 
                 if ( geometryList.size() >= 4) {
@@ -229,7 +235,7 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
     // check validity
     if ( parentKey && attributesMap.contains(parentKey) ) {
 
-        const QMap<QString, QHash<QString, QString> > &attributeContainer = attributesMap.value(parentKey);
+        const QMap<QString, AttributeInfo > &attributeContainer = attributesMap[parentKey];
 
         QPoint pos = getItemPos(testObjectKey2Ptr(parentKey));
         // assuming that if height and width attributes are present, then getItemPos returned a reasonable pos
@@ -237,15 +243,15 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
         bool ok = (( attributeContainer.contains("height") && attributeContainer.contains("width") )
                    || attributeContainer.contains("geometry"));
 
-        if (ok && 0 == attributeContainer.value( "visible" ).value( "value" ).compare("false", Qt::CaseInsensitive))
+        if (ok && 0 == attributeContainer.value( "visible" ).value.compare("false", Qt::CaseInsensitive))
             ok = false;
 
         // isVisible is only used by AVKON traverser
-        if (ok && 0 == attributeContainer.value( "isvisible" ).value( "value" ).compare("false", Qt::CaseInsensitive))
+        if (ok && 0 == attributeContainer.value( "isvisible" ).value.compare("false", Qt::CaseInsensitive))
             ok = false;
 
         /* no need to care if object is obscured, highlight should be drawn anyway to show position
-        if (ok && 0 == attributeContainer.value( "visibleonscreen" ).value( "value" ).compare("false", Qt::CaseInsensitive))
+        if (ok && 0 == attributeContainer.value( "visibleonscreen" ).value.compare("false", Qt::CaseInsensitive))
             ok = false;
         */
 
@@ -267,12 +273,10 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
     //qDebug() << "buildObjectTree";
 
     // create attribute hash for each attribute
-    QHash<QString, QString> attributeHash;
 
     QTreeWidgetItem *childItem = 0;
     QDomNode node = parentElement.firstChild();
     TestObjectKey parentPtr = ptr2TestObjectKey( parentItem );
-    QDomElement element;
 
     while ( !node.isNull() ) {
         if ( node.isElement() && node.nodeName() == "attributes" ) {
@@ -284,34 +288,21 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
         }
 
         if ( node.isElement() && node.nodeName() == "attribute" ) {
-            element = node.toElement();
+            QDomElement element(node.toElement());
+            QString name = element.attribute( "name" );
 
-            // empty attributes container
+            AttributeInfo attributeData = {
+                name,
+                element.attribute( "dataType" ),
+                element.attribute( "type" ),
+                element.elementsByTagName( "value" ).item( 0 ).toElement().text() };
 
-            // empty attribute hash
-            attributeHash.clear();
-
-            // create attributes container for each QTreeWidgetItem
-            QMap<QString, QHash<QString, QString> > attributeContainer;
-
-            // retrieve container if already exists
-            if ( attributesMap.contains( parentPtr ) ) { attributeContainer = attributesMap.value( parentPtr ); }
-
-            // store attribute values to attribute hash
-            attributeHash[ "name" ] = element.attribute( "name" );
-            attributeHash[ "datatype" ] = element.attribute( "dataType" );
-            attributeHash[ "type" ] = element.attribute( "type" );
-            attributeHash[ "value" ] = element.elementsByTagName( "value" ).item( 0 ).toElement().text();
-
-            // insert attribute hash to attribute container
-            attributeContainer.insert( element.attribute( "name" ).toLower(), attributeHash );
-
-            // insert container to attributesMap
-            attributesMap.insert( parentPtr, attributeContainer );
+            attributesMap[parentPtr][name.toLower()] = attributeData;
         }
 
         if ( node.isElement() && node.nodeName() == "object" ) {
-            element = node.toElement();
+            QDomElement element(node.toElement());
+
             TreeItemInfo data = {
                 element.attribute( "type" ),
                 element.attribute( "name" ),
@@ -680,7 +671,7 @@ QString MainWindow::treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey su
     const TreeItemInfo &treeItemData = objectTreeData.value( treeItemPtr );
     QString objRubyId = treeItemData.type;
     QString objName = treeItemData.name;
-    QString objText = attributesMap.value( treeItemPtr ).value("text").value("value");
+    QString objText = attributesMap.value( treeItemPtr ).value("text").value;
 
     if ( sutItemPtr == treeItemPtr && objRubyId == "sut" ) {
         objRubyId = tr( "TDriver.sut( :Id => '" ) + activeDevice.value( "name" ) + tr( "' )" );
@@ -689,7 +680,7 @@ QString MainWindow::treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey su
         objRubyId.append("( :name => '" + objName + "' )");
     }
     else if(objText != "" && !objText.isEmpty()) {
-        objRubyId.append("( :text => '" + attributesMap.value( treeItemPtr ).value("text").value("value") + "' )");
+        objRubyId.append("( :text => '" + attributesMap.value( treeItemPtr ).value("text").value + "' )");
     }
     else {
         objRubyId.append("( :name => '' )");

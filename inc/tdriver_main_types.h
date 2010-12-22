@@ -22,6 +22,13 @@ struct TreeItemInfo {
     QString env;
 };
 
+struct AttributeInfo {
+    QString name;
+    QString dataType;
+    QString type;
+    QString value;
+};
+
 
 struct ApplicationInfo {
     QString id;
