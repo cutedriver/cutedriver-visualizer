@@ -18,6 +18,18 @@
 ############################################################################
 
 
+desc "Task for testing visualizer"
+task :test do
+   begin
+     Dir.chdir("test")
+     result=system( "cucumber features -f TDriverReport::CucumberReporter" )
+     raise "Feature tests failed" if (result != true) or ($? != 0) 
+   ensure
+     Dir.chdir("..")
+   end
+   exit(0)
+end
+
 desc "Task for cruise control"
 task :cruise => ['build_visualizer'] do
 	exit(0)
