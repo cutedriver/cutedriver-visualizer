@@ -28,14 +28,16 @@ task :test do
      Dir.chdir("..")	 
 	if ENV['CC_BUILD_ARTIFACTS']    
     #Copy results to build artifacts
-	Dir.foreach("#{Dir.pwd}/test/tdriver_reports") do |entry|
-	  if entry.include?('test_run')
-	    FileUtils.cp_r "#{Dir.pwd}/test/tdriver_reports/#{entry}", "#{ENV['CC_BUILD_ARTIFACTS']}/#{entry}"
-        FileUtils::remove_entry_secure("#{Dir.pwd}/test/tdriver_reports/#{entry}", :force => true)
+	  Dir.foreach("#{Dir.pwd}/test/tdriver_reports") do |entry|
+	    if entry.include?('test_run')
+	      FileUtils.cp_r "#{Dir.pwd}/test/tdriver_reports/#{entry}", "#{ENV['CC_BUILD_ARTIFACTS']}/#{entry}"
+          FileUtils::remove_entry_secure("#{Dir.pwd}/test/tdriver_reports/#{entry}", :force => true)
+	    end
 	  end
-	end
+    end
    end
    exit(0)
+   
 end
 
 desc "Task for cruise control"
