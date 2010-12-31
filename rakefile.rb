@@ -24,8 +24,16 @@ task :test do
      Dir.chdir("test")
      result=system( "cucumber features -f TDriverReport::CucumberReporter" )
      raise "Feature tests failed" if (result != true) or ($? != 0) 
-   ensure
-     Dir.chdir("..")
+   ensure    
+     Dir.chdir("..")	 
+	if ENV['CC_BUILD_ARTIFACTS']    
+    #Copy results to build artifacts
+	Dir.foreach("#{Dir.pwd}/test/tdriver_reports") do |entry|
+	  if entry.include?('test_run')
+	    FileUtils.cp_r "#{Dir.pwd}/test/tdriver_reports/#{entry}", "#{ENV['CC_BUILD_ARTIFACTS']}/#{entry}"
+        FileUtils::remove_entry_secure("#{Dir.pwd}/test/tdriver_reports/#{entry}", :force => true)
+	  end
+	end
    end
    exit(0)
 end
