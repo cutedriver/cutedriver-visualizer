@@ -41,7 +41,7 @@ task :test do
 end
 
 desc "Task for cruise control"
-task :cruise => ['build_visualizer'] do
+task :cruise => ['build_visualizer', 'test'] do
 	exit(0)
 end
 
