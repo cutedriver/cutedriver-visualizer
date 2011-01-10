@@ -99,7 +99,7 @@ end
 
 
 Then /^editor contains "([^\"]*)"$/ do |arg1|
-  verify { @app.TDriverCodeTextEdit(:plainText => arg1.to_s) }
+  verify_true { @app.TDriverCodeTextEdit.attribute('plainText')==arg1.to_s }
 end
 
 
