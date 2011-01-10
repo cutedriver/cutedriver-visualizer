@@ -24,6 +24,7 @@
 #include <tdriver_util.h>
 
 #include <QDateTime>
+#include <QProcess>
 
 static QFile *debugOutFile;
 
