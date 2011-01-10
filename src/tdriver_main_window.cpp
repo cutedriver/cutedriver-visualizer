@@ -569,9 +569,8 @@ QString MainWindow::selectFolder( QString title, QString filter, QFileDialog::Ac
 void MainWindow::statusbar( QString text, int timeout )
 {
     statusBar()->showMessage( text, timeout );
-    statusBar()->update();
     statusBar()->repaint();
-    QThread::currentThread()->yieldCurrentThread();
+    qApp->processEvents();
 }
 
 
