@@ -28,11 +28,15 @@
 #include <QSettings>
 #include <QStringList>
 #include <QFileInfo>
+#include <QProcess>
 
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    // This causes QProcessManager instance to be started, which prevents deadlock in Qt 4.7.2+
+    QProcess::execute(QString("."));
 
     MEC::settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "Nokia", "TDriver_Visualizer");
 
