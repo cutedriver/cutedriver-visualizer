@@ -38,7 +38,7 @@
 
 MainWindow::MainWindow() :
     QMainWindow(),
-    foregroundApplication(false),
+    foregroundApplication(true),
     tdriverMsgBox(new QErrorMessage(this)),
     tdriverMsgTotal(0),
     tdriverMsgShown(1)
@@ -702,8 +702,6 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
     do {
         BAListMap msg;
         msg["input"] = commandString.toAscii().split(' ');
-
-
 
         qDebug() << FCFL << "going to execute" << msg << "Using timeout: " << default_timeout;
         QTime t;
