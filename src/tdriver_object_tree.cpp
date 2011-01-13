@@ -546,6 +546,7 @@ void MainWindow::refreshData()
         applicationsNamesMap.clear();
         resetApplicationsList();
         appsMenu->setDisabled( true );
+        foregroundApplication = true;
         isS60 = true;
     }
     else {
@@ -567,9 +568,15 @@ void MainWindow::refreshData()
     //canceled = progress->wasCanceled();
 
     // use target application if user has chosen one
-    if ( !currentApplication.isNull()
-            && applicationsNamesMap.contains( currentApplication.id )) {
+    if (foregroundApplication) {
+        qDebug() << FCFL << "---------------------- Refreshing foreground app";
+    }
+    else if (!currentApplication.isNull() && applicationsNamesMap.contains( currentApplication.id )) {
+        qDebug() << FCFL << "---------------------- Refreshing current application, id:" << currentApplication.id;
         refreshCmdTemplate += " " + currentApplication.id;
+    }
+    else {
+        qWarning("Current application not set and foregroundApplication false! Refreshing foreground application.");
     }
 
     // request ui xml dump

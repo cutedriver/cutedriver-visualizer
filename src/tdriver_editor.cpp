@@ -71,8 +71,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     debugOutFile = new QFile(QDir::tempPath() + "/tdriver_visualizer_main.log" );
 
-    // This causes QProcessManager instance to be started, which prevents deadlock in Qt 4.7.2+
-    QProcess::execute(QString("."));
+    // workaround for deadlock in Qt 4.7.2+
+    QProcess::execute(".");
 
     // ignore errors in remove and rename
     QFile::remove(debugOutFile->fileName()+".1");

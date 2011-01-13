@@ -25,6 +25,8 @@
 #include <QToolBar>
 #include <QMenu>
 
+#include <QDebug>
+
 bool MainWindow::updateBehaviourXml()
 {
 
@@ -197,10 +199,7 @@ void MainWindow::updateApplicationsList()
 
     connect( fgAction, SIGNAL( triggered() ), this, SLOT( appSelected() ) );
 
-    if ( foregroundApplication ) {
-        fgAction->setChecked( true );
-    }
-
+    bool appWasSet = false;
     for (iterator = applicationsNamesMap.constBegin();
          iterator != applicationsNamesMap.constEnd();
          ++iterator) {
@@ -213,9 +212,13 @@ void MainWindow::updateApplicationsList()
         if (count < 9)
             appAction->setShortcut( QKeySequence( "ALT+" + QString::number( count + 1 ) ) );
 
-        if ( iterator.key() == currentApplication.id && !foregroundApplication ) {
+        if ( !foregroundApplication && iterator.key() == currentApplication.id ) {
+            if (appWasSet) {
+                qWarning("Multiple applications with same id in applicationsNamesMap!");
+            }
             appAction->setChecked( true );
             currentApplication.set(iterator.key(), iterator.value() );
+            appWasSet = true;
         }
 
         applicationsActionMap.insert(appAction, iterator.key() );
@@ -224,6 +227,11 @@ void MainWindow::updateApplicationsList()
 
         connect( appAction, SIGNAL( triggered() ), this, SLOT( appSelected() ) );
         count++;
+    }
+
+    if ( !appWasSet ) {
+        fgAction->setChecked( true );
+        foregroundApplication = true; // may already be true, doesn't matter
     }
 }
 
@@ -240,7 +248,6 @@ void MainWindow::resetApplicationsList()
         applicationsActionMap.remove(delAct);
         delAct->deleteLater();
     }
-
     Q_ASSERT(applicationsActionMap.isEmpty());
 }
 
@@ -393,7 +400,9 @@ void MainWindow::parseApplicationsXml( QString filename ) {
 
     updateApplicationsList();
 
-    if ( !applicationsNamesMap.contains( currentApplication.id ) ) { currentApplication.clear(); }
+    if ( !applicationsNamesMap.contains( currentApplication.id ) ) {
+        currentApplication.clear();
+    }
 
     // Disable menu if it has no applications
     appsMenu->setEnabled(!applicationsNamesMap.empty());
