@@ -542,7 +542,7 @@ void MainWindow::refreshData()
     doProgress(progress, QString(50, '_'), QString(), 0);
 
     // request application list (unless s60 AVKON)
-    if ( (activeDevice.value( "type" ).toLower() == "s60" ) || (activeDevice.value( "type" ).toLower() == "symbian") ){
+    if ( activeDevice.value( "type" ).toLower() == "s60" ) {
         applicationsNamesMap.clear();
         resetApplicationsList();
         appsMenu->setDisabled( true );
