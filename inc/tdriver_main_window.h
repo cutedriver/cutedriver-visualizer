@@ -217,7 +217,7 @@ private:
 
     bool isDeviceSelected();
 
-    QString selectFolder( QString title, QString filter, QFileDialog::AcceptMode mode );
+    QString selectFolder( QString title, QString filter, QFileDialog::AcceptMode mode, const QString &saveDirKey=QString() );
 
     bool createStateArchive( QString target );
 
@@ -330,9 +330,7 @@ private:
     void resetApplicationsList();
 
     // behaviours.xml
-    void parseBehavioursXml( QString filename );
     void buildBehavioursMap();
-
     bool updateBehaviourXml();
 
     // visualizer_dump_sut_id.xml
@@ -501,6 +499,9 @@ private:
     QErrorMessage *tdriverMsgBox;
     int tdriverMsgTotal;
     int tdriverMsgShown;
+
+    QString keyLastUiStateDir;
+    QString keyLastTDriverDir;
 
 signals:
     void defaultFontSet(QFont font);

@@ -41,7 +41,9 @@ MainWindow::MainWindow() :
     foregroundApplication(true),
     tdriverMsgBox(new QErrorMessage(this)),
     tdriverMsgTotal(0),
-    tdriverMsgShown(1)
+    tdriverMsgShown(1),
+    keyLastUiStateDir("files/last_uistate_dir"),
+    keyLastTDriverDir("files/last_tdriver_dir")
 {
     // ugly hack to disable the "don't show again" checkbox,
     // may not work in future Qt versions, and may not work on all platforms
@@ -194,8 +196,6 @@ bool MainWindow::setup()
         TDriverRubyInterface::globalInstance()->requestClose();
     }
 
-    tdriverPath = applicationSettings->value( "files/location", "" ).toString();
-
     // default font for QTableWidgetItems and QTreeWidgetItems
     defaultFont = new QFont;
     defaultFont->fromString(  applicationSettings->value( "font/settings", QString("Sans Serif,8,-1,5,50,0,0,0,0,0") ).toString() );
@@ -224,6 +224,7 @@ bool MainWindow::setup()
 
     // initialize & default settings
 
+    tdriverPath = applicationSettings->value( "files/location", "" ).toString();
     if ( tdriverPath.isEmpty() ) {
         // construct QString tdriverPath depending on OS
 #if (defined(Q_OS_WIN32))
@@ -247,7 +248,8 @@ bool MainWindow::setup()
             return false; // exit
         }
 
-        tdriverPath = selectFolder( "Select TDriver configuration file folder", "Folder", QFileDialog::AcceptOpen ) + "/";
+        tdriverPath = selectFolder( "Select folder of TDriver default tdriver_parameters.xml file", "Folder", QFileDialog::AcceptOpen, keyLastTDriverDir);
+        if (!tdriverPath.endsWith('/')) tdriverPath += '/';
     }
     applicationSettings->setValue( "files/location", tdriverPath );
 
@@ -285,9 +287,6 @@ bool MainWindow::setup()
         }
         tabEditor->setParamMap(tdriverXmlParameters);
     }
-
-    // parse behaviours xml
-    //parseBehavioursXml( tdriverPath + "/behaviours.xml" );
 
     // default sut
     setActiveDevice( defaultDevice );
@@ -552,7 +551,7 @@ void MainWindow::noDeviceSelectedPopup()
 }
 
 
-QString MainWindow::selectFolder( QString title, QString filter, QFileDialog::AcceptMode mode )
+QString MainWindow::selectFolder(QString title, QString filter, QFileDialog::AcceptMode mode, const QString &saveDirKey)
 {
     QFileDialog dialog( this );
 
@@ -561,8 +560,21 @@ QString MainWindow::selectFolder( QString title, QString filter, QFileDialog::Ac
     dialog.setNameFilter( filter );
     dialog.setWindowTitle( title );
     dialog.setViewMode( QFileDialog::List );
+    if (!saveDirKey.isEmpty()) {
+        dialog.setDirectory(applicationSettings->value(saveDirKey, QVariant("")).toString());
+    }
 
-    return ( dialog.exec() ? dialog.selectedFiles().at( 0 ) : "" );
+    QString ret;
+    if (dialog.exec()) {
+        QString dirName = dialog.selectedFiles().at(0);
+        if (!dirName.isEmpty()) {
+            if (!saveDirKey.isEmpty()) {
+                applicationSettings->setValue(saveDirKey, dirName);
+            }
+            ret = dirName;
+        }
+    }
+    return ret;
 }
 
 
