@@ -344,7 +344,6 @@ void MainWindow::deviceSelected() {
 
             // clear applications
             resetApplicationsList();
-            applicationsNamesMap.clear();
             currentApplication.clear();
 
             // disable applications menu

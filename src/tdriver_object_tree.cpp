@@ -543,7 +543,6 @@ void MainWindow::refreshData()
 
     // request application list (unless s60 AVKON)
     if ( activeDevice.value( "type" ).toLower() == "s60" ) {
-        applicationsNamesMap.clear();
         resetApplicationsList();
         appsMenu->setDisabled( true );
         foregroundApplication = true;

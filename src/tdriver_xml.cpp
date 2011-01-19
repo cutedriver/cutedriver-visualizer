@@ -180,8 +180,6 @@ void MainWindow::buildBehavioursMap() {
 
 void MainWindow::updateApplicationsList()
 {
-    resetApplicationsList();
-
     QMap<QString, QString>::const_iterator iterator;
     int count = 0;
 
@@ -232,6 +230,7 @@ void MainWindow::updateApplicationsList()
     if ( !appWasSet ) {
         fgAction->setChecked( true );
         foregroundApplication = true; // may already be true, doesn't matter
+        currentApplication.clear();
     }
 }
 
@@ -249,6 +248,8 @@ void MainWindow::resetApplicationsList()
         delAct->deleteLater();
     }
     Q_ASSERT(applicationsActionMap.isEmpty());
+
+    applicationsNamesMap.clear();
 }
 
 void MainWindow::parseApiMethodsXml( QString filename ) {
@@ -357,7 +358,6 @@ void MainWindow::parseApplicationsXml( QString filename ) {
 
     QDomDocument appDocument;
 
-    applicationsNamesMap.clear();
     resetApplicationsList();
 
     if ( parseXml( filename, appDocument ) ) {
@@ -390,19 +390,13 @@ void MainWindow::parseApplicationsXml( QString filename ) {
                                 applicationsNamesMap.insert( appElement.attribute( QString( "id" ) ), appElement.attribute( QString( "name" ) ) );
                             }
                         }
-
                     }
                 }
             }
         }
-
     }
 
     updateApplicationsList();
-
-    if ( !applicationsNamesMap.contains( currentApplication.id ) ) {
-        currentApplication.clear();
-    }
 
     // Disable menu if it has no applications
     appsMenu->setEnabled(!applicationsNamesMap.empty());
