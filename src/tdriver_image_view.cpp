@@ -277,7 +277,7 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
             QMap<QAction*, QString> sortKeys;
 
             foreach(TestObjectKey id, matchingObjects) {
-                const QMap<QString, QHash<QString, QString> > &attrMap = objTreeOwner->testobjAttributes(id);
+                const QMap<QString, AttributeInfo > &attrMap = objTreeOwner->testobjAttributes(id);
                 const TreeItemInfo &treeData = objTreeOwner->testobjTreeData(id);
 
                 // create heading entry to context menu
@@ -287,13 +287,13 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
 
                 tmpText = treeData.name;
                 if ( tmpText.isEmpty())
-                    tmpText = attrMap["objectname"]["value"];
+                    tmpText = attrMap.value("objectname").value;
                 if ( !tmpText.isEmpty()) {
                     idText += QString(" name '%1'").arg(tmpText);
                     sortKey = "1"+tmpText;
                 }
 
-                tmpText = attrMap["text"]["value"];
+                tmpText = attrMap.value("text").value;
                 if ( !tmpText.isEmpty()) {
                     idText += QString(" text '%1'").arg(tmpText);
                     if (sortKey.isEmpty())
@@ -308,7 +308,7 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
 
                 QString typeText = treeData.type;
                 if (typeText.isEmpty())
-                    typeText = attrMap["objecttype"]["value"];
+                    typeText = attrMap.value("objecttype").value;
                 if (typeText.isEmpty())
                     typeText = "????";
 

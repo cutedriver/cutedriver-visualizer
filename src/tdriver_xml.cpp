@@ -520,15 +520,3 @@ bool MainWindow::getXmlParameters( QString filename )
 
     return ok;
 }
-
-
-void MainWindow::parseBehavioursXml( QString filename ) {
-
-    parseXml( filename, behaviorDomDocument );
-
-}
-
-
-
-
-

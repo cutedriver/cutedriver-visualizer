@@ -21,6 +21,7 @@
 #include "tdriver_main_window.h"
 #include "tdriver_image_view.h"
 #include "tdriver_recorder.h"
+#include "tdriver_debug_macros.h"
 
 #include <QSharedPointer>
 #include <QShortcut>
@@ -241,35 +242,38 @@ void MainWindow::openFontDialog() {
 
 }
 
+
 // LoadFileDataEvent, which is called from button event or menu
 // This loads the xml file selected, updates tree-view and tries to load an image with the same name ( except
 // of course suffix .png )
-void MainWindow::loadFileData() {
+void MainWindow::loadFileData()
+{
+    static const QString imageSuffix(".png");
 
-    // qDebug( "start loadFileData -->" );
-
+    QString dirName = applicationSettings->value(keyLastUiStateDir, QVariant("")).toString();
     // retrieve the file to a QString fileName
-    QString fileName = QFileDialog::getOpenFileName( this, tr( "Open XML-file" ), "", tr( "XML DUMP Files ( *.xml )" ) );
+    QString fileName = QFileDialog::getOpenFileName( this, tr( "Open XML-file" ), dirName, tr( "XML DUMP Files ( *.xml )" ) );
 
-    if ( fileName != NULL ) {
+    QFileInfo info(fileName);
+
+    if (info.isFile()) {
+        applicationSettings->setValue(keyLastUiStateDir, info.absolutePath());
 
         // update xml-treeview
         updateObjectTree( fileName );
 
-        // create filename and send it to imagewidget
-        fileName = fileName.section( '.', 0, -2 );
-        fileName.append( ".png" );
-
+        // create image filename and send it to imagewidget
+        fileName.replace(fileName.lastIndexOf('.'), fileName.size(), imageSuffix);
         imageWidget->refreshImage( fileName );
     }
-
 }
+
 
 // Prompts the user and stores current SUT state in the specified archive/folder
 void MainWindow::saveStateAsArchive()
 {
 
-    QString folderName = selectFolder( "Save current state to folder", "Folder", QFileDialog::AcceptSave );
+    QString folderName = selectFolder( "Save current state to folder", "Folder", QFileDialog::AcceptSave, keyLastUiStateDir );
 
     if ( !folderName.isEmpty() ) {
 
@@ -409,14 +413,11 @@ bool MainWindow::createStateArchive( QString targetPath )
     for (ii=0; ii < count; ++ii) {
         QString targetFile = targetPath + QFileInfo(sourceFiles.at(ii)).fileName();
         targetFile.replace(QRegExp("_\\d+(\\.[a-zA-Z0-9_]+)$"), "\\1");
-        if ( QFile::exists(targetFile)) {
+        if ( QFileInfo(targetFile) != QFileInfo(sourceFiles.at(ii)) && QFile::exists(targetFile)) {
             problemFiles << targetFile;
         }
         targetFiles << targetFile;
     }
-
-    qDebug() << sourceFiles;
-    qDebug() << targetFiles;
 
     if ( !problemFiles.isEmpty() ) {
 
@@ -430,19 +431,23 @@ bool MainWindow::createStateArchive( QString targetPath )
         if ( selectedButton == QMessageBox::No ) {
             return true;
         }
-        problemFiles.clear();
     }
 
-
     for (ii=0; ii < count; ++ii) {
-        if ( QFile::exists( targetFiles.at(ii))) {
-            qDebug() << "QFile::remove('" << targetFiles.at(ii) <<"');";
-            QFile::remove( targetFiles.at(ii) );
+        if (QFileInfo(targetFiles.at(ii)) != QFileInfo(sourceFiles.at(ii))) {
+            bool result;
+            if ( QFile::exists( targetFiles.at(ii))) {
+                result = QFile::remove( targetFiles.at(ii) );
+                qDebug() << FCFL << "QFile::remove('" << targetFiles.at(ii) <<"') ==" << result;
+            }
+
+            result = QFile::copy( sourceFiles.at(ii), targetFiles.at(ii));
+            qDebug() << FCFL << "QFile::copy('" << sourceFiles.at(ii) << "', '" << targetFiles.at(ii) << "'') ==" << result;
+            if ( !result) {
+                problemFiles << (sourceFiles.at(ii) + " => " + targetFiles.at(ii));
+            }
         }
-        qDebug() << "QFile::copy('" << sourceFiles.at(ii) << "', '" << targetFiles.at(ii) << "'');";
-        if ( !QFile::copy( sourceFiles.at(ii), targetFiles.at(ii))) {
-            problemFiles << (sourceFiles.at(ii) + " => " + targetFiles.at(ii));
-        }
+        else qDebug() << FCFL << "Skipping copying file to itself:" << sourceFiles.at(ii);
     }
 
     if ( !problemFiles.isEmpty() ) {
@@ -460,14 +465,19 @@ bool MainWindow::createStateArchive( QString targetPath )
 }
 
 // This function is used to get the file name for tdriver_parameters.xml file (activated from menu)
-void MainWindow::getParameterXML() {
+void MainWindow::getParameterXML()
+{
+    QString dirName = applicationSettings->value(keyLastTDriverDir, QVariant("")).toString();
+    QString fileName = QFileDialog::getOpenFileName( this, "Open tdriver_parameters.xml", dirName, "File: (tdriver_parameters.xml)" );
 
-    QString fileName = QFileDialog::getOpenFileName( this, "Open tdriver_parameters.xml", "", "File: (tdriver_parameters.xml)" );
+    QFileInfo info(fileName);
+    if (info.isFile()) {
+        applicationSettings->setValue(keyLastTDriverDir, info.absolutePath());
 
-    if (getXmlParameters( fileName )) {
-        // parametersFile changed
-        parametersFile = fileName;
-        //parseBehavioursXml( fileName );
+        if (getXmlParameters( fileName )) {
+            // parametersFile changed
+            parametersFile = fileName;
+        }
     }
 }
 
