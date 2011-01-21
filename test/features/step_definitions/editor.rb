@@ -142,5 +142,5 @@ When /^I close the document$/ do
 end
 
 Then /^editor has no files open$/ do
-  verify { @app.TDriverTabbedEditor.QStackedWidget(:count => '0') }
+  verify(10){ @app.TDriverTabbedEditor.QStackedWidget(:count => '0') }
 end
