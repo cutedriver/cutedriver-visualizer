@@ -296,7 +296,7 @@ private:
 
     bool getParentItemOffset( QTreeWidgetItem *item, int &x, int &y );
 
-    QPoint getItemPos( QTreeWidgetItem *item) ;
+    bool getItemPos( QTreeWidgetItem *item, int &x, int &y) ;
 
     void objectTreeKeyPressEvent( QKeyEvent * event );
 
