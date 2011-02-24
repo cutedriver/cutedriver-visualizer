@@ -197,8 +197,8 @@ private:
     QString sutName;
     QMap<TestObjectKey, TreeItemInfo > objectTreeData;
     QHash<QString, TestObjectKey> objectIdMap;
-    QHash<QString, QMap<QString, QString> > objectMethods;
-    QHash<QString, QMap<QString, QString> > objectSignals;
+    //    QHash<QString, QMap<QString, QString> > objectMethods;
+    //    QHash<QString, QMap<QString, QString> > objectSignals;
 
 
     // helper functions
