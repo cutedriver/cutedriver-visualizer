@@ -151,7 +151,9 @@ void MainWindow::createApplicationsMenu() {
 
     appsMenu = new QMenu( tr( " &Applications " ), this );
     appsMenu->setObjectName("main applications");
-    appsMenu->setDisabled( true );
+    //appsMenu->setDisabled( true );
+    appsMenu->addAction(startAppAction);
+    appsMenu->addSeparator();
     menubar->addMenu( appsMenu );
     menubar->actions().last()->setObjectName("main applications");
 }

@@ -275,6 +275,9 @@ bool MainWindow::setup()
     // create find dialog
     createFindDialog();
 
+    // create start app dialog
+    createStartAppDialog();
+
     // parse parameters xml to retrieve all devices
     if ( !offlineMode ){
         offlineMode = !getXmlParameters( parametersFile );
@@ -847,6 +850,11 @@ void MainWindow::createActions()
     //findAction->setShortcut( QKeySequence(tr("Ctrl+F")));
 
     connect( findAction, SIGNAL( triggered() ), this, SLOT( showFindDialog() ) );
+
+    startAppAction = new QAction(tr("Start New Application"), this);
+    startAppAction->setObjectName("main startapp");
+
+    connect( startAppAction, SIGNAL( triggered() ), this, SLOT( showStartAppDialog() ) );
 
     viewExpandAll = new QAction( this );
     viewExpandAll->setObjectName("main tree expand");

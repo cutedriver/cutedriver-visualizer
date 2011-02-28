@@ -503,6 +503,18 @@ private:
     QString keyLastUiStateDir;
     QString keyLastTDriverDir;
 
+    // start app dialog
+
+    void createStartAppDialog();
+    //void createStartAppDialogShortcuts();
+    QDialog *startAppDialog;
+    QLineEdit *startAppDialogTextLineEdit;
+    QCheckBox *startAppDialogWithTestability;
+    QPushButton *startAppDialogStartButton;
+    QPushButton *startAppDialogCloseButton;
+    QAction *startAppAction;
+
+
 signals:
     void defaultFontSet(QFont font);
     void insertToCodeEditor(QString text, bool prependParent, bool prependDot);
@@ -628,6 +640,12 @@ private slots:
     void findDialogHandleTreeCurrentChange(QTreeWidgetItem*current);
     void findDialogSubtreeChanged( int value);
     void closeFindDialog();
+
+    // start app dialog slots
+    void showStartAppDialog();
+    void closeStartAppDialog();
+    void startApp();
+    void startAppDialogEnableStartButton(const QString & text );
 
 private:
     QString treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey sutItemPtr);
