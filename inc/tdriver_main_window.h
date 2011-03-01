@@ -131,7 +131,8 @@ public:
         commandBehavioursXml,
         commandGetVersionNumber,
         commandSignalList,
-        commandGetDeviceParameter
+        commandGetDeviceParameter,
+        commandStartApplication
     };
 
     enum ExecuteCommandResult {
@@ -506,7 +507,6 @@ private:
     // start app dialog
 
     void createStartAppDialog();
-    //void createStartAppDialogShortcuts();
     QDialog *startAppDialog;
     QLineEdit *startAppDialogTextLineEdit;
     QCheckBox *startAppDialogWithTestability;
@@ -646,6 +646,7 @@ private slots:
     void closeStartAppDialog();
     void startApp();
     void startAppDialogEnableStartButton(const QString & text );
+    void startAppDialogReturnPress();
 
 private:
     QString treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey sutItemPtr);

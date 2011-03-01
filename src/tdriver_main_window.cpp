@@ -635,6 +635,7 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const BALis
         case MainWindow::commandSetAttribute: clearError = tr("Failed to set attribute %1.").arg(additionalInformation); break;
         case MainWindow::commandGetDeviceType: clearError = tr("Failed to get device type for %1.").arg(additionalInformation); break;
         case MainWindow::commandGetVersionNumber: clearError = tr("Failed to retrieve TDriver version number."); break;
+        case MainWindow::commandStartApplication: clearError = tr("Failed to start application."); break;
         default: clearError = tr("Error with unknown command");
         }
     }

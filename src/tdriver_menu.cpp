@@ -151,7 +151,7 @@ void MainWindow::createApplicationsMenu() {
 
     appsMenu = new QMenu( tr( " &Applications " ), this );
     appsMenu->setObjectName("main applications");
-    //appsMenu->setDisabled( true );
+    //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
     appsMenu->addAction(startAppAction);
     appsMenu->addSeparator();
     menubar->addMenu( appsMenu );
@@ -353,7 +353,7 @@ void MainWindow::deviceSelected() {
             currentApplication.clear();
 
             // disable applications menu
-            appsMenu->setDisabled( true );
+            //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
 
             // empty current image
             imageWidget->clearImage();

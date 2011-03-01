@@ -858,6 +858,9 @@ def @listener.main_loop (conn)
 
           when :test_record
             eval_cmd = "test_script(sut, '#{ input_array[ 2 ]}' )"
+			
+          when :start_application
+            eval_cmd = "sut.run(:name=>'#{ input_array[ 2 ]}', :arguments=>'#{ input_array[ 3 ]}' )"
 
           else
             @listener_reply['exception'] = []

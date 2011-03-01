@@ -530,7 +530,7 @@ void MainWindow::refreshData()
     // request application list (unless s60 AVKON)
     if ( activeDevice.value( "type" ).toLower() == "s60" ) {
         resetApplicationsList();
-        appsMenu->setDisabled( true );
+        //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
         foregroundApplication = true;
         isS60 = true;
     }
