@@ -170,7 +170,6 @@ private:
 
     TDriverRecorder *mRecorder;
 
-    QSettings *applicationSettings;
     QString outputPath;
 
     QFont *defaultFont;

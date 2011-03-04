@@ -185,7 +185,7 @@ void MainWindow::createTreeViewDockWidget()
 
         objectTree->setColumnWidth( i, 250 );
 
-        //objectTree->setColumnWidth( i, applicationSettings->value( QString( "objecttree/column" + QString::number( i ) ), 350 ).toInt() );
+        //objectTree->setColumnWidth( i, QSettings().value( QString( "objecttree/column" + QString::number( i ) ), 350 ).toInt() );
     }
 
     QStringList labels;
@@ -328,7 +328,7 @@ void MainWindow::createPropertiesDockWidgetApiTabWidget() {
 void MainWindow::createImageViewDockWidget()
 {
     // image resize setting
-    bool resizeSetting = applicationSettings->value( "image/resize", true ).toBool();
+    bool resizeSetting = QSettings().value( "image/resize", true ).toBool();
 
     // Add imagewidged and resize checkbox
     imageViewDock = new QDockWidget( tr(" Image View "), this );
