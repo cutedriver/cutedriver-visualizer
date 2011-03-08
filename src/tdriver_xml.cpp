@@ -399,7 +399,7 @@ void MainWindow::parseApplicationsXml( QString filename ) {
     updateApplicationsList();
 
     // Disable menu if it has no applications
-    appsMenu->setEnabled(!applicationsNamesMap.empty());
+    //appsMenu->setEnabled(!applicationsNamesMap.empty()); // Now we have extra item in the menu so always show
 
     // enable recording menu if if device type is 'kind of' qt
     recordMenu->setEnabled( !activeDevice.value( "type" ).contains( "s60", Qt::CaseInsensitive )

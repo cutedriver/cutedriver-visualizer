@@ -459,6 +459,7 @@ bool TDriverTabbedEditor::open(void)
 {
     makeDockVisible(parent());
 
+    QSettings settings;
     QString dirName;
     TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
 
@@ -467,7 +468,7 @@ bool TDriverTabbedEditor::open(void)
     }
 
     if (dirName.isEmpty()) {
-        dirName = MEC::settings->value("editor/defaultdir").toString(); // empty default ok
+        dirName = settings.value("editor/defaultdir").toString(); // empty default ok
     }
 
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open..."), dirName);
@@ -536,13 +537,14 @@ bool TDriverTabbedEditor::saveTabAs(int index, const QString &caption, const QSt
 
     QString dirName;
     if (editor->fileName().isEmpty()) {
-        dirName = MEC::settings->value("editor/defaultdir").toString(); // empty default ok
+        QSettings settings;
+        dirName = settings.value("editor/defaultdir").toString(); // empty default ok
 
         // make sure dirName is not a regular file, and fix settings if it is (cleanup old bug)
         QFileInfo dirInfo(dirName);
         if (dirInfo.isFile()) {
             dirName = MEC::pathToFile(dirName);
-            MEC::settings->setValue("editor/defaultdir", dirName);
+            settings.setValue("editor/defaultdir", dirName);
         }
     }
     else {
@@ -659,7 +661,8 @@ static inline void setEditorFontAndTabWidth(TDriverCodeTextEdit *editor, const Q
 {
     editor->setFont(font);
     int tabPixels = editor->fontMetrics().width(' '); // line number
-    editor->setTabStopWidth(MEC::settings->value("editor/tabspaces", 8).toInt() * tabPixels);
+    QSettings settings;
+    editor->setTabStopWidth(settings.value("editor/tabspaces", 8).toInt() * tabPixels);
 }
 
 
@@ -668,7 +671,7 @@ void TDriverTabbedEditor::newFile(QString fileName)
     makeDockVisible(parent());
 
     TDriverCodeTextEdit *newEdit = new TDriverCodeTextEdit(this);
-    newEdit->setTranslationDatabase(paramMap, MEC::settings);
+    newEdit->setTranslationDatabase(paramMap);
     setEditorFontAndTabWidth(newEdit, editorFont);
     newEdit->setFileName(fileName);
     //setEditorDefaultEncoding(newEdit);
@@ -1058,7 +1061,8 @@ bool TDriverTabbedEditor::saveFile(QString fileName, int index, bool resetEncodi
 
 void TDriverTabbedEditor::recentFileUpdate(QString fileName)
 {
-    QStringList files = MEC::settings->value("editor/recentFileList").toStringList();
+    QSettings settings;
+    QStringList files = settings.value("editor/recentFileList").toStringList();
     fileName = MEC::fileWithPath(fileName);
     files.removeAll(fileName);
     files.prepend(fileName);
@@ -1068,18 +1072,18 @@ void TDriverTabbedEditor::recentFileUpdate(QString fileName)
 
     QString dirName = MEC::pathToFile(fileName);
     if (!dirName.isEmpty())    {
-        MEC::settings->setValue("editor/defaultdir", dirName);
+        settings.setValue("editor/defaultdir", dirName);
         //qDebug() << FFL << "STORED editor/defaultdir" << dirName;
     }
 
-    MEC::settings->setValue("editor/recentFileList", files);
+    settings.setValue("editor/recentFileList", files);
     updateRecentFileActions();
 }
 
 
 void TDriverTabbedEditor::updateRecentFileActions()
 {
-    QStringList files = MEC::settings->value("editor/recentFileList").toStringList();
+    QStringList files = QSettings().value("editor/recentFileList").toStringList();
 
     int numRecentFiles = qMin(files.size(), (int)MaxRecentFiles);
 
@@ -1315,7 +1319,7 @@ void TDriverTabbedEditor::setParamMap(const QMap<QString, QString> &map)
     paramMap = map;
     for (int ind = 0; ind < count() ; ++ind) {
         TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(widget(ind));
-        if (editor) editor->setTranslationDatabase(map, MEC::settings);
+        if (editor) editor->setTranslationDatabase(map);
     }
 }
 

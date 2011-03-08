@@ -69,6 +69,11 @@ int main(int argc, char *argv[])
 {
 
     QApplication app(argc, argv);
+
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    app.setOrganizationName("Nokia");
+    app.setApplicationName("TDriver_Visualizer");
+
     debugOutFile = new QFile(QDir::tempPath() + "/tdriver_visualizer_main.log" );
 
     // workaround for deadlock in Qt 4.7.2+

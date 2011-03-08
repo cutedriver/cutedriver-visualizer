@@ -159,8 +159,7 @@ bool MainWindow::setup()
     setObjectName("main");
     QTime t;  // for performance debugging, can be removed
 
-    // read visualizer settings from visualizer.ini file
-    applicationSettings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "Nokia", "TDriver_Visualizer");
+    QSettings settings;
 
     TDriverRubyInterface::startGlobalInstance();
     connect(TDriverRubyInterface::globalInstance(), SIGNAL(rbiError(QString,QString,QString)),
@@ -198,33 +197,33 @@ bool MainWindow::setup()
 
     // default font for QTableWidgetItems and QTreeWidgetItems
     defaultFont = new QFont;
-    defaultFont->fromString(  applicationSettings->value( "font/settings", QString("Sans Serif,8,-1,5,50,0,0,0,0,0") ).toString() );
+    defaultFont->fromString(  settings.value( "font/settings", QString("Sans Serif,8,-1,5,50,0,0,0,0,0") ).toString() );
     emit defaultFontSet(*defaultFont);
 
     // default window size & position
-    QPoint windowPosition = applicationSettings->value( "window/pos", QPoint( 200, 200 ) ).toPoint();
-    QSize windowSize = applicationSettings->value( "window/size", QSize( 950, 600 ) ).toSize();
+    QPoint windowPosition = settings.value( "window/pos", QPoint( 200, 200 ) ).toPoint();
+    QSize windowSize = settings.value( "window/size", QSize( 950, 600 ) ).toSize();
 
     // read dock visibility settings
-    bool imageVisible = applicationSettings->value( "view/image", true ).toBool();
-    bool clipboardVisible = applicationSettings->value( "view/clipboard", true ).toBool();
-    bool propertiesVisible = true; //applicationSettings->value( "view/properties", true ).toBool();
+    bool imageVisible = settings.value( "view/image", true ).toBool();
+    bool clipboardVisible = settings.value( "view/clipboard", true ).toBool();
+    bool propertiesVisible = true; //settings.value( "view/properties", true ).toBool();
 #if DEVICE_BUTTONS_ENABLED
-    bool buttonVisible = applicationSettings->value( "view/buttons", false ).toBool();
+    bool buttonVisible = settings.value( "view/buttons", false ).toBool();
 #endif
-    bool shortcutsVisible = applicationSettings->value( "view/shortcuts", false ).toBool();
-    bool appsVisible = applicationSettings->value( "view/applications", false ).toBool();
-    bool editorVisible = applicationSettings->value( "view/editor", false ).toBool();
+    bool shortcutsVisible = settings.value( "view/shortcuts", false ).toBool();
+    bool appsVisible = settings.value( "view/applications", false ).toBool();
+    bool editorVisible = settings.value( "view/editor", false ).toBool();
 
     // default sut
-    QString defaultDevice = applicationSettings->value( "sut/activesut", QString( "sut_qt" ) ).toString();
+    QString defaultDevice = settings.value( "sut/activesut", QString( "sut_qt" ) ).toString();
 
     // if default sut is empty (in ini file), set it as 'sut_qt'
     if ( defaultDevice.isEmpty() ) { defaultDevice = "sut_qt"; }
 
     // initialize & default settings
 
-    tdriverPath = applicationSettings->value( "files/location", "" ).toString();
+    tdriverPath = settings.value( "files/location", "" ).toString();
     if ( tdriverPath.isEmpty() ) {
         // construct QString tdriverPath depending on OS
 #if (defined(Q_OS_WIN32))
@@ -251,7 +250,7 @@ bool MainWindow::setup()
         tdriverPath = selectFolder( "Select folder of TDriver default tdriver_parameters.xml file", "Folder", QFileDialog::AcceptOpen, keyLastTDriverDir);
         if (!tdriverPath.endsWith('/')) tdriverPath += '/';
     }
-    applicationSettings->setValue( "files/location", tdriverPath );
+    settings.setValue( "files/location", tdriverPath );
 
     // object tree
     collapsedObjectTreeItemPtr = 0;
@@ -274,6 +273,9 @@ bool MainWindow::setup()
 
     // create find dialog
     createFindDialog();
+
+    // create start app dialog
+    createStartAppDialog();
 
     // parse parameters xml to retrieve all devices
     if ( !offlineMode ){
@@ -440,6 +442,8 @@ void MainWindow::connectSignals()
 // shuts down thread (closes and then kills it)
 void MainWindow::closeEvent( QCloseEvent *event )
 {
+    QSettings settings;
+
     if (tabEditor && !tabEditor->mainCloseEvent(event)) {
         qDebug() << "closeEvent rejected by code editor";
         event->ignore();
@@ -452,38 +456,38 @@ void MainWindow::closeEvent( QCloseEvent *event )
     //if ( xmlView->isVisible() ) { xmlView->close();    }
 
     // save tdriver path
-    applicationSettings->setValue( "files/location", tdriverPath );
+    settings.setValue( "files/location", tdriverPath );
 
     // default window size & position
-    applicationSettings->setValue("window/pos", pos());
-    applicationSettings->setValue("window/size", size());
+    settings.setValue("window/pos", pos());
+    settings.setValue("window/size", size());
 
     // default sut
-    applicationSettings->setValue("sut/activesut", activeDevice.value("name") );
-    applicationSettings->setValue("sut/activesuttype", activeDevice.value("type") );
+    settings.setValue("sut/activesut", activeDevice.value("name") );
+    settings.setValue("sut/activesuttype", activeDevice.value("type") );
 
     // object tree settings
-    //for ( int i = 0; i < 3 ; i++ ) { applicationSettings->setValue( QString("objecttree/column" + QString::number( i ) ), objectTree->columnWidth( i ) ); }
+    //for ( int i = 0; i < 3 ; i++ ) { settings.setValue( QString("objecttree/column" + QString::number( i ) ), objectTree->columnWidth( i ) ); }
 
     // image settings
-    applicationSettings->setValue("image/resize", checkBoxResize->isChecked());
+    settings.setValue("image/resize", checkBoxResize->isChecked());
 
     // clipboard contents
 
     // view visiblity settings
-    applicationSettings->setValue( "view/clipboard", clipboardBar->isVisible());
-    applicationSettings->setValue( "view/applications", appsBar->isVisible());
-    applicationSettings->setValue( "view/image", imageViewDock->isVisible());
-    applicationSettings->setValue( "view/properties", propertiesDock->isVisible() );
+    settings.setValue( "view/clipboard", clipboardBar->isVisible());
+    settings.setValue( "view/applications", appsBar->isVisible());
+    settings.setValue( "view/image", imageViewDock->isVisible());
+    settings.setValue( "view/properties", propertiesDock->isVisible() );
 #if DEVICE_BUTTONS_ENABLED
-    applicationSettings->setValue( "view/buttons", viewButtons->isChecked() );
+    settings.setValue( "view/buttons", viewButtons->isChecked() );
 #else
-    applicationSettings->remove("view/buttons");
+    settings.remove("view/buttons");
 #endif
-    applicationSettings->setValue( "view/shortcuts", shortcutsBar->isVisible());
-    applicationSettings->setValue( "view/editor", editorDock->isVisible());
+    settings.setValue( "view/shortcuts", shortcutsBar->isVisible());
+    settings.setValue( "view/editor", editorDock->isVisible());
 
-    applicationSettings->setValue( "font/settings", defaultFont->toString() );
+    settings.setValue( "font/settings", defaultFont->toString() );
 }
 
 // Event filter, catches F1/HELP key events and processes them
@@ -554,6 +558,7 @@ void MainWindow::noDeviceSelectedPopup()
 QString MainWindow::selectFolder(QString title, QString filter, QFileDialog::AcceptMode mode, const QString &saveDirKey)
 {
     QFileDialog dialog( this );
+    QSettings settings;
 
     dialog.setAcceptMode( mode );
     dialog.setFileMode( QFileDialog::Directory );
@@ -561,7 +566,7 @@ QString MainWindow::selectFolder(QString title, QString filter, QFileDialog::Acc
     dialog.setWindowTitle( title );
     dialog.setViewMode( QFileDialog::List );
     if (!saveDirKey.isEmpty()) {
-        dialog.setDirectory(applicationSettings->value(saveDirKey, QVariant("")).toString());
+        dialog.setDirectory(settings.value(saveDirKey, QVariant("")).toString());
     }
 
     QString ret;
@@ -569,7 +574,7 @@ QString MainWindow::selectFolder(QString title, QString filter, QFileDialog::Acc
         QString dirName = dialog.selectedFiles().at(0);
         if (!dirName.isEmpty()) {
             if (!saveDirKey.isEmpty()) {
-                applicationSettings->setValue(saveDirKey, dirName);
+                settings.setValue(saveDirKey, dirName);
             }
             ret = dirName;
         }
@@ -632,6 +637,7 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const BALis
         case MainWindow::commandSetAttribute: clearError = tr("Failed to set attribute %1.").arg(additionalInformation); break;
         case MainWindow::commandGetDeviceType: clearError = tr("Failed to get device type for %1.").arg(additionalInformation); break;
         case MainWindow::commandGetVersionNumber: clearError = tr("Failed to retrieve TDriver version number."); break;
+        case MainWindow::commandStartApplication: clearError = tr("Failed to start application."); break;
         default: clearError = tr("Error with unknown command");
         }
     }
@@ -847,6 +853,11 @@ void MainWindow::createActions()
     //findAction->setShortcut( QKeySequence(tr("Ctrl+F")));
 
     connect( findAction, SIGNAL( triggered() ), this, SLOT( showFindDialog() ) );
+
+    startAppAction = new QAction(tr("Start New Application"), this);
+    startAppAction->setObjectName("main startapp");
+
+    connect( startAppAction, SIGNAL( triggered() ), this, SLOT( showStartAppDialog() ) );
 
     viewExpandAll = new QAction( this );
     viewExpandAll->setObjectName("main tree expand");

@@ -858,6 +858,9 @@ def @listener.main_loop (conn)
 
           when :test_record
             eval_cmd = "test_script(sut, '#{ input_array[ 2 ]}' )"
+			
+          when :start_application
+            eval_cmd = "sut.run(:name=>'#{ input_array[ 2 ]}', :arguments=>'#{ input_array[ 3 ]}' )"
 
           else
             @listener_reply['exception'] = []
@@ -902,9 +905,12 @@ def @listener.main_loop (conn)
               not (inputcmd = msgIn['command']).empty?)
     then
       case inputcmd[0]
-      when "line_completion" : msgOut = interact.line_completion(inputcmd[1], seqNumIn)
-      when "line_execution" : msgOut = interact.line_execution(inputcmd[1], seqNumIn)
-      else msgOut = interact.invalidcmd(inputcmd)
+        when "line_completion"
+          msgOut = interact.line_completion(inputcmd[1], seqNumIn)
+        when "line_execution"
+          msgOut = interact.line_execution(inputcmd[1], seqNumIn)
+        else 
+          msgOut = interact.invalidcmd(inputcmd)
       end
 
     elsif (nameIn == 'interact reset') then
@@ -955,8 +961,7 @@ $lg.debug "server closed"
 # send hello message with sequence number 0, and information about tdriver and ruby
 
 # following code gets all constants starting with RUBY_ in Object class
-@hello_data = Hash[Object.constants.find_all { |c| c.start_with?('RUBY_') }.map { |c| [c, [Object.const_get(c).to_s]]}]
-
+@hello_data = Hash[Object.constants.find_all { |c| c.to_s.start_with?('RUBY_') }.map { |c| [c, [Object.const_get(c).to_s]]}]
 @hello_data['tdriver'] = [ @tdriver_gem_version ]
 @hello_data['version'] = [ @tdriver_interface_rb_version ]
 

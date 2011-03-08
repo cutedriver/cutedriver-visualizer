@@ -131,7 +131,8 @@ public:
         commandBehavioursXml,
         commandGetVersionNumber,
         commandSignalList,
-        commandGetDeviceParameter
+        commandGetDeviceParameter,
+        commandStartApplication
     };
 
     enum ExecuteCommandResult {
@@ -169,7 +170,6 @@ private:
 
     TDriverRecorder *mRecorder;
 
-    QSettings *applicationSettings;
     QString outputPath;
 
     QFont *defaultFont;
@@ -197,8 +197,8 @@ private:
     QString sutName;
     QMap<TestObjectKey, TreeItemInfo > objectTreeData;
     QHash<QString, TestObjectKey> objectIdMap;
-    QHash<QString, QMap<QString, QString> > objectMethods;
-    QHash<QString, QMap<QString, QString> > objectSignals;
+    //    QHash<QString, QMap<QString, QString> > objectMethods;
+    //    QHash<QString, QMap<QString, QString> > objectSignals;
 
 
     // helper functions
@@ -296,7 +296,7 @@ private:
 
     bool getParentItemOffset( QTreeWidgetItem *item, int &x, int &y );
 
-    QPoint getItemPos( QTreeWidgetItem *item) ;
+    bool getItemPos( QTreeWidgetItem *item, int &x, int &y) ;
 
     void objectTreeKeyPressEvent( QKeyEvent * event );
 
@@ -503,6 +503,17 @@ private:
     QString keyLastUiStateDir;
     QString keyLastTDriverDir;
 
+    // start app dialog
+
+    void createStartAppDialog();
+    QDialog *startAppDialog;
+    QLineEdit *startAppDialogTextLineEdit;
+    QCheckBox *startAppDialogWithTestability;
+    QPushButton *startAppDialogStartButton;
+    QPushButton *startAppDialogCloseButton;
+    QAction *startAppAction;
+
+
 signals:
     void defaultFontSet(QFont font);
     void insertToCodeEditor(QString text, bool prependParent, bool prependDot);
@@ -628,6 +639,13 @@ private slots:
     void findDialogHandleTreeCurrentChange(QTreeWidgetItem*current);
     void findDialogSubtreeChanged( int value);
     void closeFindDialog();
+
+    // start app dialog slots
+    void showStartAppDialog();
+    void closeStartAppDialog();
+    void startApp();
+    void startAppDialogEnableStartButton(const QString & text );
+    void startAppDialogReturnPress();
 
 private:
     QString treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey sutItemPtr);

@@ -29,7 +29,7 @@
 #include <QProgressDialog>
 
 
-QPoint MainWindow::getItemPos(QTreeWidgetItem *item)
+bool MainWindow::getItemPos(QTreeWidgetItem *item, int &x, int &y)
 {
     const QMap<QString, AttributeInfo > &attributes = attributesMap[ptr2TestObjectKey( item )];
     QPoint ret;
@@ -40,37 +40,34 @@ QPoint MainWindow::getItemPos(QTreeWidgetItem *item)
     if (sutName.toLower() == "symbian" && objectTreeData.value(ptr2TestObjectKey( item )).env.toLower() == "qt") {
 
         ret = QPoint(attributes.value("x_absolute").value.toInt(&xOk),
-                      attributes.value("y_absolute").value.toInt(&yOk));
+                     attributes.value("y_absolute").value.toInt(&yOk));
     }
     else {
 
         ret = QPoint(attributes.value("x").value.toInt(&xOk),
-                      attributes.value("y").value.toInt(&yOk));
+                     attributes.value("y").value.toInt(&yOk));
     }
 
-    if (!xOk || !yOk)
-        ret = QPoint(-1, -1);
-
-    return ret;
+    if (xOk && yOk) {
+        x = ret.x();
+        y = ret.y();
+        return true;
+    }
+    else return false;
 }
 
 
 bool MainWindow::getParentItemOffset( QTreeWidgetItem * item, int & x, int & y )
 {
-    //qDebug() << "getParentItemOffset";
-    bool result = false;
-    // QTreeWidgetItem * tmpItem = item;
+    bool ok = false;
 
-    while ( x == -1 && y == -1 && item != NULL ) {
+    while ( !ok && item != NULL ) {
         // retrieve selected items attributes
-        QPoint pos = getItemPos(item);
-        x = pos.x();
-        y = pos.y();
+        ok = getItemPos(item, x, y);
         item = item->parent();
     }
 
-    result = ( x != -1 && y != -1 );
-    return result;
+    return ok;
 }
 
 
@@ -100,13 +97,10 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, RectList & geometrie
             // retrieve selected items attributes
             const QMap<QString, AttributeInfo > &attributes = attributesMap[itemPtr];
 
-            bool ok = true;
-
             // retrieve x, y, widht height, or ok=false if fail
-            int x, y, width, height;
-            QPoint pos = getItemPos(item);
-            x = pos.x();
-            y = pos.y();
+            int x, y;
+            int width, height;
+            bool ok = getItemPos(item, x, y);
             if (ok) width = attributes.value( "width" ).value.toInt(&ok);
             if (ok) height = attributes.value( "height" ).value.toInt(&ok);
 
@@ -116,6 +110,7 @@ void MainWindow::collectGeometries( QTreeWidgetItem * item, RectList & geometrie
             }
             else {
                 // parse values from geometry attribute
+                // ok is false here, but may become true below
                 const QString &geometry = attributes.value( "geometry" ).value;
                 QStringList geometryList = geometry.split(',');
 
@@ -237,11 +232,11 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
 
         const QMap<QString, AttributeInfo > &attributeContainer = attributesMap[parentKey];
 
-        QPoint pos = getItemPos(testObjectKey2Ptr(parentKey));
-        // assuming that if height and width attributes are present, then getItemPos returned a reasonable pos
+        int x, y;
+        bool ok = getItemPos(testObjectKey2Ptr(parentKey), x, y);
 
-        bool ok = (( attributeContainer.contains("height") && attributeContainer.contains("width") )
-                   || attributeContainer.contains("geometry"));
+        ok = (ok && attributeContainer.contains("height") && attributeContainer.contains("width"))
+                || attributeContainer.contains("geometry");
 
         if (ok && 0 == attributeContainer.value( "visible" ).value.compare("false", Qt::CaseInsensitive))
             ok = false;
@@ -535,7 +530,7 @@ void MainWindow::refreshData()
     // request application list (unless s60 AVKON)
     if ( activeDevice.value( "type" ).toLower() == "s60" ) {
         resetApplicationsList();
-        appsMenu->setDisabled( true );
+        //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
         foregroundApplication = true;
         isS60 = true;
     }

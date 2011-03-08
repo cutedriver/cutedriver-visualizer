@@ -88,8 +88,9 @@ MainWindow::MainWindow(QStringList filelist, QWidget *parent) :
 
     connect(tabs, SIGNAL(requestRunPreparations(QString)), tabs, SLOT(proceedRun()));
 
-    restoreGeometry(MEC::settings->value("editor/geometry").toByteArray());
-    restoreState(MEC::settings->value("editor/windowstate").toByteArray());
+    QSettings settings;
+    restoreGeometry(settings.value("editor/geometry").toByteArray());
+    restoreState(settings.value("editor/windowstate").toByteArray());
 
     // note: code below must be after connectConsoles
     if (filelist.isEmpty()) {
@@ -161,8 +162,9 @@ void MainWindow::closeEvent(QCloseEvent *ev)
     }
     else {
         //qDebug() << FFL << "doing saveGeometry and saveState";
-        MEC::settings->setValue("editor/geometry", saveGeometry());
-        MEC::settings->setValue("editor/windowstate", saveState());
+        QSettings settings;
+        settings.setValue("editor/geometry", saveGeometry());
+        settings.setValue("editor/windowstate", saveState());
         ev->accept();
     }
 }

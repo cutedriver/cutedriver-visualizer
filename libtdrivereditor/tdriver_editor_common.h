@@ -34,7 +34,6 @@ class QFile;
 class QStringList;
 class QByteArray;
 class QRegExp;
-class QSettings;
 class QTextCursor;
 
 template <class Key, class T> class QMap;
@@ -56,8 +55,6 @@ namespace MEC {
 
     QString dumpBreakpoint(const struct Breakpoint *bpp);
     QString dumpBreakpointList(const QList<struct Breakpoint> &bplist, const QString prefix=QString(), const QString delim="\n", const QString suffix=QString());
-
-    extern QSettings *settings;
 
     enum DefinitionFileType { PlainTextFile, SimpleOneLineDefinitionList, SimpleMultiLineDefinitionList, InvalidDefinitionFile };
     // note: InvalidDefinitionFile must be last entry, and integer values must start from 0 with no gaps (may be used for array indexing).

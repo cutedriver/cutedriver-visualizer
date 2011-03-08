@@ -59,6 +59,7 @@ SOURCES += ../src/tdriver_show_xml.cpp
 SOURCES += ../src/tdriver_ui.cpp
 SOURCES += ../src/tdriver_xml.cpp
 SOURCES += ../src/tdriver_find_dialog.cpp
+SOURCES += ../src/tdriver_startapp_dialog.cpp
 QT += xml
 
 # install

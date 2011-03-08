@@ -34,9 +34,8 @@
 
 
 
-void MainWindow::createEditorDocks() {
-    MEC::settings = applicationSettings;
-
+void MainWindow::createEditorDocks()
+{
     editorDock = new QDockWidget(tr("Code Editor"));
     editorDock->setObjectName("editor");
     runDock = new QDockWidget(tr("Script Console"));

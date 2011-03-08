@@ -151,7 +151,9 @@ void MainWindow::createApplicationsMenu() {
 
     appsMenu = new QMenu( tr( " &Applications " ), this );
     appsMenu->setObjectName("main applications");
-    appsMenu->setDisabled( true );
+    //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
+    appsMenu->addAction(startAppAction);
+    appsMenu->addSeparator();
     menubar->addMenu( appsMenu );
     menubar->actions().last()->setObjectName("main applications");
 }
@@ -249,15 +251,16 @@ void MainWindow::openFontDialog() {
 void MainWindow::loadFileData()
 {
     static const QString imageSuffix(".png");
+    QSettings settings;
 
-    QString dirName = applicationSettings->value(keyLastUiStateDir, QVariant("")).toString();
+    QString dirName = settings.value(keyLastUiStateDir, QVariant("")).toString();
     // retrieve the file to a QString fileName
     QString fileName = QFileDialog::getOpenFileName( this, tr( "Open XML-file" ), dirName, tr( "XML DUMP Files ( *.xml )" ) );
 
     QFileInfo info(fileName);
 
     if (info.isFile()) {
-        applicationSettings->setValue(keyLastUiStateDir, info.absolutePath());
+        settings.setValue(keyLastUiStateDir, info.absolutePath());
 
         // update xml-treeview
         updateObjectTree( fileName );
@@ -351,7 +354,7 @@ void MainWindow::deviceSelected() {
             currentApplication.clear();
 
             // disable applications menu
-            appsMenu->setDisabled( true );
+            //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
 
             // empty current image
             imageWidget->clearImage();
@@ -467,12 +470,13 @@ bool MainWindow::createStateArchive( QString targetPath )
 // This function is used to get the file name for tdriver_parameters.xml file (activated from menu)
 void MainWindow::getParameterXML()
 {
-    QString dirName = applicationSettings->value(keyLastTDriverDir, QVariant("")).toString();
+    QSettings settings;
+    QString dirName = settings.value(keyLastTDriverDir, QVariant("")).toString();
     QString fileName = QFileDialog::getOpenFileName( this, "Open tdriver_parameters.xml", dirName, "File: (tdriver_parameters.xml)" );
 
     QFileInfo info(fileName);
     if (info.isFile()) {
-        applicationSettings->setValue(keyLastTDriverDir, info.absolutePath());
+        settings.setValue(keyLastTDriverDir, info.absolutePath());
 
         if (getXmlParameters( fileName )) {
             // parametersFile changed

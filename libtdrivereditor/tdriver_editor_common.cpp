@@ -38,7 +38,6 @@
   * Debug functions and globals
   **************************************************************/
 
-QSettings *MEC::settings = NULL;
 
 
 void MEC::dumpStdItem(int indent, const QStandardItem *item)

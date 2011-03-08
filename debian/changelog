@@ -1,9 +1,15 @@
+testability-driver-visualizer (1.1.0-1) unstable; urgency=low
+
+  * new release tag
+
+ -- Testability Driver Team <testabilitydriver@nokia.com>  Tue, 08 Mar 2011 10:00:00 +0300
+
 testability-driver-visualizer (1.0.4-1) unstable; urgency=low
 
   * Fixed foreground app functionality in the applications menu
 
- -- Testability Driver Team <testabilitydriver@nokia.com>  Wed, 26 Jan 2011 16:00:00 +0200
-
+ -- Testability Driver Team <testabilitydriver@nokia.com>  Wed, 09 Feb 2011 12:00:00 +0300
+ 
 testability-driver-visualizer (1.0.0-1) unstable; urgency=low
 
   * new release tag

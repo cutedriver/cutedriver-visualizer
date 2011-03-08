@@ -38,7 +38,9 @@ int main(int argc, char *argv[])
     // workaround for deadlock in Qt 4.7.2+
     QProcess::execute(".");
 
-    MEC::settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, "Nokia", "TDriver_Visualizer");
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+    a.setOrganizationName("Nokia");
+    a.setApplicationName("TDriver_Visualizer");
 
     QStringList openList;
     for (int ii = 1 ; ii < argc; ii++) {

@@ -203,9 +203,10 @@ bool TDriverRunConsole::runFile(QString fileName, TDriverRunConsole::RunRequestT
     console->appendText(tr("Working directory: %1").arg(proc->workingDirectory()), console->notifyFormat);
     //static const QString RubyAutoflushPrefix("STDOUT.sync=true;");
 
-    QString RubyProg(MEC::settings->value("editor/ruby_application", DEFAULT_RUBY_BIN).toString());
-    QString RdebugProg(MEC::settings->value("editor/rdebug_application", DEFAULT_RDEBUG_BIN).toString());
-    QStringList RdebugArgs(MEC::settings->value("editor/rdebug_start_arguments", DEFAULT_RDEBUG_ARGS).toStringList());
+    QSettings settings;
+    QString RubyProg(settings.value("editor/ruby_application", DEFAULT_RUBY_BIN).toString());
+    QString RdebugProg(settings.value("editor/rdebug_application", DEFAULT_RDEBUG_BIN).toString());
+    QStringList RdebugArgs(settings.value("editor/rdebug_start_arguments", DEFAULT_RDEBUG_ARGS).toStringList());
 
     switch(type) {
 

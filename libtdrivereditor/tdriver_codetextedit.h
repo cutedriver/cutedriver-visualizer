@@ -114,7 +114,7 @@ public slots:
     void focusInEvent(QFocusEvent *);
     void doAutoIndent(QKeyEvent *); // helper for keyPressEvent
 
-    bool setTranslationDatabase(const QMap<QString,QString> &params, const QSettings *settings);
+    bool setTranslationDatabase(const QMap<QString, QString> &params);
     void startTranslationCompletion(QKeyEvent *);
     bool doTranslationCompletion(QKeyEvent *);
 
