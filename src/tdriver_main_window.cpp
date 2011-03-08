@@ -287,7 +287,7 @@ bool MainWindow::setup()
             delayedRefreshAction->setEnabled( true );
             parseSUT->setEnabled( true );
         }
-        tabEditor->setParamMap(tdriverXmlParameters);
+        tabEditor->setTDriverParamMap(tdriverXmlParameters);
     }
 
     // default sut
@@ -346,6 +346,7 @@ void MainWindow::setActiveDevice(const QString &deviceName )
         activeDevice.clear();
         activeDeviceParams.clear();
     }
+    tabEditor->setSutParamMap(activeDeviceParams);
 }
 
 

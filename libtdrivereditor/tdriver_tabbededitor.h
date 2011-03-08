@@ -58,7 +58,8 @@ class TDriverTabbedEditor : public QTabWidget
 public:
     explicit TDriverTabbedEditor(QWidget *shortcutParent = 0, QWidget *parent = 0);
 
-    void setParamMap(const QMap<QString, QString> &map);
+    void setTDriverParamMap(const QMap<QString, QString> &map);
+    void setSutParamMap(const QMap<QString, QString> &map);
     TDriverEditBar *searchBar() { return editBarP; }
 
     const QList<QAction *> &fileActions() const { return fileActs; }
@@ -167,9 +168,11 @@ private slots:
 
 private:
     QList<TDriverCodeTextEdit*> setupLineJump(const QString &file, int lineNum);
+    void updateEditorParams();
 
 private:
-    QMap<QString, QString> paramMap;
+    QMap<QString, QString> tdriverParamMap;
+    QMap<QString, QString> sutParamMap;
     QFont editorFont;
     QString proceedRunFilename;
     TDriverRunConsole::RunRequestType proceedRunType;
