@@ -734,6 +734,19 @@ def @listener.get_parameter( sut_id, para )
 end
 
 
+def @listener.get_all_parameters( sut_id )
+  values = []
+  keys = []
+  paras=MobyUtil::Parameter[ sut_id.to_sym ]
+  paras.each do | key, value |
+    keys << key.to_s
+    values << value.inspect
+  end
+  @listener_reply['keys'] = keys
+  @listener_reply['values'] = values
+end
+
+
 def @listener.set_output_path( new_path )
   old = @working_directory
   set_working_directory( MobyUtil::FileHelper.fix_path( File.expand_path( new_path.to_s ) + "/" ) )
@@ -776,16 +789,16 @@ def @listener.main_loop (conn)
         sut = nil
         begin
           # connect to sut, unless command does not require it
-          sut = TDriver.connect_sut( :Id => sut_id ) unless [ :get_parameter, :set_output_path, :check_version ].include?( cmd )
+          sut = TDriver.connect_sut( :Id => sut_id ) unless [ :get_parameter, :get_all_parameters, :set_output_path, :check_version ].include?( cmd )
 
           begin
             if sut then
-              $lg.debug this_method + " before adjust: #{MobyUtil::Parameter[ sut.id ][:filter_type]} #{MobyUtil::Parameter[ sut.id ][:socket_read_timeout]} #{MobyUtil::Parameter[ sut.id ][:socket_write_timeout]} #{MobyUtil::Parameter[ sut.id ][:default_timeout]}"
+              #$lg.debug this_method + " before adjust: #{MobyUtil::Parameter[ sut.id ][:filter_type]} #{MobyUtil::Parameter[ sut.id ][:socket_read_timeout]} #{MobyUtil::Parameter[ sut.id ][:socket_write_timeout]} #{MobyUtil::Parameter[ sut.id ][:default_timeout]}"
               MobyUtil::Parameter[ sut.id ][ :filter_type] = 'none'
               MobyUtil::Parameter[ sut.id ][ :socket_read_timeout] = '10'
               MobyUtil::Parameter[ sut.id ][ :socket_write_timeout] = '10'
               MobyUtil::Parameter[ sut.id ][ :default_timeout] = '10'
-              $lg.debug this_method + " after adjust: #{MobyUtil::Parameter[ sut.id ][:filter_type]} #{MobyUtil::Parameter[ sut.id ][:socket_read_timeout]} #{MobyUtil::Parameter[ sut.id ][:socket_write_timeout]} #{MobyUtil::Parameter[ sut.id ][:default_timeout]}"
+              #$lg.debug this_method + " after adjust: #{MobyUtil::Parameter[ sut.id ][:filter_type]} #{MobyUtil::Parameter[ sut.id ][:socket_read_timeout]} #{MobyUtil::Parameter[ sut.id ][:socket_write_timeout]} #{MobyUtil::Parameter[ sut.id ][:default_timeout]}"
             end
           rescue
           end
@@ -825,6 +838,9 @@ def @listener.main_loop (conn)
           when :get_parameter
             eval_cmd = "get_parameter( sut_id , '#{ input_array[ 2 ] }' )"
 
+          when :get_all_parameters
+            eval_cmd = "get_all_parameters( sut_id )"
+
           when :tap_screen
             eval_cmd = "sut.tap_screen( #{ input_array[ 2 ].to_i }, #{ input_array[ 3 ].to_i } )"
 
@@ -858,7 +874,7 @@ def @listener.main_loop (conn)
 
           when :test_record
             eval_cmd = "test_script(sut, '#{ input_array[ 2 ]}' )"
-			
+
           when :start_application
             eval_cmd = "sut.run(:name=>'#{ input_array[ 2 ]}', :arguments=>'#{ input_array[ 3 ]}' )"
 
@@ -909,7 +925,7 @@ def @listener.main_loop (conn)
           msgOut = interact.line_completion(inputcmd[1], seqNumIn)
         when "line_execution"
           msgOut = interact.line_execution(inputcmd[1], seqNumIn)
-        else 
+        else
           msgOut = interact.invalidcmd(inputcmd)
       end
 

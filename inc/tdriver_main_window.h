@@ -126,12 +126,12 @@ public:
         commandRefreshImage,
         commandKeyPress,
         commandSetAttribute,
-        commandGetDeviceType,
         commandCheckApiFixture,
         commandBehavioursXml,
         commandGetVersionNumber,
         commandSignalList,
         commandGetDeviceParameter,
+        commandGetAllDeviceParameters,
         commandStartApplication
     };
 
@@ -160,7 +160,7 @@ private:
 
     // command executing & error handling
 
-    void processErrorMessage( ExecuteCommandType commandType, const BAListMap &msg, const QString &additionalInformation,
+    void processErrorMessage( ExecuteCommandType commandType, const QString &commandString, const BAListMap &msg, const QString &additionalInformation,
                               unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError );
     bool executeTDriverCommand( ExecuteCommandType commandType, const QString &commandString, const QString &additionalInformation = QString(), BAListMap *reply = NULL);
 
@@ -178,8 +178,9 @@ private:
     QScrollArea *imageScroller;
     TDriverImageView *imageWidget;
 
-    QMap<QString, QHash<QString, QString> > deviceList;
-    QMap<QString, QString> activeDevice;
+    QStringList deviceList;
+    QString activeDevice;
+    QMap<QString, QString> activeDeviceParams;
 
     QMap<QString, QString> tdriverXmlParameters;
 
@@ -194,7 +195,6 @@ private:
     QMap<TestObjectKey, RectList> geometriesMap;
     QSet<TestObjectKey> screenshotObjects;
 
-    QString sutName;
     QMap<TestObjectKey, TreeItemInfo > objectTreeData;
     QHash<QString, TestObjectKey> objectIdMap;
     //    QHash<QString, QMap<QString, QString> > objectMethods;
@@ -207,8 +207,8 @@ private:
     void updateWindowTitle();
 
     void setActiveDevice( const QString &deviceName );
-    QString getDeviceType( QString deviceName );
     QString getDeviceParameter( QString deviceName, QString parameter );
+    bool getActiveDeviceParameters();
     QString getDriverVersionNumber();
 
     void noDeviceSelectedPopup();
@@ -322,7 +322,7 @@ private:
 
     // tdriver_parameters.xml
     bool getXmlParameters( QString filename );
-    void updateDevicesList(const QMap<QString, QHash<QString, QString> > &newDeviceList);
+    void updateDevicesList(const QStringList &newDeviceList);
 
     // visualizer_applications_sut_id.xml
     void parseApplicationsXml( QString filename );

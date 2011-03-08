@@ -539,7 +539,7 @@ bool TDriverRubyInterface::executeCmd(const QByteArray &name, BAListMap &cmd_rep
 #else
             if (cmd_reply.contains("error") && cmd_reply.value("error").isEmpty()) cmd_reply.remove("error");
 #endif
-            qDebug() << FCFL << "REPLY" << cmd_reply;
+            //qDebug() << FCFL << "REPLY" << cmd_reply;
             return true;
         }
     }

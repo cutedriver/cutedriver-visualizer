@@ -145,7 +145,7 @@ void MainWindow::updateWindowTitle() {
 
     tempTitle += ( offlineMode ) ?
                  tr("Offline mode") : ( activeDevice.isEmpty() ?
-                                        tr("no device selected") : activeDevice.value("name") );
+                                        tr("no device selected") : activeDevice);
     setWindowTitle( tempTitle );
 }
 

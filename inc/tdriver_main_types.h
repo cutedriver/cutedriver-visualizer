@@ -39,6 +39,16 @@ struct ApplicationInfo {
 };
 
 
+//struct DeviceInfo {
+//    QString name;
+//    QString type;
+//    DeviceInfo(const DeviceInfo &other) : name(other.name), type(other.type) {}
+//    DeviceInfo(const QString &name, const QString &type) : name(name),type(type) {}
+//    void set(const QString &name, const QString &type) { this->name=name; this->type=type; }
+//    void clear() { name.clear(); type.clear(); }
+//};
+
+
 // internal convenience type, not really intended to be used outside this header
 
 typedef QTreeWidgetItem *TestObjectPtrType;
