@@ -782,9 +782,9 @@ def @listener.main_loop (conn)
             if sut then
               $lg.debug this_method + " before adjust: #{MobyUtil::Parameter[ sut.id ][:filter_type]} #{MobyUtil::Parameter[ sut.id ][:socket_read_timeout]} #{MobyUtil::Parameter[ sut.id ][:socket_write_timeout]} #{MobyUtil::Parameter[ sut.id ][:default_timeout]}"
               MobyUtil::Parameter[ sut.id ][ :filter_type] = 'none'
-              MobyUtil::Parameter[ sut.id ][ :socket_read_timeout] = '10'
-              MobyUtil::Parameter[ sut.id ][ :socket_write_timeout] = '10'
-              MobyUtil::Parameter[ sut.id ][ :default_timeout] = '10'
+#              MobyUtil::Parameter[ sut.id ][ :socket_read_timeout] = '10'
+#              MobyUtil::Parameter[ sut.id ][ :socket_write_timeout] = '10'
+#              MobyUtil::Parameter[ sut.id ][ :default_timeout] = '10'
               $lg.debug this_method + " after adjust: #{MobyUtil::Parameter[ sut.id ][:filter_type]} #{MobyUtil::Parameter[ sut.id ][:socket_read_timeout]} #{MobyUtil::Parameter[ sut.id ][:socket_write_timeout]} #{MobyUtil::Parameter[ sut.id ][:default_timeout]}"
             end
           rescue
