@@ -1,3 +1,9 @@
+testability-driver-visualizer (1.1.0-2) unstable; urgency=low
+
+  * Fixed interface timeout setting
+
+ -- Testability Driver Team <testabilitydriver@nokia.com>  Tue, 08 Mar 2011 10:00:00 +0300
+ 
 testability-driver-visualizer (1.1.0-1) unstable; urgency=low
 
   * new release tag
