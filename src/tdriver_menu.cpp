@@ -203,8 +203,8 @@ bool MainWindow::disconnectSUT()
     QString status = "SUT disconnected";
 
     if ( !executeTDriverCommand( commandDisconnectSUT,
-                           QString( activeDevice.value( "name" ) + " disconnect" ),
-                           activeDevice.value( "name" )) ) {
+                           activeDevice + " disconnect",
+                           activeDevice) ) {
         status = "SUT disconnecting failed";
         result = false;
     }
@@ -217,7 +217,7 @@ bool MainWindow::disconnectSUT()
 
 bool MainWindow::disconnectExclusiveSUT()
 {
-    if ( activeDevice.value( "type" ).contains( "s60", Qt::CaseInsensitive ) ) {
+    if ( activeDeviceParams.value( "type" ).toLower() == "symbian" ) {
         return disconnectSUT();
     }
     else {
@@ -301,7 +301,7 @@ void MainWindow::openRecordWindow()
 
         } else {
 
-            mRecorder->setActiveDevAndApp( activeDevice.value("name"), currentApplication.id );
+            mRecorder->setActiveDevAndApp( activeDevice, currentApplication.id );
             mRecorder->show();
 
             mRecorder->activateWindow();
@@ -337,17 +337,16 @@ void MainWindow::appSelected() {
 
 
 // Helper function, called when device is selected from list
-void MainWindow::deviceSelected() {
-
+void MainWindow::deviceSelected()
+{
     QAction *action = qobject_cast<QAction *>( sender() );
 
     if ( action ) {
 
-        QString strOldDevice = activeDevice.value("name");
+        QString strOldDevice = activeDevice;
 
         setActiveDevice( action->text() );
-
-        if ( strOldDevice != activeDevice.value("name") ) {
+        if ( strOldDevice != activeDevice) {
 
             // clear applications
             resetApplicationsList();
@@ -369,33 +368,31 @@ void MainWindow::deviceSelected() {
             clearPropertiesTableContents();
 
         }
-
     }
 
-    QString deviceType = activeDevice.value("type");
+    if (!activeDevice.isEmpty()) {
+
+        bool deviceIsQt = (activeDeviceParams.value("type").toLower() == "qt");
 
 #if DEVICE_BUTTONS_ENABLED
-    // enable s60 buttons selection if device type is 'kind of' s60
-    viewButtons->setEnabled( deviceType.contains( "s60", Qt::CaseInsensitive ) );
+        // enable s60 buttons selection if device type is 'kind of' symbian
+        viewButtons->setEnabled( deviceType.contains( "symbian", Qt::CaseInsensitive ) );
 #endif
 
-    // enable api tab if if device type is 'kind of' qt
-    tabWidget->setTabEnabled( tabWidget->indexOf( apiTab ), deviceType.contains( "qt", Qt::CaseInsensitive ) );
-    apiFixtureEnabled = deviceType.contains( "qt", Qt::CaseInsensitive );
-    apiFixtureChecked = false;
+        // enable api tab if if device type is 'kind of' qt
+        tabWidget->setTabEnabled( tabWidget->indexOf( apiTab ), deviceIsQt);
+        apiFixtureEnabled = deviceIsQt;
+        apiFixtureChecked = false;
 
-    // enable recording menu if if device type is 'kind of' qt
-    recordMenu->setEnabled( deviceType.contains( "qt", Qt::CaseInsensitive )
-                           && !applicationsNamesMap.empty() );
-
+        // enable recording menu if device type is 'kind of' qt
+        recordMenu->setEnabled( deviceIsQt && !applicationsNamesMap.empty() );
+    }
     // update window title
     updateWindowTitle();
-
     behavioursMap.clear();
-
     propertyTabLastTimeUpdated.clear();
-
 }
+
 
 // Creates a folder containing xml and png dump using the specified file path.
 bool MainWindow::createStateArchive( QString targetPath )
@@ -486,7 +483,7 @@ void MainWindow::getParameterXML()
 }
 
 
-void MainWindow::updateDevicesList(const QMap<QString, QHash<QString, QString> > &newDeviceList)
+void MainWindow::updateDevicesList(const QStringList &newDeviceList)
 {
     // clear previous list of actions
     while(!deviceMenu->isEmpty()) {
@@ -496,23 +493,20 @@ void MainWindow::updateDevicesList(const QMap<QString, QHash<QString, QString> >
     }
 
     deviceList = newDeviceList;
-    for ( QMap<QString, QHash<QString, QString> >::const_iterator iterator(newDeviceList.constBegin());
-         iterator != newDeviceList.constEnd();
-         ++iterator) {
-
-        QAction *devAction = new QAction(this);
-        devAction->setObjectName("main device "+iterator.key());
-        devAction->setText( iterator.key() );
-        devAction->setToolTip( iterator.value().value( "type" ) );
-
-        connect( devAction, SIGNAL( triggered() ), this, SLOT( deviceSelected() ) );
-
-        deviceMenu->addAction( devAction );
+    if (deviceList.isEmpty()) {
+        QAction *emptyAct = new QAction(tr("No devices!"), this);
+        emptyAct->setDisabled(true);
+        deviceMenu->addAction( emptyAct );
+    }
+    else {
+        foreach(const QString &name, deviceList) {
+            QAction *devAction = new QAction(this);
+            devAction->setObjectName("main device " + name);
+            devAction->setText( name );
+            connect( devAction, SIGNAL( triggered() ), this, SLOT( deviceSelected() ) );
+            deviceMenu->addAction( devAction );
+        }
     }
 
-    // disable devices menu, disconnect sut etc if no devices found
-    deviceMenu->setDisabled(deviceMenu->isEmpty());
-    disconnectCurrentSUT->setEnabled(deviceMenu->isEmpty());
+    disconnectCurrentSUT->setEnabled(deviceList.isEmpty());
 }
-
-

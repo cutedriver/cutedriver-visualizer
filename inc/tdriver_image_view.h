@@ -69,12 +69,12 @@ public:
         return QPoint(float(mousePos.x()) / zoomFactor, float(mousePos.y()) / zoomFactor);
     }
 
-    QPoint &convertS60Pos(QPoint &pos) {
-        // rotate when in portrait mode
-        if ( image->width() > image->height())
-            pos = QPoint(image->height() - pos.y(), pos.x());
-        return pos;
-    }
+    //    QPoint &convertS60Pos(QPoint &pos) {
+    //        // rotate when in portrait mode
+    //        if ( image->width() > image->height())
+    //            pos = QPoint(image->height() - pos.y(), pos.x());
+    //        return pos;
+    //    }
 
     void changeImageResized(bool checked);
     void setLeftClickAction (int action);

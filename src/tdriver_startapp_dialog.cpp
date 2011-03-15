@@ -41,7 +41,7 @@ void MainWindow::closeStartAppDialog() {
 void MainWindow::startApp(){
     QString app_name = startAppDialogTextLineEdit->text();
     QString app_arguments = ( startAppDialogWithTestability->isChecked() ) ? "-testability" : "";
-    QString cmd = activeDevice.value( "name" ) + " start_application " + app_name + " " + app_arguments;
+    QString cmd = activeDevice + " start_application " + app_name + " " + app_arguments;
 
     //qDebug() << "Executing app" + cmd;
 

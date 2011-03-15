@@ -79,7 +79,7 @@ void MainWindow::deviceActionButtonPressed()
         //bool cmd_result = false;
 
         if ( executeTDriverCommand( commandKeyPress,
-                              QString( activeDevice.value("name") + " press_key :" + keyToPress ),
+                              QString( activeDevice + " press_key :" + keyToPress ),
                               keyToPress) ) {
 #if 0
             progressDialog.reset();

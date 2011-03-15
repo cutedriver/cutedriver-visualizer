@@ -52,15 +52,7 @@ void MainWindow::connectImageWidgetSignals() {
 
     if (area.isValid() && area.contains(pos)) {
         highlightAtCoords( pos, true );
-        // convert to S60 coordinates
-        if ( sutName.toLower() == "s60" ) {
-            QPoint s60Pos(pos);
-            imageWidget->convertS60Pos(s60Pos);
-            statusbar( tr("Inspect: image coordinates (%1, %2) = S60 coordinates (%3, %4)")
-                      .arg(pos.x()).arg(pos.y()).arg(s60Pos.x()).arg(s60Pos.y()),
-                      2000 );
-        }
-        else statusbar( tr("inspect: (%1, %2)").arg(pos.x()).arg(pos.y()), 2000 );
+        statusbar( tr("inspect: (%1, %2)").arg(pos.x()).arg(pos.y()), 2000 );
     }
 }
 
@@ -73,15 +65,7 @@ void MainWindow::imageInsertFindItem()
     if (area.isValid() && area.contains(pos)) {
 
         highlightAtCoords( pos, true, "tap" );
-
-        if ( sutName.toLower() == "s60" ) {
-            QPoint s60Pos(pos);
-            imageWidget->convertS60Pos(s60Pos);
-            statusbar( tr("Inserted: image coordinates (%1, %2) = S60 coordinates (%3, %4)")
-                      .arg(pos.x()).arg(pos.y()).arg(s60Pos.x()).arg(s60Pos.y()),
-                      2000 );
-        }
-        else statusbar( tr("Inserted: (%1, %2)").arg(pos.x()).arg(pos.y()), 2000 );
+        statusbar( tr("Inserted: (%1, %2)").arg(pos.x()).arg(pos.y()), 2000 );
     }
 }
 
@@ -131,7 +115,7 @@ void MainWindow::tapScreenWithRefresh( QString target )
     statusbar( "Tapping...", 0, 1 );
     typedef QList<QByteArray> QByteArrayList;
 
-    if ( !executeTDriverCommand( commandTapScreen, QString( activeDevice.value( "name" ) + " " + target ))) {
+    if ( !executeTDriverCommand( commandTapScreen, QString( activeDevice + " " + target ))) {
         statusbar( "Error: Failed to tap the screen", 1000 );
     }
 
@@ -142,28 +126,18 @@ void MainWindow::tapScreenWithRefresh( QString target )
 }
 
 
-// Image has been clicked - fetch X, Y from imageWidget, and
-// if S60 without Qt, send tap_screen command to coordinates,
-// else try to tap object that was clicked
+// Image has been clicked - fetch X, Y from imageWidget, and try to tap object that was clicked
 void MainWindow::clickedImage()
 {
     QPoint pos(imageWidget->getEventPosInImage());
 
-    if ( sutName.toLower() == "s60" ) {
-        imageWidget->convertS60Pos(pos);
-        tapScreenWithRefresh( "tap_screen " + QString::number( pos.x() ) + " " + QString::number( pos.y() ) );
+    if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
+        const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
+        tapScreenWithRefresh( "tap " + treeItemData.type + "(:id=>" + treeItemData.id + ") " + currentApplication.id );
+        highlightAtCoords( pos, true );
     }
-
     else {
-        if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
-            const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-            tapScreenWithRefresh( "tap " + treeItemData.type + "(:id=>" + treeItemData.id + ") " + currentApplication.id );
-            highlightAtCoords( pos, true );
-        }
-
-        else {
-            QMessageBox::critical( 0, "Tap to screen", "No object found at coordinates x: " + QString::number( pos.x() ) + ", y: " + QString::number( pos.y() ) );
-        }
+        QMessageBox::critical( 0, "Tap to screen", "No object found at coordinates x: " + QString::number( pos.x() ) + ", y: " + QString::number( pos.y() ) );
     }
 }
 

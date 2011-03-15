@@ -460,9 +460,34 @@ static inline void completerResize(QCompleter *completer)
 }
 
 
-bool TDriverCodeTextEdit::setTranslationDatabase(const QMap<QString, QString> &params)
+bool TDriverCodeTextEdit::getTranslationParameter(const QString &paramKey, const QString &settingKey, const QMap<QString, QString> &tdriverParamMap, const QMap<QString, QString> &sutParamMap, QString &paramValue)
 {
-    QSettings settings;
+    bool ret = false;
+
+    if (!paramKey.isEmpty() && sutParamMap.contains(paramKey)) {
+        paramValue = sutParamMap.value(paramKey);
+        ret = true;
+    }
+    else if (!paramKey.isEmpty() && tdriverParamMap.contains(paramKey)) {
+        paramValue = tdriverParamMap.value(paramKey);
+        ret = true;
+    }
+    else {
+        if (!settingKey.isEmpty()) {
+            QSettings settings;
+            if (settings.contains(settingKey)) {
+                paramValue = settings.value(settingKey).toString();
+                ret = true;
+            }
+        }
+    }
+
+    return ret;
+}
+
+
+bool TDriverCodeTextEdit::setTranslationDatabase(const QMap<QString, QString> &tdriverParamMap, const QMap<QString, QString> &sutParamMap)
+{
     // tdriver_parameters.xml parameter names
     static const char *PK_HOST = "localisation_server_ip";
     static const char *PK_NAME = "localisation_server_database_name";
@@ -481,35 +506,37 @@ bool TDriverCodeTextEdit::setTranslationDatabase(const QMap<QString, QString> &p
 
     translationDBerrors.clear();
 
-    if (params.contains(PK_HOST)) translationDBHost = params.value(PK_HOST);
-    else if (settings.contains(SK_HOST)) translationDBHost = settings.value(SK_HOST).toString();
-    else translationDBerrors << tr("database server not defined");
+    if (!getTranslationParameter(PK_HOST, SK_HOST, tdriverParamMap, sutParamMap, translationDBHost))
+        translationDBerrors << tr("database server not defined");
 
-    if (params.contains(PK_USER)) translationDBUser = params.value(PK_USER);
-    else if (settings.contains(SK_USER)) translationDBUser = settings.value(SK_USER).toString();
-    else translationDBerrors << tr("username not defined");
+    if (!getTranslationParameter(PK_USER, SK_USER, tdriverParamMap, sutParamMap, translationDBUser))
+        translationDBerrors << tr("username not defined");
 
-    if (params.contains(PK_PASSWORD)) translationDBPassword = params.value(PK_PASSWORD);
-    else if (settings.contains(SK_PASSWORD)) translationDBPassword = settings.value(SK_PASSWORD).toString();
-    else translationDBerrors << tr("password not defined");
+    if (!getTranslationParameter(PK_PASSWORD, SK_PASSWORD, tdriverParamMap, sutParamMap, translationDBPassword))
+        translationDBerrors << tr("password not defined");
 
-    if (params.contains(PK_NAME)) translationDBName = params.value(PK_NAME);
-    else if (settings.contains(SK_NAME)) translationDBName = settings.value(SK_NAME).toString();
-    else translationDBerrors << tr("database name not defined");
+    if (!getTranslationParameter(PK_NAME, SK_NAME, tdriverParamMap, sutParamMap, translationDBName))
+        translationDBerrors << tr("database name not defined");
 
-    if (params.contains(PK_TABLE)) translationDBTable = params.value(PK_TABLE);
-    else if (settings.contains(SK_TABLE)) translationDBTable = settings.value(SK_TABLE).toString();
-    else translationDBerrors << tr("database table not defined");
+    if (!getTranslationParameter(PK_TABLE, SK_TABLE, tdriverParamMap, sutParamMap, translationDBTable))
+        translationDBerrors << tr("database table not defined");
 
-    if (params.contains(PK_LANGUAGE)) {
+    QString langStr;
+    if (getTranslationParameter(PK_LANGUAGE, QString(), tdriverParamMap, sutParamMap, langStr)) {
         translationDBLanguages.clear();
-        translationDBLanguages << params.value(PK_LANGUAGE);
-    }
-    else if (settings.contains(SK_LANGUAGES)) {
-        translationDBLanguages = settings.value(SK_LANGUAGES).toStringList();
+        if (!langStr.isEmpty()) {
+            translationDBLanguages << langStr;
+        }
     }
     else {
-        translationDBerrors << "languages not defined";
+        QSettings settings;
+        if (settings.contains(SK_LANGUAGES)) {
+            translationDBLanguages = settings.value(SK_LANGUAGES).toStringList();
+        }
+    }
+
+    if (translationDBLanguages.isEmpty()) {
+        translationDBerrors << "no languages defined";
     }
 
     translationDBconfigured = translationDBerrors.isEmpty();

@@ -671,7 +671,7 @@ void TDriverTabbedEditor::newFile(QString fileName)
     makeDockVisible(parent());
 
     TDriverCodeTextEdit *newEdit = new TDriverCodeTextEdit(this);
-    newEdit->setTranslationDatabase(paramMap);
+    newEdit->setTranslationDatabase(tdriverParamMap, sutParamMap);
     setEditorFontAndTabWidth(newEdit, editorFont);
     newEdit->setFileName(fileName);
     //setEditorDefaultEncoding(newEdit);
@@ -1314,13 +1314,17 @@ bool TDriverTabbedEditor::smartInsert(QString text, bool prependParent, bool pre
 }
 
 
-void TDriverTabbedEditor::setParamMap(const QMap<QString, QString> &map)
+void TDriverTabbedEditor::setTDriverParamMap(const QMap<QString, QString> &map)
 {
-    paramMap = map;
-    for (int ind = 0; ind < count() ; ++ind) {
-        TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(widget(ind));
-        if (editor) editor->setTranslationDatabase(map);
-    }
+    tdriverParamMap = map;
+    updateEditorParams();
+}
+
+
+void TDriverTabbedEditor::setSutParamMap(const QMap<QString, QString> &map)
+{
+    sutParamMap = map;
+    updateEditorParams();
 }
 
 
@@ -1518,6 +1522,15 @@ QList<TDriverCodeTextEdit*> TDriverTabbedEditor::setupLineJump(const QString &fi
     }
 
     return ret;
+}
+
+
+void TDriverTabbedEditor::updateEditorParams()
+{
+    for (int ind = 0; ind < count() ; ++ind) {
+        TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(widget(ind));
+        if (editor) editor->setTranslationDatabase(tdriverParamMap, sutParamMap);
+    }
 }
 
 

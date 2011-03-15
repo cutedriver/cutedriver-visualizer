@@ -80,7 +80,7 @@ void MainWindow::updatePropertiesTable()
 
 bool MainWindow::checkApiFixture()
 {
-    return executeTDriverCommand( commandCheckApiFixture, activeDevice.value( "name" ) + " check_fixture");
+    return executeTDriverCommand( commandCheckApiFixture, activeDevice + " check_fixture");
 }
 
 
@@ -88,7 +88,7 @@ void MainWindow::getClassMethods( QString objectType )
 {
     BAListMap reply;
     if ( executeTDriverCommand( commandClassMethods,
-                               activeDevice.value( "name" ) + " fixture " + objectType,
+                               activeDevice + " fixture " + objectType,
                                objectType, &reply ) ) {
         parseApiMethodsXml( reply.value("fixture_filename").value(0));
     }
@@ -100,11 +100,11 @@ bool MainWindow::getClassSignals(QString objectType, QString objectId)
     if (objectType != "sut" && objectType != "application" && objectType != "QAction") {
 
         // list_signals
-        if (activeDevice.value( "name" ).contains("qt")){
+        if (activeDevice.contains("qt")){
             if (!apiSignalsMap.contains(objectType)) {
                 BAListMap reply;
                 if ( executeTDriverCommand(commandSignalList,
-                                           activeDevice.value( "name" )
+                                           activeDevice
                                            + " list_signals " + currentApplication.name
                                            + " " + objectId
                                            + " " + objectType,
@@ -434,16 +434,14 @@ void MainWindow::connectTabWidgetSignals()
 
 void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
 {
-    // this feature is not supported in with s60 devices
-    if ( activeDevice.value( "type" ).toLower() != "s60" ) {
+    TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
+    const TreeItemInfo &treeItemData = objectTreeData.value( currentItemPtr );
 
-        TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
+    // this feature is not supported in with env != qt
+    if (treeItemData.env.toLower() == "qt") {
 
         QTableWidgetItem *currentItem = propertiesTable->item( propertiesTable->row( item ), 0 );
         QString attributeName = currentItem->text();
-
-        const TreeItemInfo &treeItemData = objectTreeData.value( currentItemPtr );
-
         QString objRubyId = treeItemData.type;
 
         if ( treeItemData.name != "application" ) {
@@ -461,13 +459,16 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
         } else {
             QString attributeNameAndValue = attributeName + " '" + item->text() + "'";
             if ( executeTDriverCommand(commandSetAttribute,
-                                       activeDevice.value( "name" )
+                                       activeDevice
                                        + " set_attribute " + objRubyId
                                        + " " + targetDataType
                                        + " " + attributeNameAndValue )) {
                 refreshData();
             }
         }
+    }
+    else {
+        qDebug() << FCFL << "tried to change non-qt property, fail";
     }
 }
 

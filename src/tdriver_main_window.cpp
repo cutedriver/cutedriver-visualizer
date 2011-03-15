@@ -287,7 +287,7 @@ bool MainWindow::setup()
             delayedRefreshAction->setEnabled( true );
             parseSUT->setEnabled( true );
         }
-        tabEditor->setParamMap(tdriverXmlParameters);
+        tabEditor->setTDriverParamMap(tdriverXmlParameters);
     }
 
     // default sut
@@ -334,22 +334,19 @@ bool MainWindow::setup()
 
 void MainWindow::setActiveDevice(const QString &deviceName )
 {
-    activeDevice.clear();
+    if ( !deviceName.isEmpty() && deviceList.contains( deviceName ) ) {
+        activeDevice = deviceName;
+        getActiveDeviceParameters();
 
-    if ( deviceList.contains( deviceName ) ) {
-        const QHash<QString, QString> &sut = deviceList.value( deviceName );
-        sutName = sut.value( "name" );
-        activeDevice["name"] = sutName;
-        activeDevice["type"] = sut.value( "type" );
-        activeDevice["default_timeout"] = sut.value( "default_timeout" );
-
-        // enable recording menu if if device type is 'kind of' qt
-        recordMenu->setEnabled( sut.value( "type" ).contains( "qt", Qt::CaseInsensitive )
+        // enable recording menu if device type is 'kind of' qt
+        recordMenu->setEnabled( activeDeviceParams.value( "type" ).contains( "qt", Qt::CaseInsensitive )
                                && !applicationsNamesMap.empty() );
     }
     else {
-        sutName.clear();
+        activeDevice.clear();
+        activeDeviceParams.clear();
     }
+    tabEditor->setSutParamMap(activeDeviceParams);
 }
 
 
@@ -384,28 +381,6 @@ QByteArray MainWindow::cleanDoneResult(QByteArray output)
 }
 
 
-QString MainWindow::getDeviceType( QString deviceName )
-{
-    qDebug() << FCFL << deviceName;
-    QByteArray result = "Unknown";
-    BAListMap reply;
-    QString command = deviceName + " get_parameter type";
-
-    if ( executeTDriverCommand( commandGetDeviceType, command, deviceName, &reply ) ) {
-        if (reply.contains("parameter")) {
-            if (reply.value("parameter").size() == 2 && reply.value("parameter").at(0) == "type") {
-                result = reply.value("parameter").at(1);
-            }
-            else qDebug() << "BAD get_parameter VALUE" << reply.value("parameters");
-        }
-        else qDebug() << "BAD get_parameter REPLY" << reply;
-    }
-    else qDebug() << "FAILED get_parameter";
-
-    qDebug() << FCFL << "got" << result;
-    return QString(result);
-}
-
 QString MainWindow::getDeviceParameter( QString deviceName, QString parameter )
 {
     qDebug() << FCFL << deviceName;
@@ -429,6 +404,34 @@ QString MainWindow::getDeviceParameter( QString deviceName, QString parameter )
 }
 
 
+bool MainWindow::getActiveDeviceParameters()
+{
+    qDebug() << FCFL << activeDevice;
+    BAListMap reply;
+    QString command = activeDevice + " get_all_parameters";
+
+    bool result = false;
+    if ( executeTDriverCommand( commandGetAllDeviceParameters, command, activeDevice, &reply ) ) {
+        const BAList &keys = reply["keys"];
+        const BAList &values = reply["values"];
+        int count = keys.count();
+        if (count > 0 && count == values.count() ) {
+            activeDeviceParams.clear();
+            result = true;
+            for (int ii=0; ii < count; ++ii) {
+                activeDeviceParams.insert(keys.at(ii), values.at(ii));
+            }
+            //qDebug() << FCFL << activeDevice << ":" << activeDeviceParams;
+        }
+        else qDebug() << FCFL << "BAD get_parameter keys and/or values counts:" << keys.count() << values.count();
+    }
+    else qDebug() << FCFL << "FAILED get_all_parameters" << activeDevice;
+
+    qDebug() << FCFL << "got" << result;
+    return result;
+}
+
+
 void MainWindow::connectSignals()
 {
     connectObjectTreeSignals();
@@ -437,6 +440,7 @@ void MainWindow::connectSignals()
 
     QMetaObject::connectSlotsByName( this );
 }
+
 
 // This is called when closing Visualizer. Call threads close method, which
 // shuts down thread (closes and then kills it)
@@ -463,8 +467,8 @@ void MainWindow::closeEvent( QCloseEvent *event )
     settings.setValue("window/size", size());
 
     // default sut
-    settings.setValue("sut/activesut", activeDevice.value("name") );
-    settings.setValue("sut/activesuttype", activeDevice.value("type") );
+    settings.setValue("sut/activesut", activeDevice);
+    settings.remove("sut/activesuttype"); // this is no longer stored in application settings
 
     // object tree settings
     //for ( int i = 0; i < 3 ; i++ ) { settings.setValue( QString("objecttree/column" + QString::number( i ) ), objectTree->columnWidth( i ) ); }
@@ -609,7 +613,7 @@ void MainWindow::handleRbiError(QString title, QString text, QString details)
 }
 
 
-void MainWindow::processErrorMessage(ExecuteCommandType commandType, const BAListMap &msg, const QString &additionalInformation,
+void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QString &commandString, const BAListMap &msg, const QString &additionalInformation,
                                      unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError )
 {
     QStringList errList;
@@ -635,10 +639,9 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const BALis
         case MainWindow::commandRefreshImage: clearError = tr("Failed to refresh screen capture image."); break;
         case MainWindow::commandKeyPress: clearError = tr("Failed to press key %1.").arg(additionalInformation); break;
         case MainWindow::commandSetAttribute: clearError = tr("Failed to set attribute %1.").arg(additionalInformation); break;
-        case MainWindow::commandGetDeviceType: clearError = tr("Failed to get device type for %1.").arg(additionalInformation); break;
         case MainWindow::commandGetVersionNumber: clearError = tr("Failed to retrieve TDriver version number."); break;
         case MainWindow::commandStartApplication: clearError = tr("Failed to start application."); break;
-        default: clearError = tr("Error with unknown command");
+        default: clearError = tr("Error with command string '%1'").arg(commandString);
         }
     }
 
@@ -712,10 +715,10 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
     bool exit = false;
     bool result = true;
     int iteration = 0;
-    int default_timeout=activeDevice["default_timeout"].toInt()*1000;
+    int default_timeout=activeDeviceParams.value("default_timeout").toInt()*1000;
     unsigned resultEnum = OK;
 
-    if (default_timeout==0){
+    if (default_timeout <= 0){
         default_timeout=35000;
     }
 
@@ -733,7 +736,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
 
             result = false;
             exit = true;
-            processErrorMessage(commandType, msg, additionalInformation,
+            processErrorMessage(commandType, commandString, msg, additionalInformation,
                                 resultEnum, clearError, shortError, fullError);
 
             if ( resultEnum & FAIL || iteration > 0 ) {
@@ -744,7 +747,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
             if ( resultEnum & DISCONNECT ) {
                 // disconnect
                 msg.clear();
-                msg["input"] << activeDevice.value( "name" ).toAscii() << "disconnect";
+                msg["input"] << activeDevice.toAscii() << "disconnect";
                 /*bool response2 =*/
                 TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, default_timeout );
                 if (msg.contains("error")) {
@@ -762,7 +765,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
             }
         }
         else {
-            qDebug() << FCFL << "success time" << float(t.elapsed())/1000.0 << "reply" << msg;
+            qDebug() << FCFL << "success time" << float(t.elapsed())/1000.0 << "reply keys" << msg.keys();
             if (reply) {
                 *reply = msg;
             }

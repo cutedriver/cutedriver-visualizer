@@ -37,7 +37,7 @@ bool MainWindow::getItemPos(QTreeWidgetItem *item, int &x, int &y)
     bool xOk = false;
     bool yOk = false;
 
-    if (sutName.toLower() == "symbian" && objectTreeData.value(ptr2TestObjectKey( item )).env.toLower() == "qt") {
+    if (activeDeviceParams.value("type").toLower() == "symbian" && objectTreeData.value(ptr2TestObjectKey( item )).env.toLower() == "qt") {
 
         ret = QPoint(attributes.value("x_absolute").value.toInt(&xOk),
                      attributes.value("y_absolute").value.toInt(&yOk));
@@ -358,7 +358,6 @@ void MainWindow::updateObjectTree( QString filename )
     // empty object tree
     objectTree->clear();
     uiDumpFileName.clear();
-    sutName.clear();
 
     // parse ui dump xml
     if (parseXml( filename, xmlDocument )) {
@@ -377,11 +376,19 @@ void MainWindow::updateObjectTree( QString filename )
                 QDomElement element = node.toElement();
                 QString sutId = element.attribute( "id" );
 
-                sutName = element.attribute("name");
+                TreeItemInfo treeItemData = {
+                    QString("sut"),
+                    element.attribute("name"),
+                    element.attribute("id"),
+                    element.attribute("env") };
+
+                if (treeItemData.name != activeDevice) {
+                    qDebug() << FCFL << "device/sut name mismatch:" << activeDevice << treeItemData.name;
+                }
 
                 // add sut to the top of the object tree
                 sutItem->setData( 0, Qt::DisplayRole, QString("sut") );
-                sutItem->setData( 1, Qt::DisplayRole, sutName );
+                sutItem->setData( 1, Qt::DisplayRole, treeItemData.name );
                 sutItem->setData( 2, Qt::DisplayRole, sutId );
 
                 sutItem->setFont( 0, *defaultFont );
@@ -393,11 +400,6 @@ void MainWindow::updateObjectTree( QString filename )
 
                 TestObjectKey itemPtr = ptr2TestObjectKey( sutItem );
 
-                TreeItemInfo treeItemData = {
-                    QString("sut"),
-                    sutName,
-                    element.attribute("id"),
-                    element.attribute("env") };
 
                 // store object tree data
                 objectTreeData.insert( itemPtr, treeItemData );
@@ -505,14 +507,14 @@ void MainWindow::refreshData()
 {
     bool canceled = false;
     bool giveup = false;
-    bool isS60 = false;
+    bool isSymbian = false;
     bool listAppsOk = false;
     QString refreshUiFileName;
     bool refreshImageOk = false;
     bool behavioursOk = false;
     BAListMap reply;
     QString progressTemplate = tr("Refreshing: %1...");
-    QString refreshCmdTemplate = activeDevice.value( "name" ) + " %1";
+    QString refreshCmdTemplate = activeDevice + " %1";
 
     QProgressDialog *progress = new QProgressDialog("Visualizer Progress Dialog", tr("Cancel"), 0, 100, this);
     progress->setWindowModality(Qt::WindowModal);
@@ -527,15 +529,15 @@ void MainWindow::refreshData()
     // purpose of the doProgress below is to force QProgress dialog window to be wide enough to not need resize
     doProgress(progress, QString(50, '_'), QString(), 0);
 
-    // request application list (unless s60 AVKON)
-    if ( activeDevice.value( "type" ).toLower() == "s60" ) {
+    // request application list (unless symbian)
+    if ( activeDeviceParams.value( "type" ).toLower() == "symbian" ) {
         resetApplicationsList();
         //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
         foregroundApplication = true;
-        isS60 = true;
+        isSymbian = true;
     }
     else {
-        QString listCommand = QString( activeDevice.value( "name" ) + " list_apps" );
+        QString listCommand = QString( activeDevice + " list_apps" );
         doProgress(progress, progressTemplate, tr("requesting application list"), 1);
         statusbar( "Refreshing application list...", 0);
         qDebug() << FCFL << "app list refresh started at" << float(t.elapsed())/1000.0;
@@ -544,7 +546,7 @@ void MainWindow::refreshData()
     }
     //canceled = progress->wasCanceled();
 
-    if (!giveup && !canceled && !isS60 && listAppsOk) {
+    if (!giveup && !canceled && !isSymbian && listAppsOk) {
         qDebug() << FCFL << "app list parse started at" << float(t.elapsed())/1000.0;
         doProgress(progress, progressTemplate, tr("parsing application list"), 20);
         statusbar( "Updating applications list...", 0);
@@ -554,10 +556,10 @@ void MainWindow::refreshData()
 
     // use target application if user has chosen one
     if (foregroundApplication) {
-        qDebug() << FCFL << "---------------------- Refreshing foreground app";
+        qDebug() << FCFL << "Refreshing foreground app";
     }
     else if (!currentApplication.isNull() && applicationsNamesMap.contains( currentApplication.id )) {
-        qDebug() << FCFL << "---------------------- Refreshing current application, id:" << currentApplication.id;
+        qDebug() << FCFL << "Refreshing current application, id:" << currentApplication.id;
         refreshCmdTemplate += " " + currentApplication.id;
     }
     else {
@@ -616,11 +618,12 @@ void MainWindow::refreshData()
     progress->reset();
 
     /*if (canceled) statusbar( "Refresh canceled!", 1500 );
-    else*/ if ((listAppsOk || isS60) && !refreshUiFileName.isEmpty()) statusbar( "Refresh done!", 1500 );
+    else*/ if ((listAppsOk || isSymbian) && !refreshUiFileName.isEmpty()) statusbar( "Refresh done!", 1500 );
     else if (!refreshUiFileName.isEmpty()) statusbar( "Refreshed only UI XML data!", 1500 );
     else if (listAppsOk) statusbar( "Refreshed only Application List!", 1500 );
     else statusbar( "Refresh failed!", 1500 );
 
+    disconnectExclusiveSUT();
     if (progress) delete progress;
 }
 
@@ -675,7 +678,7 @@ QString MainWindow::treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey su
     QString objText = attributesMap.value( treeItemPtr ).value("text").value;
 
     if ( sutItemPtr == treeItemPtr && objRubyId == "sut" ) {
-        objRubyId = tr( "TDriver.sut( :Id => '" ) + activeDevice.value( "name" ) + tr( "' )" );
+        objRubyId = "TDriver.sut( :Id => '"  + activeDevice + "' )";
     }
     else if ( objName != "NoName" && !objName.isEmpty() ) {
         objRubyId.append("( :name => '" + objName + "' )");

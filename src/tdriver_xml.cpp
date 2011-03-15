@@ -62,7 +62,7 @@ bool MainWindow::updateBehaviourXml()
 
     BAListMap reply;
     if ( executeTDriverCommand( commandBehavioursXml,
-                                activeDevice.value( "name" ) + " get_behaviours " + objectTypesString,
+                                activeDevice + " get_behaviours " + objectTypesString,
                                 QString(), &reply )
          && objectTypes.size() > 0 ) {
         if (parseXml( reply.value("behaviour_filename").value(0) , behaviorDomDocument )) {
@@ -402,8 +402,10 @@ void MainWindow::parseApplicationsXml( QString filename ) {
     //appsMenu->setEnabled(!applicationsNamesMap.empty()); // Now we have extra item in the menu so always show
 
     // enable recording menu if if device type is 'kind of' qt
-    recordMenu->setEnabled( !activeDevice.value( "type" ).contains( "s60", Qt::CaseInsensitive )
-                           && !applicationsNamesMap.empty() );
+    recordMenu->setEnabled(
+                activeDeviceParams.value( "type" ).toLower() == "qt"
+                && !applicationsNamesMap.empty()
+                );
 
 }
 
@@ -468,7 +470,7 @@ bool MainWindow::getXmlParameters( QString filename )
 {
     QDomDocument tmpDomTree;
     QDomNode node;
-    QMap<QString, QHash<QString, QString> > tmpDeviceList;
+    QStringList tmpDeviceList;
     QMap<QString, QString> tmpXmlParameters;
     bool ok = false;
 
@@ -483,12 +485,7 @@ bool MainWindow::getXmlParameters( QString filename )
 
                 if ( node.isElement() ) {
                     if (node.nodeName() == "sut" ) {
-                        QString id = node.toElement().attribute("id");
-                        QHash<QString, QString> sut;
-                        sut.insert( "name", id);
-                        sut.insert( "type", getDeviceType( id ) );
-                        sut.insert( "default_timeout", getDeviceParameter( id, "default_timeout" ));
-                        tmpDeviceList.insert(id, sut);
+                        tmpDeviceList << node.toElement().attribute("id");
                     }
 
                     else if (node.nodeName() == "parameter" ) {
