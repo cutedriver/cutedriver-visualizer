@@ -730,7 +730,7 @@ end
 
 def @listener.get_parameter( sut_id, para )
   para_value = MobyUtil::Parameter[ sut_id.to_sym ][ para.to_sym, nil ]
-  @listener_reply['parameter'] = [ para.to_s, para_value.to_s ]
+  @listener_reply['parameter'] = [ para.to_s, para_value.inspect ]
 end
 
 

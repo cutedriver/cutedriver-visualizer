@@ -339,8 +339,8 @@ void MainWindow::setActiveDevice(const QString &deviceName )
         getActiveDeviceParameters();
 
         // enable recording menu if device type is 'kind of' qt
-        recordMenu->setEnabled( activeDeviceParams.value( "type" ).contains( "qt", Qt::CaseInsensitive )
-                               && !applicationsNamesMap.empty() );
+        recordMenu->setEnabled( !applicationsNamesMap.empty()
+                               && TDriverUtil::isQtSut(activeDeviceParams.value( "type" )));
     }
     else {
         activeDevice.clear();
@@ -715,7 +715,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
     bool exit = false;
     bool result = true;
     int iteration = 0;
-    int default_timeout=activeDeviceParams.value("default_timeout").toInt()*1000;
+    int default_timeout = TDriverUtil::quotedToInt(activeDeviceParams.value("default_timeout"))*1000;
     unsigned resultEnum = OK;
 
     if (default_timeout <= 0){

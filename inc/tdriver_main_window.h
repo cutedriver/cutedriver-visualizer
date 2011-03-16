@@ -180,6 +180,10 @@ private:
 
     QStringList deviceList;
     QString activeDevice;
+
+    // note about activeDeviceParams:
+    // values are converted to strings with Ruby's inspect methods,
+    // so for example string values have "" around them
     QMap<QString, QString> activeDeviceParams;
 
     QMap<QString, QString> tdriverXmlParameters;
@@ -199,7 +203,6 @@ private:
     QHash<QString, TestObjectKey> objectIdMap;
     //    QHash<QString, QMap<QString, QString> > objectMethods;
     //    QHash<QString, QMap<QString, QString> > objectSignals;
-
 
     // helper functions
     static QByteArray cleanDoneResult(QByteArray output);

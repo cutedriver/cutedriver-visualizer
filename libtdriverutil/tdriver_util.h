@@ -35,6 +35,21 @@ public:
     static QString helpUrlString(const char *file);
     static QString tdriverHelperFilePath(const QString &filename, const QString &overrideEnvVar=QString());
     static QString smartJoin(const QString &str1, QChar sep, const QString &str2 = QString());
+    static int quotedToInt(QString str);
+
+
+    static bool isExclusiveConnectionSut(const QString &sut) {
+        return isSymbianSut(sut);
+    }
+
+    static bool isSymbianSut(const QString &sut) {
+        return (sut.contains("symbian", Qt::CaseInsensitive)
+                || sut.contains("s60", Qt::CaseInsensitive));
+    }
+
+    static bool isQtSut(const QString &sut) {
+        return (sut.contains("qt", Qt::CaseInsensitive));
+    }
 
 signals:
 

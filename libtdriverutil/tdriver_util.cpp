@@ -80,3 +80,11 @@ QString TDriverUtil::smartJoin(const QString &str1, QChar sep, const QString &st
 
     return result;
 }
+
+int TDriverUtil::quotedToInt(QString str)
+{
+    // this is very liberal, allowing any number of single or double quotes at start or end of string
+    str.replace("'", " ");
+    str.replace("\"", " ");
+    return str.trimmed().toInt();
+}

@@ -402,11 +402,9 @@ void MainWindow::parseApplicationsXml( QString filename ) {
     //appsMenu->setEnabled(!applicationsNamesMap.empty()); // Now we have extra item in the menu so always show
 
     // enable recording menu if if device type is 'kind of' qt
-    recordMenu->setEnabled(
-                activeDeviceParams.value( "type" ).toLower() == "qt"
-                && !applicationsNamesMap.empty()
-                );
-
+    recordMenu->setEnabled(TDriverUtil::isQtSut(activeDeviceParams.value( "type" ))
+                           && !applicationsNamesMap.empty()
+                           );
 }
 
 

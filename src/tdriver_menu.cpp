@@ -217,11 +217,12 @@ bool MainWindow::disconnectSUT()
 
 bool MainWindow::disconnectExclusiveSUT()
 {
-    if ( activeDeviceParams.value( "type" ).toLower() == "symbian" ) {
+    if ( TDriverUtil::isExclusiveConnectionSut(activeDeviceParams.value( "type" ))) {
+        qDebug() << FCFL << "Disconnecting sut type" << activeDeviceParams.value( "type" );
         return disconnectSUT();
     }
     else {
-        emit disconnectSUTResult(false);
+        // emit disconnectSUTResult(false);
         return false;
     }
 }
@@ -372,7 +373,7 @@ void MainWindow::deviceSelected()
 
     if (!activeDevice.isEmpty()) {
 
-        bool deviceIsQt = (activeDeviceParams.value("type").toLower() == "qt");
+        bool deviceIsQt = TDriverUtil::isQtSut(activeDeviceParams.value("type"));
 
 #if DEVICE_BUTTONS_ENABLED
         // enable s60 buttons selection if device type is 'kind of' symbian

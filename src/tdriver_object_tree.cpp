@@ -31,14 +31,18 @@
 
 bool MainWindow::getItemPos(QTreeWidgetItem *item, int &x, int &y)
 {
-    const QMap<QString, AttributeInfo > &attributes = attributesMap[ptr2TestObjectKey( item )];
+    const TestObjectKey itemKey = ptr2TestObjectKey(item);
+
+    const QMap<QString, AttributeInfo > &attributes = attributesMap[itemKey];
     QPoint ret;
 
     bool xOk = false;
     bool yOk = false;
 
-    if (activeDeviceParams.value("type").toLower() == "symbian" && objectTreeData.value(ptr2TestObjectKey( item )).env.toLower() == "qt") {
 
+    if (TDriverUtil::isSymbianSut(activeDeviceParams.value("type"))
+            && objectTreeData.value(itemKey).env.compare("qt", Qt::CaseInsensitive)) {
+        // handle special case for Qt testobject with Symbian SUT
         ret = QPoint(attributes.value("x_absolute").value.toInt(&xOk),
                      attributes.value("y_absolute").value.toInt(&yOk));
     }
@@ -530,7 +534,8 @@ void MainWindow::refreshData()
     doProgress(progress, QString(50, '_'), QString(), 0);
 
     // request application list (unless symbian)
-    if ( activeDeviceParams.value( "type" ).toLower() == "symbian" ) {
+    if ( TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )) ) {
+        qDebug() << FCFL << "Application list refresh skipped for sut type" << activeDeviceParams.value( "type" );
         resetApplicationsList();
         //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
         foregroundApplication = true;
