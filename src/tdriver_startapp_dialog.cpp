@@ -47,6 +47,7 @@ void MainWindow::startApp(){
 
     if ( !executeTDriverCommand( commandStartApplication, cmd)) {
         statusbar( "Error: Failed to start application.", 1000 );
+        disconnectExclusiveSUT();
     }
     else {
         startAppDialog->hide();

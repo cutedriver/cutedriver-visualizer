@@ -87,8 +87,12 @@ void TDriverRubyInterface::startGlobalInstance()
     pGlobalInstance = new TDriverRubyInterface();
     pGlobalInstance->moveToThread(pGlobalInstance);
     pGlobalInstance->setValidThread(pGlobalInstance->thread());
-    connect(pGlobalInstance, SIGNAL(requestRubyConnection(int)), pGlobalInstance, SLOT(resetRubyConnection(int)), Qt::QueuedConnection);
-    connect(pGlobalInstance, SIGNAL(requestCloseSignal()), pGlobalInstance, SLOT(close()), Qt::QueuedConnection);
+    connect(pGlobalInstance, SIGNAL(requestRubyConnection(int)),
+            pGlobalInstance, SLOT(resetRubyConnection(int)),
+            Qt::QueuedConnection);
+    connect(pGlobalInstance, SIGNAL(requestCloseSignal()),
+            pGlobalInstance, SLOT(close()),
+            Qt::QueuedConnection);
 
     pGlobalInstance->start();
 }

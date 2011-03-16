@@ -36,10 +36,12 @@
 
 
 TDriverRubyInteract::TDriverRubyInteract(QWidget *parent) :
-        TDriverRunConsole(false, parent), // false means QProcess will not be created
-        stdoutFormat(new QTextCharFormat),
-        stderrFormat(new QTextCharFormat),
-        prevSeqNum(0)
+    TDriverRunConsole(false, parent) // false means QProcess will not be created
+  , resetAct(NULL)
+  , restartAct(NULL)
+  , stdoutFormat(new QTextCharFormat)
+  , stderrFormat(new QTextCharFormat)
+  , prevSeqNum(0)
 {
     commandLineLabel->setText(tr("Eval:"));
 
@@ -146,13 +148,19 @@ void TDriverRubyInteract::createActions()
 
     resetAct = new QAction(QIcon(":/images/reset.png"), tr("&Reset"), this);
     resetAct->setObjectName("reset");
-    resetAct->setToolTip(tr("Clear contents of buffer"));
+    resetAct->setToolTip(tr("Reset script evaluation instance."));
     acts.append(resetAct);
     connect(resetAct, SIGNAL(triggered()), this, SLOT(resetScript()));
 
+    restartAct = new QAction(QIcon(":/images/kill.png"), tr("&Restart"), this);
+    restartAct->setObjectName("restart");
+    restartAct->setToolTip(tr("Terminate helper script so it will be restarted."));
+    acts.append(restartAct);
+    connect(restartAct, SIGNAL(triggered()),
+            TDriverRubyInterface::globalInstance(), SIGNAL(requestCloseSignal()));
+
     insertActions(actions().first(), acts);
     toolbar->insertActions(toolbar->actions().first(), acts);
-
 }
 
 

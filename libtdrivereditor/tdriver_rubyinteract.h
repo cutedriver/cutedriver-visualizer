@@ -65,6 +65,7 @@ protected:
     void createActions();
 
     QAction *resetAct;
+    QAction *restartAct;
 
     struct QueryQueueItem {
         enum QueryType { COMPLETION, EVALUATION };
