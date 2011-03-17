@@ -308,7 +308,7 @@ module TDriver
     begin
       sut=self.__original_connect_sut__(sut_attributes)
     rescue => ex
-      $lg.error "Custom connect_sut: raising __original_connect_sut__ exception: " +  ex.message
+      $lg.error "Custom connect_sut: raising __original_connect_sut__ exception: " + ex.message
       raise
     end
 
@@ -316,7 +316,7 @@ module TDriver
       $lg.info "Setting timeout to 0 for #{sut_attributes.inspect}"
       sut.instance_eval{ @test_object_factory.timeout = 0 }
     rescue => ex
-      $lg.error "Custom connect_sut: ignoring @test_object_factory.timeout= exception: " +  ex.message
+      $lg.error "Custom connect_sut: ignoring @test_object_factory.timeout= exception: " + ex.message
     end
 
     return sut
@@ -782,7 +782,7 @@ def @listener.main_loop (conn)
 
       if input_array.size >= 2
         sut_id = input_array.first.to_sym
-        cmd = input_array[ 1 ].downcase.to_sym
+        cmd = input_array[1].downcase.to_sym
         eval_cmd = ""
         error = false
 
@@ -818,16 +818,16 @@ def @listener.main_loop (conn)
             eval_cmd = "check_version"
 
           when :set_output_path
-            eval_cmd = "set_output_path( '#{ input_array[ 2 ] }' )"
+            eval_cmd = "set_output_path( '#{ input_array[2] }' )"
 
           when :get_behaviours
-            eval_cmd = "get_behaviours_xml( sut, '#{ sut_id }', [#{  input_array[ 2 ] }] )"
+            eval_cmd = "get_behaviours_xml( sut, '#{ sut_id }', [#{ input_array[2] }] )"
 
           when :refresh_ui
-            eval_cmd = "get_ui_dump( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[ 2 ] }'" : "nil" } )"
+            eval_cmd = "get_ui_dump( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[2] }'" : "nil" } )"
 
           when :refresh_image
-            eval_cmd = "capture_screen( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[ 2 ] }'" : "nil" } )"
+            eval_cmd = "capture_screen( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[2] }'" : "nil" } )"
 
           when :list_apps
             eval_cmd = "get_app_list( sut, '#{ sut_id }' )"
@@ -836,47 +836,45 @@ def @listener.main_loop (conn)
             eval_cmd = "TDriver.disconnect_sut( :Id => '#{ sut_id }' )" # this does not work with qt
 
           when :get_parameter
-            eval_cmd = "get_parameter( sut_id , '#{ input_array[ 2 ] }' )"
+            eval_cmd = "get_parameter( sut_id , '#{ input_array[2] }' )"
 
           when :get_all_parameters
             eval_cmd = "get_all_parameters( sut_id )"
 
-          when :tap_screen
-            eval_cmd = "sut.tap_screen( #{ input_array[ 2 ].to_i }, #{ input_array[ 3 ].to_i } )"
-
           when :tap
-            eval_cmd = "sut.application#{ input_array.size > 3 ? "( :id => '#{ input_array[ 3 ] }' ).#{ input_array[ 2 ] }" : ".#{ input_array[ 2 ] }" }.tap"
+            eval_cmd = "sut.application"
+            eval_cmd += "(:id=>'#{input_array[3]}')" if input_array.size > 3
+            eval_cmd += ".#{input_array[2]}.tap"
 
           when :check_fixture
             eval_cmd = "check_api_fixture( sut )"
 
           when :fixture
-            #eval_cmd = "sut.application#{ input_array[ 2 ].downcase == 'application' ? "#{ input_array[ 3 ] }" : ".#{ input_array[ 2 ] }#{ input_array[ 3 ] }" }.fixture( 'tasqtapiaccessor', 'list_class_methods', { :class => '#{ input_array[ 2 ] }' } )"
-            eval_cmd = "get_fixture_xml( sut, '#{ sut_id }', '#{ input_array[ 2 ] }' )"
+            eval_cmd = "get_fixture_xml( sut, '#{ sut_id }', '#{ input_array[2] }' )"
 
           when :press_key
-            eval_cmd = "sut.press_key( #{ input_array[ 2 ].to_sym } )"
+            eval_cmd = "sut.press_key( #{ input_array[2].to_sym } )"
 
           when :list_signals
-            eval_cmd = "get_signal_xml( sut, '#{ sut_id }', '#{ input_array[ 2 ] }', '#{ input_array[ 3 ] }', '#{ input_array[ 4 ] }')"
+            eval_cmd = "get_signal_xml( sut, '#{ sut_id }', '#{ input_array[2] }', '#{ input_array[3] }', '#{ input_array[4] }')"
 
           when :set_attribute
-            parameter = ( input_array.size > 5 ? input_array[ 5..input_array.size ].join(" ") : parameter = input_array[ 5 ] )
-            # strip single quotes added by visualizer
-            parameter = parameter [ 1..-2 ] if parameter.size > 1
-            eval_cmd = "sut.application.#{ input_array[ 2 ] }.set_attribute( '#{ input_array[ 4 ] }', '#{ parameter }', '#{input_array [ 3 ] }' )"
+            attributeName = input_array[4]
+            attributeValue = input_array[ 5..input_array.size ].join(' ')
+            attributeType = input_array[3]
+            eval_cmd = "sut.application.#{ input_array[2] }.set_attribute( '#{attributeName}', '#{attributeValue}', '#{attributeType}' )"
 
           when :start_record
-            eval_cmd = "start_recording(sut, #{ ( input_array.size > 2 ? "'#{ input_array[ 2 ] }'" : "nil" ) })"
+            eval_cmd = "start_recording(sut, #{ ( input_array.size > 2 ? "'#{ input_array[2] }'" : "nil" ) })"
 
           when :stop_record
-            eval_cmd = "get_recorded_script(sut, #{ ( input_array.size > 2 ? "'#{ input_array[ 2 ]}'" : "nil" ) })"
+            eval_cmd = "get_recorded_script(sut, #{ ( input_array.size > 2 ? "'#{ input_array[2]}'" : "nil" ) })"
 
           when :test_record
-            eval_cmd = "test_script(sut, '#{ input_array[ 2 ]}' )"
+            eval_cmd = "test_script(sut, '#{ input_array[2]}' )"
 
           when :start_application
-            eval_cmd = "sut.run(:name=>'#{ input_array[ 2 ]}', :arguments=>'#{ input_array[ 3 ]}' )"
+            eval_cmd = "sut.run(:name=>'#{input_array[2]}', :arguments=>'#{input_array[3]}' )"
 
           else
             @listener_reply['exception'] = []

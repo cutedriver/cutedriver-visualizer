@@ -73,7 +73,6 @@ void MainWindow::imageInsertFindItem()
 void MainWindow::imageInsertCoords()
 {
     QPoint pos = imageWidget->getEventPosInImage();
-    //emit insertToCodeEditor(QString("@sut.tap_screen(%1, %2)\n").arg(pos.x()).arg(pos.y()), false, false);
     emit insertToCodeEditor(QString(" %1, %2 ").arg(pos.x()).arg(pos.y()), false, false);
 }
 
@@ -99,7 +98,9 @@ void MainWindow::imageTapFromId(TestObjectKey id)
     if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 && !currentApplication.isNull()) {
         TreeItemInfo treeItemData = objectTreeData.value( lastHighlightedObjectKey );
         // note: tapScreenWithRefresh will invalidate id, because underneath id is a pointer to QTreeWidgetItem
-        tapScreenWithRefresh( "tap " + treeItemData.type + "(:id=>" + treeItemData.id + ") " + currentApplication.id );
+        tapScreenWithRefresh( QString("tap %1 %2")
+                             .arg(treeItemData.type + "(:id=>'" + treeItemData.id + "')")
+                             .arg(currentApplication.id) );
         id = objectIdMap.value(treeItemData.id);
         highlightByKey( id, true );
     }
@@ -133,7 +134,9 @@ void MainWindow::clickedImage()
 
     if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
         const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-        tapScreenWithRefresh( "tap " + treeItemData.type + "(:id=>" + treeItemData.id + ") " + currentApplication.id );
+        tapScreenWithRefresh( QString("tap %1 %2")
+                .arg(treeItemData.type + "(:id=>'" + treeItemData.id + "')")
+                .arg(currentApplication.id) );
         highlightAtCoords( pos, true );
     }
     else {

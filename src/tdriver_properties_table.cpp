@@ -457,12 +457,14 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
             QMessageBox::critical( 0, "Error", "No data type found for attribute " + attributeName );
 
         } else {
-            QString attributeNameAndValue = attributeName + " '" + item->text() + "'";
+            // note: item->text() is split by C++ code and joined by Ruby code, but it should keep
+            // empty parts, so even multiple whitespace should not get lost
             if ( executeTDriverCommand(commandSetAttribute,
-                                       activeDevice
-                                       + " set_attribute " + objRubyId
-                                       + " " + targetDataType
-                                       + " " + attributeNameAndValue )) {
+                                       QString(activeDevice + " set_attribute %1 %2 %3 %4")
+                                       .arg(objRubyId)
+                                       .arg(targetDataType)
+                                       .arg(attributeName)
+                                       .arg(item->text()) ) ) {
                 refreshData();
             }
         }
