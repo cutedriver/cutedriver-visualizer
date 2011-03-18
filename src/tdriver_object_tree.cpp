@@ -17,8 +17,6 @@
 **
 ****************************************************************************/
 
-
-
 #include "tdriver_main_window.h"
 #include "tdriver_image_view.h"
 #include <tdriver_util.h>
@@ -34,6 +32,7 @@ bool MainWindow::getItemPos(QTreeWidgetItem *item, int &x, int &y)
     const TestObjectKey itemKey = ptr2TestObjectKey(item);
 
     const QMap<QString, AttributeInfo > &attributes = attributesMap[itemKey];
+
     QPoint ret;
 
     bool xOk = false;
@@ -166,14 +165,50 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem,
     // if type or id is empty...
     QString type = data.type;
     QString id = data.id;
-    if ( type.isEmpty() ) { type = "<NoName>"; }
+    QString name = data.name;
+
+    if ( type.isEmpty() ) { 
+
+      type = "<NoName>"; 
+
+    } else {
+    
+    }
+    
     if ( id.isEmpty()   ) { id = "<None>";     }
 
+    item->setBackground( 0, QBrush() );
+    item->setBackground( 1, QBrush() );
+    item->setBackground( 2, QBrush() );
+
+    if ( name.isEmpty() ) { 
+
+      name = "<Object name not defined>"; 
+
+      //item->setBackground( 1, QColor(Qt::red).lighter( 120 ) );
+      item->setBackground( 1, QColor(Qt::red) );
+      item->setForeground( 1, QColor(Qt::white) );
+
+      item->setData( 1, Qt::ToolTipRole, QString("\n  Warning!  \n\n  Name for this object is not defined in the applications source code. Identifying objects with other  \n  attributes such as \"x\", \"y\", \"width\", \"height\", \"text\" or \"icon\" may lead to failure of the tests.  \n\n  Object names are more likely to remain the same throughout the software life cycle.  \n\n  Please contact your manager, application development team or responsible person and  \n  request for properly named objects in order to make this application more testable.  \n\n") );
+      
+      
+    } else {
+    
+      item->setForeground( 1, QColor(Qt::darkGreen) );
+    
+    }
+
     item->setData( 0, Qt::DisplayRole, type);
-    if (!data.env.isEmpty())
+
+    if (!data.env.isEmpty()) {
         item->setData( 0, Qt::ToolTipRole, data.env);
-    item->setData( 1, Qt::DisplayRole, data.name);
+    }
+
+    item->setData( 1, Qt::DisplayRole, name);
     item->setData( 2, Qt::DisplayRole, id);
+
+    item->setForeground( 0, QColor(Qt::darkCyan).darker(180) );
+    item->setForeground( 2, QColor(Qt::darkYellow) );
 
     item->setFont( 0, *defaultFont );
     item->setFont( 1, *defaultFont );
@@ -394,6 +429,10 @@ void MainWindow::updateObjectTree( QString filename )
                 sutItem->setData( 0, Qt::DisplayRole, QString("sut") );
                 sutItem->setData( 1, Qt::DisplayRole, treeItemData.name );
                 sutItem->setData( 2, Qt::DisplayRole, sutId );
+
+                sutItem->setForeground( 0, QColor(Qt::darkCyan).darker(180) );
+                sutItem->setForeground( 1, QColor(Qt::darkGreen) );
+                sutItem->setForeground( 2, QColor(Qt::darkYellow) );
 
                 sutItem->setFont( 0, *defaultFont );
                 sutItem->setFont( 1, *defaultFont );
