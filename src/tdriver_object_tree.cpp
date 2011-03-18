@@ -183,13 +183,13 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem,
 
     if ( name.isEmpty() ) { 
 
-      name = "<Object name not defined>"; 
+      name = "<Object name not defined...>"; 
 
       //item->setBackground( 1, QColor(Qt::red).lighter( 120 ) );
       item->setBackground( 1, QColor(Qt::red) );
       item->setForeground( 1, QColor(Qt::white) );
 
-      item->setData( 1, Qt::ToolTipRole, QString("\n  Warning!  \n\n  Name for this object is not defined in the applications source code. Identifying objects with other  \n  attributes such as \"x\", \"y\", \"width\", \"height\", \"text\" or \"icon\" may lead to failure of the tests.  \n\n  Object names are more likely to remain the same throughout the software life cycle.  \n\n  Please contact your manager, application development team or responsible person and  \n  request for properly named objects in order to make this application more testable.  \n\n") );
+      item->setData( 1, Qt::ToolTipRole, QString("\n  Warning!  \n\n  Name for this object is not defined in the applications source code. Identifying objects with other  \n  attributes such as \"x\", \"y\", \"width\", \"height\", \"text\" or \"icon\" may lead to failure of the tests.  \n\n  Object names are more likely to remain the same throughout the software life cycle.  \n\n  Please contact your manager, development team or responsible person and request for  \n  properly named objects in order to make this application more testable.  \n\n") );
       
       
     } else {
