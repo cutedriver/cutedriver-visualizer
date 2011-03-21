@@ -62,7 +62,7 @@ TDriverHighlighter::TDriverHighlighter(QTextDocument *parent) :
         rule2->matchPat = new QRegExp("\"");
         // endPat matches " at the beginning, or preceded by even number of backslashes
         // requires endCaretMode QRegExp::CaretAtOffset
-        rule2->endPat = new QRegExp("(^\"|[^\\\\](\\\\\\\\)*\")");
+        rule2->endPat = new QRegExp("(^\\\"|[^\\\\](\\\\\\\\)*\\\")");
         rule2->format = doubleQuotationFormat;
         //qDebug() << FFL << rule2->matchPat->pattern();
         rules.append(rule2);
@@ -72,7 +72,7 @@ TDriverHighlighter::TDriverHighlighter(QTextDocument *parent) :
         rule2->matchPat = new QRegExp("'");
         // endPat matches ' at the beginning, or preceded by even number of backslashes
         // requires endCaretMode QRegExp::CaretAtOffset
-        rule2->endPat = new QRegExp("(^'|[^\\\\](\\\\\\\\)*')");
+        rule2->endPat = new QRegExp("(^\\'|[^\\\\](\\\\\\\\)*\\')");
         rule2->format = singleQuotationFormat;
         //qDebug() << FFL << rule2->matchPat->pattern();
         rules.append(rule2);
@@ -110,6 +110,8 @@ int TDriverHighlighter::readPlainStrings(
 
 void TDriverHighlighter::highlightBlock(const QString &text)
 {
+    //qDebug() << ">>> START BLOCK ";
+
     int startIndex = 0;
     if (previousBlockState() >= 0) {
         const HighlightingRuleBase *rule = stateRulePtrs.value(previousBlockState());
@@ -162,6 +164,8 @@ void TDriverHighlighter::highlightBlock(const QString &text)
                 if (rule->resetBlockState) setCurrentBlockState(-1);
 
                 rule->postMatch(text, index, length);
+
+                //qDebug() << FFL << "startindex " << startIndex << " new index " << index;
 
                 // optimization: extend already known to be formatted part of line,
                 // and return if entire line highlighted (common case with #-style comment)
@@ -221,7 +225,7 @@ int TDriverHighlighter::HighlightingRule2::handlePreviousState(const QString &te
     if (startIndex == -1) {
         castowner->setFormat(0, text.length(), *format);
         castowner->setCurrentBlockState(castowner->previousBlockState());
-        // qDebug() << FFL << "full line formatted, block state continuation" << castowner->previousBlockState();
+         //qDebug() << FFL << "full line formatted, block state continuation" << castowner->previousBlockState();
     }
     else {
         startIndex += endPat->matchedLength();
@@ -240,6 +244,7 @@ void TDriverHighlighter::HighlightingRule2::postMatch (
 {
     TDriverHighlighter *castowner = const_cast<TDriverHighlighter *>(owner);
     int endIndex = endPat->indexIn(text, startInd+formatLen, endCaretMode);
+    //qDebug() << FFL << text << " " << startInd << " " << formatLen << " " << endIndex;
 
     if (endIndex == -1) {
         // rule continues to next line:
@@ -252,7 +257,16 @@ void TDriverHighlighter::HighlightingRule2::postMatch (
         // set formatLen to cover start and end patters (including text between)
         formatLen = endIndex - startInd + endPat->matchedLength();
 
-        // TODO: somehow fix case of endIndex being in already formated text
+        // RESET remaining block before setting new rule format
+        // Higher priority rules format has been already applied but not closed if current block state is not -1.
+        // If a lower priority rule now is closed before the higher one then have to first clear previous formatting
+        // on the remaining block to be processed, before applying the new formatting.
+        if (castowner->currentBlockState() < stateIndex)
+        {
+            int start_remaining_block = startInd;
+            int end_remaining_block = castowner->currentBlock().position() + castowner->currentBlock().length() -1;
+            castowner->setFormat(start_remaining_block, end_remaining_block, *castowner->defaultFormat);
+        }
     }
 
     castowner->setFormat(startInd, formatLen, *format);
