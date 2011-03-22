@@ -110,23 +110,23 @@ int TDriverHighlighter::readPlainStrings(
 
 void TDriverHighlighter::highlightBlock(const QString &text)
 {
-    //qDebug() << ">>> START BLOCK ";
+    qDebug() << ">>> START BLOCK ";
 
     int startIndex = 0;
     if (previousBlockState() >= 0) {
         const HighlightingRuleBase *rule = stateRulePtrs.value(previousBlockState());
         Q_ASSERT(rule);
-        //qDebug() << FFL << "calling handlePreviousState of rule type" << rule->type();
+        qDebug() << FFL << "calling handlePreviousState of rule type" << rule->type();
         startIndex = rule->handlePreviousState(text);
 
         if (startIndex == -1) {
-            //qDebug() << FFL << "DONE after handlePreviousState, with state" << currentBlockState();
+            qDebug() << FFL << "DONE after handlePreviousState, with state" << currentBlockState();
             return;
         }
     }
 
     setCurrentBlockState(-1);
-    //qDebug() << FFL << "startIndex" << startIndex << ", set block state" << currentBlockState();
+    qDebug() << FFL << "startIndex" << startIndex << ", set block state" << currentBlockState();
 
     setFormat(startIndex, text.length() - startIndex, *defaultFormat);
 
@@ -151,11 +151,11 @@ void TDriverHighlighter::highlightBlock(const QString &text)
                 // this length value applies if rule coveres all of text to be highlighted
                 int length = rule->matchPat->matchedLength();
 
-                //qDebug() << FFL << index << length;
+                qDebug() << FFL << index << length;
 
                 // skip this match if position already formatted
                 if (format(index).property(QTextFormat::UserProperty).toBool() != true) {
-                    //qDebug() << FFL << format(index) << "formated already, skip at index" << index;
+                    qDebug() << FFL << format(index) << "formated already, skip at index" << index;
                     index += length;
                     continue;
                 }
@@ -165,7 +165,7 @@ void TDriverHighlighter::highlightBlock(const QString &text)
 
                 rule->postMatch(text, index, length);
 
-                //qDebug() << FFL << "startindex " << startIndex << " new index " << index;
+                qDebug() << FFL << "startindex " << startIndex << " new index " << index;
 
                 // optimization: extend already known to be formatted part of line,
                 // and return if entire line highlighted (common case with #-style comment)
@@ -225,12 +225,12 @@ int TDriverHighlighter::HighlightingRule2::handlePreviousState(const QString &te
     if (startIndex == -1) {
         castowner->setFormat(0, text.length(), *format);
         castowner->setCurrentBlockState(castowner->previousBlockState());
-         //qDebug() << FFL << "full line formatted, block state continuation" << castowner->previousBlockState();
+         qDebug() << FFL << "full line formatted, block state continuation" << castowner->previousBlockState();
     }
     else {
         startIndex += endPat->matchedLength();
         castowner->setFormat(0, startIndex, *format);
-        //qDebug() << FFL << "formated until pos" << startIndex;
+        qDebug() << FFL << "formated until pos" << startIndex;
     }
 
     return startIndex;
@@ -244,14 +244,14 @@ void TDriverHighlighter::HighlightingRule2::postMatch (
 {
     TDriverHighlighter *castowner = const_cast<TDriverHighlighter *>(owner);
     int endIndex = endPat->indexIn(text, startInd+formatLen, endCaretMode);
-    //qDebug() << FFL << text << " " << startInd << " " << formatLen << " " << endIndex;
+    qDebug() << FFL << text << " " << startInd << " " << formatLen << " " << endIndex;
 
     if (endIndex == -1) {
         // rule continues to next line:
         // set formatLen to cover rest of line and return new block state for Highlighter
         formatLen = text.length() - startInd; // rest of the text
         castowner->setCurrentBlockState(stateIndex);
-        //qDebug() << FFL << "re-set block state" <<castowner->currentBlockState();;
+        qDebug() << FFL << "re-set block state" <<castowner->currentBlockState();;
     }
     else {
         // set formatLen to cover start and end patters (including text between)
@@ -266,6 +266,7 @@ void TDriverHighlighter::HighlightingRule2::postMatch (
             int start_remaining_block = startInd;
             int end_remaining_block = castowner->currentBlock().position() + castowner->currentBlock().length() -1;
             castowner->setFormat(start_remaining_block, end_remaining_block, *castowner->defaultFormat);
+            castowner->setCurrentBlockState(-1);
         }
     }
 
