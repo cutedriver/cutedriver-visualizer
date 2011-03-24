@@ -180,6 +180,14 @@ QString TDriverRubyInterface::goOnline()
 }
 
 
+bool TDriverRubyInterface::isOnline()
+{
+    VALIDATE_THREAD_NOT;
+    QMutexLocker lock(syncMutex);
+    return (isRunning() && initState==Connected);
+}
+
+
 void TDriverRubyInterface::recreateConn()
 {
     VALIDATE_THREAD;
@@ -365,9 +373,16 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
         Q_ASSERT(!handler);
         handler = new TDriverRbiProtocol(conn, syncMutex, msgCond, helloCond, this);
         handler->setValidThread(currentThread());
-        connect(handler, SIGNAL(helloReceived()), this, SIGNAL(rubyOnline()));
-        connect(handler, SIGNAL(messageReceived(quint32,QByteArray,BAListMap)), this, SIGNAL(messageReceived(quint32,QByteArray,BAListMap)));
-        connect(handler, SIGNAL(gotDisconnection()), this, SLOT(close()));
+
+        connect(handler, SIGNAL(helloReceived()),
+                SIGNAL(rubyOnline()));
+
+        connect(handler, SIGNAL(messageReceived(quint32,QByteArray,BAListMap)),
+                SIGNAL(messageReceived(quint32,QByteArray,BAListMap)));
+
+        connect(handler, SIGNAL(gotDisconnection()),
+                SLOT(close()));
+
         qDebug() << FCFL << "Connecting localhost :" << rbiPort;
         conn->connectToHost(QHostAddress(QHostAddress::LocalHost), rbiPort);
         if (!conn->waitForConnected(30000)) {
@@ -493,7 +508,7 @@ void TDriverRubyInterface::readProcessStderr()
 }
 
 
-quint32 TDriverRubyInterface::sendCmd( const QByteArray &name, const BAListMap &cmd)
+quint32 TDriverRubyInterface::sendCmdMessage( const QByteArray &name, const BAListMap &cmd)
 {
     if (initState != Connected || !handler) {
         return 0;
@@ -503,6 +518,26 @@ quint32 TDriverRubyInterface::sendCmd( const QByteArray &name, const BAListMap &
     Q_ASSERT(seqNum > 0);
     return seqNum;
 }
+
+
+quint32 TDriverRubyInterface::sendCmd(const QByteArray &name, const BAListMap &cmd)
+{
+    VALIDATE_THREAD_NOT;
+
+    quint32 seqNum = 0;
+
+    QString goOnlineError;
+    if (!(goOnlineError = goOnline()).isNull()) {
+        qDebug() << FCFL << "goOnline error" << goOnlineError;
+    }
+    else {
+        QMutexLocker lock(syncMutex);
+        seqNum = sendCmdMessage(name, cmd);
+        qDebug() << FCFL << "SENT" << seqNum << cmd;
+    }
+    return seqNum;
+}
+
 
 bool TDriverRubyInterface::executeCmd(const QByteArray &name, BAListMap &cmd_reply, unsigned long timeout, const QString &showCommand)
 {
@@ -515,7 +550,7 @@ bool TDriverRubyInterface::executeCmd(const QByteArray &name, BAListMap &cmd_rep
 
     QMutexLocker lock(syncMutex);
     qDebug() << FCFL << "SENDING" << cmd_reply;
-    quint32 seqNum = sendCmd(name, cmd_reply);
+    quint32 seqNum = sendCmdMessage(name, cmd_reply);
     //qDebug() << FCFL << "Sent" << seqNum << name << cmd_reply;
     if (seqNum != 0) {
         QMessageBox *box = NULL;

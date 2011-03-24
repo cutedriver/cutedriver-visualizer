@@ -78,6 +78,7 @@ TDriverTabbedEditor::TDriverTabbedEditor(QWidget *shortcutParent, QWidget *paren
     editBarP(new TDriverEditBar(this)),
     rubyHighlighter(new TDriverRubyHighlighter()),
     plainHighlighter(new TDriverHighlighter()),
+    needRunPreparations(false),
     runConsoleContainer(NULL),
     runConsole(NULL),
     runConsoleVisible(false),
@@ -1390,16 +1391,25 @@ void TDriverTabbedEditor::runFilePrep(QString fileName, TDriverRunConsole::RunRe
 {
     proceedRunFilename = fileName;
     proceedRunType = type;
-    proceedRunPending = true;
-    emit requestRunPreparations(fileName);
+    if (needRunPreparations) {
+        proceedRunPending = true;
+        emit requestRunPreparations(fileName);
+    }
+    else {
+        proceedRun(true);
+    }
 }
 
 
-bool TDriverTabbedEditor::proceedRun()
+bool TDriverTabbedEditor::proceedRun(bool okToProceed)
 {
-    if (!proceedRunPending) return false;
 
+    if (needRunPreparations && !proceedRunPending) return false;
+
+    qDebug() << FCFL << "okToProceed" << okToProceed << "proceedRunPending" << proceedRunPending;
     proceedRunPending = false;
+
+    if (!okToProceed) return false;
     return runConsole->runFile(proceedRunFilename, proceedRunType);
 }
 

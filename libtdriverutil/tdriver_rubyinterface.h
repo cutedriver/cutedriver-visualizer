@@ -45,9 +45,11 @@ public:
     static TDriverRubyInterface *globalInstance();
 
     QString goOnline(); // return Null string on success, error message on error
+    bool isOnline();
 
+    quint32 sendCmdMessage( const QByteArray &name, const BAListMap &cmd);
+    quint32 sendCmd(const QByteArray &name, const BAListMap &cmd);
     bool executeCmd( const QByteArray &name, BAListMap &cmd_reply, unsigned long timeout, const QString &showCommand = QString());
-    quint32 sendCmd( const QByteArray &name, const BAListMap &cmd);
 
     int getPort();
     int getRbiVersion();

@@ -557,6 +557,9 @@ end # class Code_evaluation_sandbox
 
 @listener = Object.new
 
+@listener.VISUALIZATION_ID = 'visualization'
+@listener.INTERACTION_ID = 'interaction'
+
 def @listener.set_working_directory( dir )
   @working_directory = dir
 end
@@ -772,7 +775,7 @@ def @listener.main_loop (conn)
     $lg.debug this_method + " MSG #{seqNumIn} #{nameIn} : #{msgIn.inspect}"
 
     #listener.rb was old script, which had STDIN/STDOUT interface
-    if ((nameIn == 'visualization') and
+    if ((nameIn == VISUALIZATION_ID) and
           msgIn.key?('input') and
           not (input_array = msgIn['input']).empty?)
     then
@@ -914,7 +917,7 @@ def @listener.main_loop (conn)
       msgOut = @listener_reply
 
     #ruby_interact.rb was old script, which had STDIN/STDOUT interface
-    elsif ((nameIn == 'interaction') and
+    elsif ((nameIn == INTERACTION_ID) and
               msgIn.key?('command') and
               not (inputcmd = msgIn['command']).empty?)
     then

@@ -160,9 +160,24 @@ private:
 
     // command executing & error handling
 
-    void processErrorMessage( ExecuteCommandType commandType, const QString &commandString, const BAListMap &msg, const QString &additionalInformation,
-                              unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError );
-    bool executeTDriverCommand( ExecuteCommandType commandType, const QString &commandString, const QString &additionalInformation = QString(), BAListMap *reply = NULL);
+    void processErrorMessage(ExecuteCommandType commandType,
+                             const QString &commandString,
+                             const BAListMap &msg,
+                             const QString &additionalInformation,
+                             unsigned &resultEnum,
+                             QString &clearError,
+                             QString &shortError,
+                             QString &fullError );
+
+    bool sendTDriverCommand(ExecuteCommandType commandType,
+                            const QString &commandString,
+                            const QString &errorName = QString());
+
+    bool executeTDriverCommand(ExecuteCommandType commandType,
+                               const QString &commandString,
+                               const QString &additionalInformation = QString(),
+                               BAListMap *reply = NULL);
+
 
     // global data & caches
 
@@ -520,7 +535,7 @@ private:
 signals:
     void defaultFontSet(QFont font);
     void insertToCodeEditor(QString text, bool prependParent, bool prependDot);
-    void disconnectSUTResult(bool disconnected);
+    void disconnectionOk(bool disconnected);
 
 private slots:
 
@@ -539,16 +554,12 @@ private slots:
     void propertiesItemPressed( QTableWidgetItem *item );
     void apiItemPressed( QTableWidgetItem *item );
 
-    void keyPressEvent ( QKeyEvent *event );
-    bool eventFilter ( QObject *obj, QEvent *event );
-
     void showMainVisualizerAssistant();
     void showContextVisualizerAssistant( const QString &page );
 
     void showVisualizerHelp();
     void showAboutVisualizer();
 
-    void closeEvent( QCloseEvent *event );
 
     // toolBar methods
 
@@ -564,7 +575,15 @@ private slots:
     void delayedRefreshData();
     void forceRefreshData();
 
-    void refreshData();
+
+
+    void sendAppListRequest(bool refreshAfter=true);
+
+    QString constructRefreshCmd(const QString &command);
+    void sendImageRequest();
+    void sendUiDumpRequest();
+    void sendRefreshCommands();
+
     void refreshDataDisplay();
 
     void objectViewItemClicked( QTreeWidgetItem *item, int column );
@@ -650,7 +669,20 @@ private slots:
     void startAppDialogEnableStartButton(const QString & text );
     void startAppDialogReturnPress();
 
+    void receiveTDriverMessage(quint32 seqNum, QByteArray name, const BAListMap &reply = BAListMap());
+    void messageTimeoutSlot();
+    void resetMessageSequenceFlags();
+
 private:
+    QMap<quint32, ExecuteCommandType> sentTDriverMessages; // maps seqnum of sent message to message type
+    QTimer *messageTimeoutTimer;
+    bool doRefreshAfterAppList;
+    unsigned doExlusiveDisconnectAfterRefreshes; // bitfield: 1 for image, 2 for UI XML refresh
+private:
+    void keyPressEvent ( QKeyEvent *event );
+    bool eventFilter ( QObject *obj, QEvent *event );
+    void closeEvent( QCloseEvent *event );
+
     QString treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey sutItemPtr);
     QTreeWidgetItem *findDialogSubtreeNext(QTreeWidgetItem *current, QTreeWidgetItem *root, bool wrap=false);
     QTreeWidgetItem *findDialogSubtreePrev(QTreeWidgetItem *current, QTreeWidgetItem *root, bool wrap=false);

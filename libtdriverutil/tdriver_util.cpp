@@ -24,6 +24,9 @@
 #include <QCoreApplication>
 #include <cstdlib>
 
+const char TDriverUtil::visualizationId[] = "visualization";
+const char TDriverUtil::interactionId[] = "interaction";
+
 TDriverUtil::TDriverUtil(QObject *parent) :
     QObject(parent)
 {

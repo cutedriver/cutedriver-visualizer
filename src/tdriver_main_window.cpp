@@ -20,10 +20,12 @@
 
 #include "tdriver_main_window.h"
 #include "tdriver_recorder.h"
+#include "tdriver_image_view.h"
 
 #include <tdriver_tabbededitor.h>
 #include <tdriver_rubyinterface.h>
 #include "../common/version.h"
+
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -32,19 +34,25 @@
 #include <QThread>
 #include <QToolBar>
 #include <QLabel>
+#include <QTimer>
 
 #include <tdriver_debug_macros.h>
 
 
 MainWindow::MainWindow() :
     QMainWindow(),
-    foregroundApplication(true),
+    foregroundApplication(false),
     tdriverMsgBox(new QErrorMessage(this)),
     tdriverMsgTotal(0),
     tdriverMsgShown(1),
     keyLastUiStateDir("files/last_uistate_dir"),
-    keyLastTDriverDir("files/last_tdriver_dir")
+    keyLastTDriverDir("files/last_tdriver_dir"),
+    messageTimeoutTimer(new QTimer(this))
 {
+    resetMessageSequenceFlags();
+    messageTimeoutTimer->setSingleShot(true);
+    connect(messageTimeoutTimer, SIGNAL(timeout()), SLOT(messageTimeoutSlot()));
+
     // ugly hack to disable the "don't show again" checkbox,
     // may not work in future Qt versions, and may not work on all platforms
     foreach(QObject *child, tdriverMsgBox->children()) {
@@ -162,8 +170,12 @@ bool MainWindow::setup()
     QSettings settings;
 
     TDriverRubyInterface::startGlobalInstance();
+
     connect(TDriverRubyInterface::globalInstance(), SIGNAL(rbiError(QString,QString,QString)),
-            this, SLOT(handleRbiError(QString,QString,QString)));
+            SLOT(handleRbiError(QString,QString,QString)));
+
+    connect(TDriverRubyInterface::globalInstance(), SIGNAL(messageReceived(quint32,QByteArray,BAListMap)),
+            SLOT(receiveTDriverMessage(quint32,QByteArray,BAListMap)));
 
     // determine if connection to TDriver established -- if not, allow user to run TDriver Visualizer in viewer/offline mode
     offlineMode = true;
@@ -171,8 +183,8 @@ bool MainWindow::setup()
     QString goOnlineError;
     if (!(goOnlineError = TDriverRubyInterface::globalInstance()->goOnline()).isNull()) {
         tdriverMsgAppend(tr("TDriver Visualizer failed to interface with TDriver framework:\n\n" )
-                    + goOnlineError
-                    + tr("\n\n=== Launching in offline mode ==="));
+                         + goOnlineError
+                         + tr("\n\n=== Launching in offline mode ==="));
     }
     else {
         QString installedDriverVersion = getDriverVersionNumber();
@@ -237,11 +249,11 @@ bool MainWindow::setup()
     while ( !QFile((parametersFile = tdriverPath + "/tdriver_parameters.xml")).exists() ) {
 
         QMessageBox::StandardButton result = QMessageBox::critical(
-                0,
-                tr("Missing file"),
-                tr("Could not locate TDriver parameters file:\n\n  %1\n\n").arg(parametersFile) +
-                tr("Please click Ok to select correct folder, or Cancel to quit.\n\nNote: Location will be saved to Visualizer configuration."),
-                QMessageBox::Ok | QMessageBox::Cancel);
+                    0,
+                    tr("Missing file"),
+                    tr("Could not locate TDriver parameters file:\n\n  %1\n\n").arg(parametersFile) +
+                    tr("Please click Ok to select correct folder, or Cancel to quit.\n\nNote: Location will be saved to Visualizer configuration."),
+                    QMessageBox::Ok | QMessageBox::Cancel);
 
         if (result & QMessageBox::Cancel) {
             return false; // exit
@@ -322,7 +334,7 @@ bool MainWindow::setup()
 #endif
 
     if ( !offlineMode &&
-         !executeTDriverCommand( commandSetOutputPath, "listener set_output_path " + outputPath) ) {
+            !executeTDriverCommand( commandSetOutputPath, "listener set_output_path " + outputPath) ) {
         outputPath = QApplication::applicationDirPath();
     }
 
@@ -518,9 +530,9 @@ bool MainWindow::eventFilter(QObject * object, QEvent *event) {
                 widget = static_cast<QWidget *>(object)-> focusWidget();
                 if (widget == objectTree)
                     page = "tree.html";
-                }else {
-                    page = "devices.html";
-                }
+            }else {
+                page = "devices.html";
+            }
 #endif
             showContextVisualizerAssistant(page);
 
@@ -602,6 +614,7 @@ void MainWindow::statusbar( QString text, int currentProgressValue, int maxProgr
     statusBar()->repaint();
 }
 
+
 void MainWindow::handleRbiError(QString title, QString text, QString details)
 {
     tdriverMsgAppend(tr("Error from TDriver interface:\n")
@@ -612,6 +625,188 @@ void MainWindow::handleRbiError(QString title, QString text, QString details)
                      + details);
 }
 
+
+void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BAListMap &reply)
+{
+    if (name != TDriverUtil::visualizationId) return; // not for us
+
+    if (!sentTDriverMessages.contains(seqNum)) {
+        qDebug() << FCFL << "received visualization message with unknown seqNum:" << seqNum;// << reply;
+        return;
+    }
+
+    qDebug() << FCFL << "received visualization message:" << seqNum << reply;
+
+    ExecuteCommandType commandType = sentTDriverMessages.take(seqNum);
+
+    bool handleError = false;
+    bool handleNormally = false;
+
+    if (reply.contains("error")) {
+        handleError = true;
+        unsigned resultEnum = OK;
+        QString clearError, shortError, fullError;
+        processErrorMessage(commandType, "<N/A>", reply, "<unknownn>",
+                            resultEnum, clearError, shortError, fullError);
+
+        if ( resultEnum & FAIL) {
+
+        }
+
+        if ( resultEnum & DISCONNECT ) {
+            // disconnect
+            qDebug() << FCFL << "DISCONNECT";
+
+            BAListMap msg;
+            msg["input"] << activeDevice.toAscii() << "disconnect";
+            /*bool response2 =*/
+            TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, 9999);
+            if (msg.contains("error")) {
+                fullError += "\n\nDisconnect after error failed!";
+            }
+            else {
+                fullError += "\n\nDisconnect after error succeeded.";
+                // disconnect passed -- retry
+                currentApplication.clear();
+            }
+        }
+        qDebug() << FCFL << resultEnum << clearError << shortError << fullError;
+        return;
+    }
+    else if (seqNum > 0) {
+        handleNormally = true;
+    }
+
+
+    switch (commandType) {
+    case commandSetOutputPath:
+        break;
+
+    case commandListApps:
+        if (handleNormally) {
+            qDebug() << FCFL << "got app list:" << applicationsNamesMap;
+            statusbar(tr("Parsing applications list..."));
+            parseApplicationsXml( reply.value("applications_filename").value(0) );
+            statusbar(tr("Applications list updated!"), 2000);
+        }
+        if (doRefreshAfterAppList) {
+            // leave doRefreshAfterAppList to true for the call, in case it's used.
+            if (!handleError) sendRefreshCommands();
+            doRefreshAfterAppList = false;
+        }
+        break;
+
+    case commandClassMethods:
+        break;
+
+    case commandDisconnectSUT:
+        qDebug() << FCFL << "Disconnection" << !handleError;
+        statusbar(tr("SUT disconnected"), 1000);
+        emit disconnectionOk(handleError);
+        break;
+
+    case commandRecordingStart:
+        break;
+
+    case commandRecordingStop:
+        break;
+
+    case commandRecordingTest:
+        break;
+
+    case commandTapScreen:
+        if (handleNormally && !doRefreshAfterAppList) {
+            statusbar(tr("Tap done, auto-refreshing..."), 1000 );
+            sendRefreshCommands();
+        }
+        break;
+
+    case commandRefreshUI:
+        if (handleNormally) {
+            statusbar(tr("UI XML refresh done, updating object tree..."));
+            updateObjectTree( reply.value("ui_filename").value(0) );
+
+            statusbar(tr("UI XML refresh done, updating behaviours..."));
+            /*bool behavioursOk =*/
+            updateBehaviourXml();
+
+            statusbar(tr("UI XML refresh done, updating properties..."));
+            updatePropertiesTable();
+
+            statusbar(tr("UI XML refresh complete!"), 1000 );
+            updateWindowTitle();
+
+        }
+        // bitfield: 2 for UI XML refresh
+        if (doExlusiveDisconnectAfterRefreshes == 2) {
+            disconnectExclusiveSUT();
+        }
+        doExlusiveDisconnectAfterRefreshes &= ~2;
+        objectTree->setDisabled(false);
+        propertiesDock->setDisabled(false);
+        break;
+
+    case commandRefreshImage:
+        if (handleNormally) {
+            statusbar(tr("Image refresh done, updating..."), 1000);
+            imageWidget->disableDrawHighlight();
+            imageWidget->refreshImage( reply.value("image_filename").value(0));
+            imageWidget->repaint();
+            statusbar(tr("Image refresh complete!"), 1000);
+        }
+        // bitfield: 1 for image
+        if (doExlusiveDisconnectAfterRefreshes == 1) {
+            disconnectExclusiveSUT();
+        }
+        doExlusiveDisconnectAfterRefreshes &= ~1;
+        imageViewDock->setDisabled(false);
+        break;
+
+    case commandKeyPress:
+        break;
+
+    case commandSetAttribute:
+        break;
+
+    case commandCheckApiFixture:
+        break;
+
+    case commandBehavioursXml:
+        break;
+
+    case commandGetVersionNumber:
+        break;
+
+    case commandSignalList:
+        break;
+
+    case commandGetDeviceParameter:
+        break;
+
+    case commandGetAllDeviceParameters:
+        break;
+
+    case commandStartApplication:
+        break;
+
+    }
+
+}
+
+
+void MainWindow::messageTimeoutSlot()
+{
+    statusbar(tr("TDriver interface time-out!"), 1000);
+    resetMessageSequenceFlags();
+}
+
+
+void MainWindow::resetMessageSequenceFlags()
+{
+    doRefreshAfterAppList=false;
+    doExlusiveDisconnectAfterRefreshes=0;
+    if (messageTimeoutTimer) messageTimeoutTimer->stop();
+}
 
 void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QString &commandString, const BAListMap &msg, const QString &additionalInformation,
                                      unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError )
@@ -630,17 +825,17 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QStri
     // do clearError
     {
         switch ( commandType ) {
-        case MainWindow::commandListApps: clearError = tr("Error retrieving applications list."); break;
-        case MainWindow::commandClassMethods: clearError = tr("Error retrieving methods list for %1.").arg(additionalInformation); break;
-        case MainWindow::commandSignalList: clearError = tr("Error retrieving signal list for %1.").arg(additionalInformation); break;
-        case MainWindow::commandDisconnectSUT: clearError = tr("Error disconnecting SUT %1.").arg(additionalInformation); break;
-        case MainWindow::commandTapScreen: clearError = tr("Error performing tap to screen."); break;
-        case MainWindow::commandRefreshUI: clearError = tr("Failed to refresh UI data."); break;
-        case MainWindow::commandRefreshImage: clearError = tr("Failed to refresh screen capture image."); break;
-        case MainWindow::commandKeyPress: clearError = tr("Failed to press key %1.").arg(additionalInformation); break;
-        case MainWindow::commandSetAttribute: clearError = tr("Failed to set attribute %1.").arg(additionalInformation); break;
-        case MainWindow::commandGetVersionNumber: clearError = tr("Failed to retrieve TDriver version number."); break;
-        case MainWindow::commandStartApplication: clearError = tr("Failed to start application."); break;
+        case commandListApps: clearError = tr("Error retrieving applications list."); break;
+        case commandClassMethods: clearError = tr("Error retrieving methods list for %1.").arg(additionalInformation); break;
+        case commandSignalList: clearError = tr("Error retrieving signal list for %1.").arg(additionalInformation); break;
+        case commandDisconnectSUT: clearError = tr("Error disconnecting SUT %1.").arg(additionalInformation); break;
+        case commandTapScreen: clearError = tr("Error performing tap to screen."); break;
+        case commandRefreshUI: clearError = tr("Failed to refresh UI data."); break;
+        case commandRefreshImage: clearError = tr("Failed to refresh screen capture image."); break;
+        case commandKeyPress: clearError = tr("Failed to press key %1.").arg(additionalInformation); break;
+        case commandSetAttribute: clearError = tr("Failed to set attribute %1.").arg(additionalInformation); break;
+        case commandGetVersionNumber: clearError = tr("Failed to retrieve TDriver version number."); break;
+        case commandStartApplication: clearError = tr("Failed to start application."); break;
         default: clearError = tr("Error with command string '%1'").arg(commandString);
         }
     }
@@ -697,17 +892,52 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QStri
         if (!exList.empty()) {
             while (exList.size() < 2) exList << QString();
             fullError += tr("\n\nException '%1':\n%2\n\nBacktrace:\n%3").
-                         arg(exList.takeFirst()).
-                         arg(exList.takeFirst()).
-                         arg(exList.join("\n"));
+                    arg(exList.takeFirst()).
+                    arg(exList.takeFirst()).
+                    arg(exList.join("\n"));
             fullError.replace(":in `", ":\n  in `");
         }
     }
-
 }
 
 
-bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QString &commandString, const QString &additionalInformation, BAListMap *reply )
+bool MainWindow::sendTDriverCommand( ExecuteCommandType commandType,
+                                    const QString &commandString,
+                                    const QString &errorName)
+{
+    BAListMap msg;
+    msg["input"] = commandString.toAscii().split(' ');
+
+    quint32 seqNum = TDriverRubyInterface::globalInstance()->sendCmd(TDriverUtil::visualizationId, msg);
+    qDebug() << FCFL << "SENT SEQNUM" << seqNum;
+
+    if (seqNum > 0) {
+        sentTDriverMessages[seqNum] = commandType;
+
+        int default_timeout = TDriverUtil::quotedToInt(activeDeviceParams.value("default_timeout"))*1000;
+
+        if (default_timeout <= 0){
+            default_timeout=35000;
+        }
+
+        messageTimeoutTimer->start(default_timeout);
+        return true;
+    }
+    else {
+        // send message with sequence number 0 to trigger any followup action to happen
+        if (!errorName.isNull()) {
+            statusbar(tr("ERROR: Sending %1 command to TDriver failed!").arg(errorName), 1000);
+        }
+        receiveTDriverMessage(0, "visualizer");
+        return false;
+    }
+}
+
+
+bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType,
+                                       const QString &commandString,
+                                       const QString &additionalInformation,
+                                       BAListMap *reply )
 {
     QString clearError;
     QString shortError;
@@ -730,7 +960,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
         QTime t;
         t.start();
         /*bool response1 =*/
-        TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, default_timeout );
+        TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, default_timeout );
         if (msg.contains("error")) {
             qDebug() << FCFL << "failure time" << float(t.elapsed())/1000.0 << "reply" << msg;
 
@@ -749,7 +979,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType, const QS
                 msg.clear();
                 msg["input"] << activeDevice.toAscii() << "disconnect";
                 /*bool response2 =*/
-                TDriverRubyInterface::globalInstance()->executeCmd("visualization", msg, default_timeout );
+                TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, default_timeout );
                 if (msg.contains("error")) {
                     fullError += "\n\nDisconnect after error failed!";
                     result = false;
