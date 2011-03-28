@@ -630,14 +630,14 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
 {
     if (name != TDriverUtil::visualizationId) return; // not for us
 
-    if (!sentTDriverMessages.contains(seqNum)) {
+    if (!sentTDriverMsgs.contains(seqNum)) {
         qDebug() << FCFL << "received visualization message with unknown seqNum:" << seqNum;// << reply;
         return;
     }
 
     qDebug() << FCFL << "received visualization message:" << seqNum << reply;
 
-    ExecuteCommandType commandType = sentTDriverMessages.take(seqNum);
+    SentTDriverMsg sentMsg(sentTDriverMsgs.take(seqNum));
 
     bool handleError = false;
     bool handleNormally = false;
@@ -646,8 +646,25 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
         handleError = true;
         unsigned resultEnum = OK;
         QString clearError, shortError, fullError;
-        processErrorMessage(commandType, "<N/A>", reply, "<unknownn>",
+        processErrorMessage(sentMsg.type, "<N/A>", reply, "<unknownn>",
                             resultEnum, clearError, shortError, fullError);
+#if 0
+        qDebug() << FCFL << "error: " << resultEnum << fullError;
+        tdriverMsgAppend(fullError);
+        if (resultEnum & RETRY) {
+            if (sentMsg.resends <= 0) {
+                if (resendTDriverCommand(sentMsg)) {
+                    qDebug() << FCFL << "Resending ok";
+                    return;
+                }
+                else {
+                    qDebug() << FCFL << "Resend failed!";
+                }
+            }
+            else {
+                qDebug() << FCFL << "Ignoring RETRY for resend count" << sentMsg.resends;
+            }
+        }
 
         if ( resultEnum & FAIL) {
 
@@ -670,7 +687,26 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
                 currentApplication.clear();
             }
         }
-        qDebug() << FCFL << resultEnum << clearError << shortError << fullError;
+        //        qDebug() << FCFL << resultEnum << clearError << shortError << fullError;
+#else
+        qDebug() << FCFL << "Sending disconnect after error:" << resultEnum << fullError;
+        statusbar(tr("Sending disconnect after error!"));
+
+        BAListMap msg;
+        msg["input"] << activeDevice.toAscii() << "disconnect";
+        TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, 9999);
+        if (msg.contains("error")) {
+            fullError += "\n\nDisconnect after error failed!";
+            statusbar(tr("Disconnect failed"), 2000);
+        }
+        else {
+            fullError += "\n\nDisconnect after error succeeded.";
+            // disconnect passed -- retry
+            currentApplication.clear();
+            statusbar(tr("Disconnected after error!"), 2000);
+        }
+        tdriverMsgAppend(fullError);
+#endif
         return;
     }
     else if (seqNum > 0) {
@@ -678,7 +714,7 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
     }
 
 
-    switch (commandType) {
+    switch (sentMsg.type) {
     case commandSetOutputPath:
         break;
 
@@ -789,6 +825,8 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
     case commandStartApplication:
         break;
 
+    case commandInvalid:
+        qDebug() << FCFL << "got message type commandInvalid!";
     }
 
 }
@@ -808,8 +846,10 @@ void MainWindow::resetMessageSequenceFlags()
     if (messageTimeoutTimer) messageTimeoutTimer->stop();
 }
 
-void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QString &commandString, const BAListMap &msg, const QString &additionalInformation,
-                                     unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError )
+void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QString &commandString,
+                                     const BAListMap &msg, const QString &additionalInformation,
+                                     unsigned &resultEnum,
+                                     QString &clearError, QString &shortError, QString &fullError)
 {
     QStringList errList;
     foreach(const QByteArray &ba, msg.value("error")) {
@@ -908,18 +948,16 @@ bool MainWindow::sendTDriverCommand( ExecuteCommandType commandType,
     BAListMap msg;
     msg["input"] = commandString.toAscii().split(' ');
 
-    quint32 seqNum = TDriverRubyInterface::globalInstance()->sendCmd(TDriverUtil::visualizationId, msg);
+    quint32 seqNum = TDriverRubyInterface::globalInstance()->sendCmd(
+                TDriverUtil::visualizationId, msg);
     qDebug() << FCFL << "SENT SEQNUM" << seqNum;
 
     if (seqNum > 0) {
-        sentTDriverMessages[seqNum] = commandType;
+
+        sentTDriverMsgs[seqNum] = SentTDriverMsg(commandType, msg, errorName);
 
         int default_timeout = TDriverUtil::quotedToInt(activeDeviceParams.value("default_timeout"))*1000;
-
-        if (default_timeout <= 0){
-            default_timeout=35000;
-        }
-
+        if (default_timeout <= 0) default_timeout=35000;
         messageTimeoutTimer->start(default_timeout);
         return true;
     }
@@ -928,7 +966,33 @@ bool MainWindow::sendTDriverCommand( ExecuteCommandType commandType,
         if (!errorName.isNull()) {
             statusbar(tr("ERROR: Sending %1 command to TDriver failed!").arg(errorName), 1000);
         }
-        receiveTDriverMessage(0, "visualizer");
+        sentTDriverMsgs[0] = SentTDriverMsg(commandType, msg, errorName, -1);
+        receiveTDriverMessage(0, TDriverUtil::visualizationId);
+        return false;
+    }
+}
+
+
+bool MainWindow::resendTDriverCommand(SentTDriverMsg &msg)
+{
+    msg.resends++;
+
+    quint32 seqNum = TDriverRubyInterface::globalInstance()->sendCmd(
+                TDriverUtil::visualizationId, msg.msg);
+    qDebug() << FCFL << "RESENT SEQNUM" << seqNum;
+    if (seqNum > 0) {
+        sentTDriverMsgs[seqNum] = SentTDriverMsg(msg);
+        int default_timeout = TDriverUtil::quotedToInt(activeDeviceParams.value("default_timeout"))*1000;
+        if (default_timeout <= 0) default_timeout=35000;
+        messageTimeoutTimer->start(default_timeout);
+        return true;
+    }
+    else {
+        if (!msg.err.isNull()) {
+            statusbar(tr("ERROR: Sending %1 command to TDriver failed!").arg(msg.err), 1000);
+        }
+        sentTDriverMsgs[0] = msg;
+        receiveTDriverMessage(0, TDriverUtil::visualizationId);
         return false;
     }
 }

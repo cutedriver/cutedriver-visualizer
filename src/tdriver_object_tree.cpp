@@ -501,12 +501,12 @@ void MainWindow::sendAppListRequest(bool refreshAfter)
 
     if (TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" ))) {
         // receive fake message to trigger any followup action
-        sentTDriverMessages[0] = commandListApps;
-        receiveTDriverMessage(0, TDriverUtil::visualizationId, BAListMap());
+        sentTDriverMsgs[0] = SentTDriverMsg(commandListApps);
+        receiveTDriverMessage(0, TDriverUtil::visualizationId);
     }
     else {
         QString listCommand = QString( activeDevice + " list_apps" );
-        if (sendTDriverCommand(commandListApps, listCommand), "application list") {
+        if (sendTDriverCommand(commandListApps, listCommand, "application list")) {
             statusbar(tr("Refreshing application list..."));
         }
         //else {            statusbar( "Error: Failed send application list request", 1000 );        }
