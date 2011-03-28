@@ -155,7 +155,7 @@ void MainWindow::objectTreeItemChanged()
 }
 
 
-QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem, const TreeItemInfo &data)
+QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem, const TreeItemInfo &data, QMap<QString, QStringList> duplicateItems )
 {
 
     //qDebug() << "createObjectTreeItem";
@@ -194,7 +194,36 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem,
       
     } else {
     
-      item->setForeground( 1, QColor(Qt::darkGreen) );
+      if ( duplicateItems.count( name ) != 0 ){
+
+        QStringList items = duplicateItems.value( name );
+
+        QString toolTipMessage;
+
+        if ( items.size() == 1 ){
+
+          toolTipMessage = "\n  Warning!  \n\n  Multiple objects found with same object name and id. Identifying and accessing this test object without \n  full stack of parent object(s) may lead your test scripts to fail. The reason for this issue is how \n  objects are traversed but usually due to there are no unique object id available.  \n\n  Please contact your manager, traverser development team or responsible person and request for  \n  unique object names and ids in order to make this application more testable.  \n\n";
+
+          //name = name + " <Duplicate object name and ID>";
+
+        } else {
+
+          toolTipMessage = "\n  Warning!  \n\n  Multiple objects found with same object name. Objects without unique name may lead your test scripts to \n  fail due to multiple test objects found exception.  \n\n  Please contact your manager, development team or responsible person and request for  \n  uniquely named objects in order to make this application more testable.  \n\n";
+
+          //name = name + " <Duplicate object name>";
+
+        }
+
+        item->setBackground( 1, QColor(Qt::red) );
+          item->setForeground( 1, QColor(Qt::white) );
+
+        item->setData( 1, Qt::ToolTipRole, toolTipMessage );  
+
+      } else {
+
+        item->setForeground( 1, QColor(Qt::darkGreen) );
+
+      }
     
     }
 
@@ -301,8 +330,126 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
     }
 }
 
+QList<QMap<QString, QString> > MainWindow::collectObjectData( QDomElement element )
+{
 
-void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement )
+    QList<QMap<QString, QString> > results;
+
+    QDomNode node = element.firstChild();
+
+    while ( !node.isNull() ) {
+
+      if ( node.isElement() and node.nodeName() == "objects" ){
+
+        results << collectObjectData( node.toElement() );
+
+      }
+
+      if ( node.isElement() and node.nodeName() == "object" ){
+
+        QDomElement tmpElement( node.toElement() );
+
+        if ( tmpElement.attribute( "name" ) != "" ){
+
+          QMap<QString, QString> tmpValue;
+
+          tmpValue.insert( "name", tmpElement.attribute( "name" ) );
+          tmpValue.insert( "id", tmpElement.attribute( "id" ) );
+
+          results << tmpValue;
+
+        }
+
+        results << collectObjectData( node.toElement() );
+
+      }
+    
+      node = node.nextSibling();
+
+    }
+
+    return results;
+
+}
+
+QMap<QString, QStringList> MainWindow::findDuplicateObjectNames( QList<QMap<QString, QString> > objects )
+{
+
+  QMap<QString, QStringList> results;
+
+  QMap<QString, QStringList> foundObjects;
+
+  if ( objects.size() > 0 ){
+
+    for ( int i = 0; i < objects.size(); i++ ){ 
+
+      qDebug() << "--";
+
+      QMap<QString, QString> object = objects.at( i );
+
+      QString objectName = object.value( "name" );
+
+      QString objectId = object.value( "id" );
+
+      bool duplicate = false;
+
+      QStringList objectIds;
+
+      if ( foundObjects.count( objectName ) != 0 ){
+
+        objectIds = foundObjects[ objectName ];
+
+        qDebug() << "objectIds: " << objectIds;
+
+        if ( objectIds.contains( objectId ) == true ){
+
+          qDebug() << "objects name and id are identical, show warning...";
+
+          duplicate = true;
+
+        } else {
+
+          duplicate = true;
+
+          objectIds << objectId;
+
+          foundObjects[ objectName ] = objectIds;
+
+        }
+
+        results[ objectName ] = objectIds;
+
+        qDebug() << objectIds;
+
+      } else {
+
+        objectIds << objectId;
+
+        foundObjects.insert( objectName, objectIds );
+      
+      }
+
+      if ( duplicate == false ){
+
+        qDebug() << " not duplicate... " << object;
+
+      } else {
+
+        qDebug() << " duplicate... " << object;
+
+      }
+
+      qDebug() << object;
+
+    }
+
+  }
+
+  return results;
+
+}
+
+void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement, QMap<QString, QStringList> duplicateItems )
 {
     //qDebug() << "buildObjectTree";
 
@@ -314,11 +461,11 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 
     while ( !node.isNull() ) {
         if ( node.isElement() && node.nodeName() == "attributes" ) {
-            buildObjectTree( parentItem, node.toElement() );
+            buildObjectTree( parentItem, node.toElement(), duplicateItems );
         }
 
         if ( node.isElement() && node.nodeName() == "objects" ) {
-            buildObjectTree( parentItem, node.toElement() );
+            buildObjectTree( parentItem, node.toElement(), duplicateItems );
         }
 
         if ( node.isElement() && node.nodeName() == "attribute" ) {
@@ -349,12 +496,13 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
                 currentApplication.set(data.id, data.name);
             }
 
-            childItem = createObjectTreeItem( parentItem, data);
+            childItem = createObjectTreeItem( parentItem, data, duplicateItems );
+
             storeItemToObjectTreeMap( childItem, data );
 
             // iterate the node recursively if child nodes exists
             if ( node.hasChildNodes() ) {
-                buildObjectTree( childItem, element );
+                buildObjectTree( childItem, element, duplicateItems );
             }
 
 
@@ -443,12 +591,17 @@ void MainWindow::updateObjectTree( QString filename )
 
                 TestObjectKey itemPtr = ptr2TestObjectKey( sutItem );
 
-
                 // store object tree data
                 objectTreeData.insert( itemPtr, treeItemData );
 
+                QList<QMap<QString,QString> > objectNamesList = collectObjectData( element );
+
+                QMap<QString, QStringList> duplicates; 
+
+                duplicates = findDuplicateObjectNames( objectNamesList );
+
                 // build object tree with xml
-                buildObjectTree( sutItem, element );
+                buildObjectTree( sutItem, element, duplicates );
 
                 break; // while node is not null
             }
@@ -458,8 +611,7 @@ void MainWindow::updateObjectTree( QString filename )
     }
 
     if (!sutItem) {
-        qWarning("%s:%i: got no tasInfo elements from XML file '%s', returning from method",
-                 __FILE__, __LINE__, qPrintable(filename));
+        qWarning("%s:%i: got no tasInfo elements from XML, returning from method", __FILE__, __LINE__);
         return;
     }
 
@@ -526,89 +678,150 @@ void MainWindow::forceRefreshData()
     else {
         delayedRefreshAction->setDisabled(false);
         refreshAction->setDisabled(false);
-        sendAppListRequest();
+        refreshData();
     }
 }
 
 
-void MainWindow::sendAppListRequest(bool refreshAfter)
+static void doProgress(QProgressDialog *progress, const QString &prefix, const QString &arg, int value)
 {
-    if (refreshAfter) {
-        if (doRefreshAfterAppList) return; // don't re-send
-        else doRefreshAfterAppList = true;
+    if (!prefix.isNull()) {
+        if (!arg.isNull()) {
+            progress->setLabelText(prefix.arg(arg));
+        }
+        else {
+            progress->setLabelText(prefix);
+        }
     }
+    progress->setValue(value);
+    progress->show();
+    progress->repaint();
+}
 
-    if (TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" ))) {
-        // receive fake message to trigger any followup action
-        sentTDriverMsgs[0] = SentTDriverMsg(commandListApps);
-        receiveTDriverMessage(0, TDriverUtil::visualizationId);
+
+void MainWindow::refreshData()
+{
+    bool canceled = false;
+    bool giveup = false;
+    bool isSymbian = false;
+    bool listAppsOk = false;
+    QString refreshUiFileName;
+    bool refreshImageOk = false;
+    bool behavioursOk = false;
+    BAListMap reply;
+    QString progressTemplate = tr("Refreshing: %1...");
+    QString refreshCmdTemplate = activeDevice + " %1";
+
+    QProgressDialog *progress = new QProgressDialog("Visualizer Progress Dialog", tr("Cancel"), 0, 100, this);
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setAutoReset(false);
+    progress->setAutoClose(true);
+    progress->setMinimumDuration(0);
+    progress->setCancelButtonText(QString()); // hide cancle button here, because it seems to work badly
+
+    QTime t;
+    t.start();
+
+    // purpose of the doProgress below is to force QProgress dialog window to be wide enough to not need resize
+    doProgress(progress, QString(50, '_'), QString(), 0);
+
+    // request application list (unless symbian)
+    if ( TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )) ) {
+        qDebug() << FCFL << "Application list refresh skipped for sut type" << activeDeviceParams.value( "type" );
+        resetApplicationsList();
+        //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
+        foregroundApplication = true;
+        isSymbian = true;
     }
     else {
         QString listCommand = QString( activeDevice + " list_apps" );
-        if (sendTDriverCommand(commandListApps, listCommand, "application list")) {
-            statusbar(tr("Refreshing application list..."));
-        }
-        //else {            statusbar( "Error: Failed send application list request", 1000 );        }
+        doProgress(progress, progressTemplate, tr("requesting application list"), 1);
+        statusbar( "Refreshing application list...", 0);
+        qDebug() << FCFL << "app list refresh started at" << float(t.elapsed())/1000.0;
+        listAppsOk = executeTDriverCommand( commandListApps, listCommand, "", &reply );
+        if (!listAppsOk) giveup = true;
     }
-}
+    //canceled = progress->wasCanceled();
 
-
-QString MainWindow::constructRefreshCmd(const QString &command)
-{
-    QString ret;
-
-    if (!activeDevice.isEmpty()) {
-        if (currentApplication.isNull()) {
-            if (!foregroundApplication) {
-                qWarning("Current application not set and foregroundApplication false!"
-                         " Refreshing foreground application.");
-            }
-            ret = QString("%1 %2").arg(activeDevice, command);
-        }
-        else {
-            ret = QString("%1 %2 %3").arg(activeDevice, command, currentApplication.id);
-        }
+    if (!giveup && !canceled && !isSymbian && listAppsOk) {
+        qDebug() << FCFL << "app list parse started at" << float(t.elapsed())/1000.0;
+        doProgress(progress, progressTemplate, tr("parsing application list"), 20);
+        statusbar( "Updating applications list...", 0);
+        parseApplicationsXml( reply.value("applications_filename").value(0) );
     }
-    qDebug() << FCFL << "result" << ret;
+    //canceled = progress->wasCanceled();
 
-    return ret;
-}
-
-
-void MainWindow::sendImageRequest()
-{
-    QString cmd = constructRefreshCmd("refresh_image");
-    if (!cmd.isEmpty() && sendTDriverCommand(commandRefreshImage, cmd, "image refresh")) {
-        statusbar(tr("Sent image refresh request..."));
-        imageViewDock->setDisabled(true);
+    // use target application if user has chosen one
+    if (foregroundApplication) {
+        qDebug() << FCFL << "Refreshing foreground app";
     }
-    else imageViewDock->setDisabled(false);
-    //else {        statusbar( "Error: Failed to send image refresh request", 1000 );    }
-}
-
-
-void MainWindow::sendUiDumpRequest()
-{
-    QString cmd = constructRefreshCmd("refresh_ui");
-    if (!cmd.isEmpty() && sendTDriverCommand(commandRefreshUI, cmd, "UI XML refresh")) {
-        statusbar(tr("Sent UI XML refresh request..."));
-        objectTree->setDisabled(true);
-        propertiesDock->setDisabled(true);
+    else if (!currentApplication.isNull() && applicationsNamesMap.contains( currentApplication.id )) {
+        qDebug() << FCFL << "Refreshing current application, id:" << currentApplication.id;
+        refreshCmdTemplate += " " + currentApplication.id;
     }
     else {
-        objectTree->setDisabled(false);
-        propertiesDock->setDisabled(false);
+        qWarning("Current application not set and foregroundApplication false! Refreshing foreground application.");
     }
 
-    // else {        statusbar( "Error: Failed to send UI refresh request", 1000 );    }
-}
+    // request ui xml dump
+    if (!giveup && !canceled) {
+        doProgress(progress, progressTemplate, tr("requesting UI XML data"), 25);
+        statusbar( "Getting UI XML data...", 0);
+        qDebug() << FCFL << "xml refresh started at" << float(t.elapsed())/1000.0;
+        if (executeTDriverCommand( commandRefreshUI, refreshCmdTemplate.arg("refresh_ui"), "", &reply ))
+            refreshUiFileName = reply.value("ui_filename").value(0);
+        else
+            giveup = true;
+    }
+    //canceled = progress->wasCanceled();
 
+    // request screen capture image
+    if (!giveup && !canceled) {
+        doProgress(progress, progressTemplate, tr("getting screen capture image"), 65);
+        statusbar( "Getting UI image data...", 0);
+        qDebug() << FCFL << "image refresh started at" << float(t.elapsed())/1000.0;
+        refreshImageOk = executeTDriverCommand( commandRefreshImage, refreshCmdTemplate.arg("refresh_image"), "", &reply );
+    }
+    //progress->setCancelButtonText(QString()); // hide cancle button here
+    //canceled = progress->wasCanceled();
 
-void MainWindow::sendRefreshCommands()
-{
-    doExlusiveDisconnectAfterRefreshes = 1|2; // bitfield: 1 for image, 2 for UI XML refresh
-    sendUiDumpRequest();
-    sendImageRequest();
+    if (!giveup && !canceled && refreshImageOk) {
+        qDebug() << FCFL << "image load started at" << float(t.elapsed())/1000.0;
+        doProgress(progress, progressTemplate, tr("loading screen capture image"), 90);
+        statusbar( "Loading screen capture image...", 0);
+        imageWidget->disableDrawHighlight();
+        imageWidget->refreshImage( reply.value("image_filename").value(0));
+        imageWidget->repaint();
+    }
+
+    if (!giveup && !canceled && !refreshUiFileName.isEmpty()) {
+
+        doProgress(progress, progressTemplate, tr("parsing UI XML data"), 95);
+        statusbar( "Updating object tree...", 0);
+        qDebug() << FCFL << "object tree update / ui xml parse started at" << float(t.elapsed())/1000.0;
+        updateObjectTree( refreshUiFileName );
+
+        qDebug() << FCFL << "behaviour update started at" << float(t.elapsed())/1000.0;
+        statusbar( "Updating behaviours...", 0);
+        behavioursOk = updateBehaviourXml();
+
+        qDebug() << FCFL << "properties and title update started at" << float(t.elapsed())/1000.0;
+        statusbar( "Almost done...", 0);
+        updatePropertiesTable();
+        updateWindowTitle();
+    }
+
+    qDebug() << FCFL << "done (listAppsOk" << listAppsOk << "refreshUiFileName" << refreshUiFileName << "refreshImageOk" << refreshImageOk << "behavioursOk" << behavioursOk << ") at" << float(t.elapsed())/1000.0;
+    progress->reset();
+
+    /*if (canceled) statusbar( "Refresh canceled!", 1500 );
+    else*/ if ((listAppsOk || isSymbian) && !refreshUiFileName.isEmpty()) statusbar( "Refresh done!", 1500 );
+    else if (!refreshUiFileName.isEmpty()) statusbar( "Refreshed only UI XML data!", 1500 );
+    else if (listAppsOk) statusbar( "Refreshed only Application List!", 1500 );
+    else statusbar( "Refresh failed!", 1500 );
+
+    disconnectExclusiveSUT();
+    if (progress) delete progress;
 }
 
 
