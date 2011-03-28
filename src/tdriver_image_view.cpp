@@ -172,7 +172,7 @@ void TDriverImageView::mousePressEvent(QMouseEvent *event)
     }
 
     QPoint pos(getEventPosInImage());
-    emit statusBarMessage(QString("Mouse click at (%1, %2)").arg(pos.x()).arg(pos.y()), 2000);
+    emit statusBarMessage(tr("Mouse click at (%1, %2)").arg(pos.x()).arg(pos.y()), 2000);
 }
 
 
@@ -246,7 +246,7 @@ void TDriverImageView::mouseMoveEvent( QMouseEvent * event )
     if (dragging) {
         QPoint pos1(getPosInImage(dragStart));
         QPoint pos2(getPosInImage(dragEnd));
-        emit statusBarMessage( QString("Selection: (%1, %2) - (%3, %4) size (%5, %6)")
+        emit statusBarMessage( tr("Selection: (%1, %2) - (%3, %4) size (%5, %6)")
                               .arg(pos1.x()).arg(pos1.y())
                               .arg(pos2.x()).arg(pos2.y())
                               .arg(pos2.x()-pos1.x()).arg(pos2.y()-pos1.y()),

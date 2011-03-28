@@ -55,9 +55,12 @@ void MainWindow::createEditorDocks()
     Q_ASSERT(defaultFont);
     tabEditor->setEditorFont(*defaultFont);
     connect(this, SIGNAL(defaultFontSet(QFont)), tabEditor, SLOT(setEditorFont(QFont)));
-    connect(this, SIGNAL(disconnectSUTResult(bool)), tabEditor, SLOT(proceedRun()));
     connect(this, SIGNAL(insertToCodeEditor(QString,bool,bool)), tabEditor, SLOT(smartInsert(QString,bool,bool)));
+
+    // make tabEditor emit requestRunPreparations and then wait for proceedRun
+    connect(this, SIGNAL(disconnectionOk(bool)), tabEditor, SLOT(proceedRun(bool)));
     connect(tabEditor, SIGNAL(requestRunPreparations(QString)), this, SLOT(disconnectExclusiveSUT()));
+    tabEditor->setNeedRunPreparations(true);
 
     Q_ASSERT(imageWidget);
     connect(imageWidget, SIGNAL(insertToCodeEditor(QString,bool,bool)), tabEditor, SLOT(smartInsert(QString,bool,bool)));

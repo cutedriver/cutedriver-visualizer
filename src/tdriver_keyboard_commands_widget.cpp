@@ -84,7 +84,7 @@ void MainWindow::deviceActionButtonPressed()
 #if 0
             progressDialog.reset();
 #endif
-            refreshData();
+            sendAppListRequest();
         }
     }
 }

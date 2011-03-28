@@ -90,6 +90,54 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
+    enum ExecuteCommandType {
+        commandSetOutputPath,
+        commandListApps,
+        commandClassMethods,
+        commandDisconnectSUT,
+        commandRecordingStart,
+        commandRecordingStop,
+        commandRecordingTest,
+        commandTapScreen,
+        commandRefreshUI,
+        commandRefreshImage,
+        commandKeyPress,
+        commandSetAttribute,
+        commandCheckApiFixture,
+        commandBehavioursXml,
+        commandGetVersionNumber,
+        commandSignalList,
+        commandGetDeviceParameter,
+        commandGetAllDeviceParameters,
+        commandStartApplication,
+        commandInvalid
+    };
+
+    enum ExecuteCommandResult {
+        OK = 0,
+        WARNING = 0x1,
+        FAIL = 0x2,
+        RETRY = 0x4,
+        DISCONNECT = 0x08,
+        SILENT = 0x10
+    };
+
+private:
+    struct SentTDriverMsg {
+        ExecuteCommandType type;
+        BAListMap msg;
+        QString err;
+        int resends;
+
+        SentTDriverMsg(ExecuteCommandType type = commandInvalid, BAListMap msg = BAListMap(),
+                       const QString &err = QString(), int resends=0) :
+            type(type), msg(msg), err(err), resends(resends) {}
+        SentTDriverMsg(const SentTDriverMsg &other) :
+            type(other.type), msg(other.msg), err(other.err), resends(other.resends) {}
+    };
+
+
+public:
     MainWindow();
 
     QString tdriverPath;
@@ -113,37 +161,6 @@ public:
 
     bool isPathAction(ContextMenuSelection action) { return (action == copyPathAction || action == appendPathAction || action == insertPathAction); }
 
-    enum ExecuteCommandType {
-        commandSetOutputPath,
-        commandListApps,
-        commandClassMethods,
-        commandDisconnectSUT,
-        commandRecordingStart,
-        commandRecordingStop,
-        commandRecordingTest,
-        commandTapScreen,
-        commandRefreshUI,
-        commandRefreshImage,
-        commandKeyPress,
-        commandSetAttribute,
-        commandCheckApiFixture,
-        commandBehavioursXml,
-        commandGetVersionNumber,
-        commandSignalList,
-        commandGetDeviceParameter,
-        commandGetAllDeviceParameters,
-        commandStartApplication
-    };
-
-    enum ExecuteCommandResult {
-        OK = 0,
-        WARNING = 0x1,
-        FAIL = 0x2,
-        RETRY = 0x4,
-        DISCONNECT = 0x08,
-        SILENT = 0x10
-             };
-
 public:    // methods to access test object data by object id
     const QMap<QString, AttributeInfo > &testobjAttributes(TestObjectKey id) { return attributesMap[id]; }
     //const QStringList &testobjGeometries(AttributeKey id) { return geometriesMap[id]; }
@@ -160,9 +177,26 @@ private:
 
     // command executing & error handling
 
-    void processErrorMessage( ExecuteCommandType commandType, const QString &commandString, const BAListMap &msg, const QString &additionalInformation,
-                              unsigned &resultEnum, QString &clearError, QString &shortError, QString &fullError );
-    bool executeTDriverCommand( ExecuteCommandType commandType, const QString &commandString, const QString &additionalInformation = QString(), BAListMap *reply = NULL);
+    void processErrorMessage(ExecuteCommandType commandType,
+                             const QString &commandString,
+                             const BAListMap &msg,
+                             const QString &additionalInformation,
+                             unsigned &resultEnum,
+                             QString &clearError,
+                             QString &shortError,
+                             QString &fullError );
+
+    bool sendTDriverCommand(ExecuteCommandType commandType,
+                            const QString &commandString,
+                            const QString &errorName);
+
+    bool resendTDriverCommand(SentTDriverMsg &msg);
+
+    bool executeTDriverCommand(ExecuteCommandType commandType,
+                               const QString &commandString,
+                               const QString &additionalInformation = QString(),
+                               BAListMap *reply = NULL);
+
 
     // global data & caches
 
@@ -516,11 +550,10 @@ private:
     QPushButton *startAppDialogCloseButton;
     QAction *startAppAction;
 
-
 signals:
     void defaultFontSet(QFont font);
     void insertToCodeEditor(QString text, bool prependParent, bool prependDot);
-    void disconnectSUTResult(bool disconnected);
+    void disconnectionOk(bool disconnected);
 
 private slots:
 
@@ -539,16 +572,12 @@ private slots:
     void propertiesItemPressed( QTableWidgetItem *item );
     void apiItemPressed( QTableWidgetItem *item );
 
-    void keyPressEvent ( QKeyEvent *event );
-    bool eventFilter ( QObject *obj, QEvent *event );
-
     void showMainVisualizerAssistant();
     void showContextVisualizerAssistant( const QString &page );
 
     void showVisualizerHelp();
     void showAboutVisualizer();
 
-    void closeEvent( QCloseEvent *event );
 
     // toolBar methods
 
@@ -564,7 +593,15 @@ private slots:
     void delayedRefreshData();
     void forceRefreshData();
 
-    void refreshData();
+
+
+    void sendAppListRequest(bool refreshAfter=true);
+
+    QString constructRefreshCmd(const QString &command);
+    void sendImageRequest();
+    void sendUiDumpRequest();
+    void sendRefreshCommands();
+
     void refreshDataDisplay();
 
     void objectViewItemClicked( QTreeWidgetItem *item, int column );
@@ -650,7 +687,21 @@ private slots:
     void startAppDialogEnableStartButton(const QString & text );
     void startAppDialogReturnPress();
 
+    void receiveTDriverMessage(quint32 seqNum, QByteArray name, const BAListMap &reply = BAListMap());
+    void messageTimeoutSlot();
+    void resetMessageSequenceFlags();
+
 private:
+
+    QMap<quint32, SentTDriverMsg> sentTDriverMsgs; // maps seqnum of sent message to message type
+    QTimer *messageTimeoutTimer;
+    bool doRefreshAfterAppList;
+    unsigned doExlusiveDisconnectAfterRefreshes; // bitfield: 1 for image, 2 for UI XML refresh
+private:
+    void keyPressEvent ( QKeyEvent *event );
+    bool eventFilter ( QObject *obj, QEvent *event );
+    void closeEvent( QCloseEvent *event );
+
     QString treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey sutItemPtr);
     QTreeWidgetItem *findDialogSubtreeNext(QTreeWidgetItem *current, QTreeWidgetItem *root, bool wrap=false);
     QTreeWidgetItem *findDialogSubtreePrev(QTreeWidgetItem *current, QTreeWidgetItem *root, bool wrap=false);

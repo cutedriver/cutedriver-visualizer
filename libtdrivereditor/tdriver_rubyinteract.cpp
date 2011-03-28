@@ -200,7 +200,7 @@ bool TDriverRubyInteract::sendNextQuery()
         if (query.rbiSeqNum == 0) {
             BAListMap msg;
             msg["command"] << query.command << query.statement;
-            query.rbiSeqNum = TDriverRubyInterface::globalInstance()->sendCmd("interaction", msg);
+            query.rbiSeqNum = TDriverRubyInterface::globalInstance()->sendCmd(TDriverUtil::interactionId, msg);
             if (query.rbiSeqNum == 0) {
                 qDebug() <<FCFL << ">>>> sendCmd returned failure, command remains in queryQueue, size" << queryQueue.size();
                 return false;
@@ -257,7 +257,7 @@ void TDriverRubyInteract::rbiMessage(quint32 seqNum, QByteArray name, BAListMap 
 
     // after this point, received message affects queryQueue even if it's not for us
 
-    if (seqNum == query.rbiSeqNum && name == "interaction") {
+    if (seqNum == query.rbiSeqNum && name == TDriverUtil::interactionId) {
         // it's for us!
 
         switch (query.type) {

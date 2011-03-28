@@ -465,7 +465,7 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
                                        .arg(targetDataType)
                                        .arg(attributeName)
                                        .arg(item->text()) ) ) {
-                refreshData();
+                sendRefreshCommands();
             }
         }
     }

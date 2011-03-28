@@ -112,17 +112,12 @@ void MainWindow::imageTapFromId(TestObjectKey id)
 
 void MainWindow::tapScreenWithRefresh( QString target )
 {
-    //qDebug() << "tapScreen";
-    statusbar( "Tapping...", 0, 1 );
+    qDebug() << FCFL << target;
+    statusbar(tr("Tapping..."));
     typedef QList<QByteArray> QByteArrayList;
 
-    if ( !executeTDriverCommand( commandTapScreen, QString( activeDevice + " " + target ))) {
-        statusbar( "Error: Failed to tap the screen", 1000 );
-    }
-
-    else {
-        statusbar( "Tapping...", 1000 );
-        refreshData();
+    if ( !sendTDriverCommand( commandTapScreen, QString( activeDevice + " " + target ), "screen tapping")) {
+        //statusbar( "Error: Failed to send tap to the screen", 1000 );
     }
 }
 

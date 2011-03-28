@@ -86,8 +86,6 @@ MainWindow::MainWindow(QStringList filelist, QWidget *parent) :
 
     tabs->connectConsoles(runConsole, runDock, debugConsole, debugDock, irConsole, irDock);
 
-    connect(tabs, SIGNAL(requestRunPreparations(QString)), tabs, SLOT(proceedRun()));
-
     QSettings settings;
     restoreGeometry(settings.value("editor/geometry").toByteArray());
     restoreState(settings.value("editor/windowstate").toByteArray());

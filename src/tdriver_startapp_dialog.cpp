@@ -46,13 +46,13 @@ void MainWindow::startApp(){
     //qDebug() << "Executing app" + cmd;
 
     if ( !executeTDriverCommand( commandStartApplication, cmd)) {
-        statusbar( "Error: Failed to start application.", 1000 );
+        statusbar(tr("Error: Failed to start application."), 1000 );
         disconnectExclusiveSUT();
     }
     else {
         startAppDialog->hide();
-        statusbar( "Starting application...", 1000 );
-        refreshData();
+        statusbar(tr("Applicaton started, refreshing..."), 1000 );
+        sendAppListRequest();
     }
     startAppDialog->close();
 }

@@ -199,18 +199,25 @@ void MainWindow::createHelpMenu()
 // Function to send disconnect sut to listener (slot)
 bool MainWindow::disconnectSUT()
 {
-    bool result = true;
-    QString status = "SUT disconnected";
+    bool result = false;
 
-    if ( !executeTDriverCommand( commandDisconnectSUT,
-                           activeDevice + " disconnect",
-                           activeDevice) ) {
-        status = "SUT disconnecting failed";
-        result = false;
+    if (activeDevice.isEmpty()) {
+        qDebug() << FCFL << "trying to disconnect empty activeSut";
+        emit disconnectionOk(true);
+    }
+    else {
+        result =  sendTDriverCommand(commandDisconnectSUT,
+                                     activeDevice + " disconnect",
+                                     tr("disconnect '%1'").arg(activeDevice) );
+        if (result) {
+            statusbar( tr("Sent SUT disconnect...") );
+        }
+        else {
+            statusbar( tr("Failed to send SUT disconnect command!"), 2000 );
+            emit disconnectionOk(true);
+        }
     }
 
-    statusbar( status, 2000 );
-    emit disconnectSUTResult(result);
     return result;
 }
 
@@ -218,11 +225,12 @@ bool MainWindow::disconnectSUT()
 bool MainWindow::disconnectExclusiveSUT()
 {
     if ( TDriverUtil::isExclusiveConnectionSut(activeDeviceParams.value( "type" ))) {
-        qDebug() << FCFL << "Disconnecting sut type" << activeDeviceParams.value( "type" );
+        qDebug() << FCFL << "Disconnecting SUT type" << activeDeviceParams.value( "type" );
         return disconnectSUT();
     }
     else {
-        // emit disconnectSUTResult(false);
+        qDebug() << FCFL << "Skipping non-exclusive SUT type" << activeDeviceParams.value( "type" );
+        emit disconnectionOk(true);
         return false;
     }
 }
@@ -332,7 +340,7 @@ void MainWindow::appSelected() {
         action->setChecked( true );
         foregroundApplication = ( processId == "0" ) ? true : false;
         updateWindowTitle();
-        refreshData();
+        sendAppListRequest();
     }
 }
 
@@ -350,6 +358,7 @@ void MainWindow::deviceSelected()
         if ( strOldDevice != activeDevice) {
 
             // clear applications
+            resetMessageSequenceFlags();
             resetApplicationsList();
             currentApplication.clear();
 

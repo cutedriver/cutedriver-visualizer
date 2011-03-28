@@ -75,6 +75,7 @@ public:
     QMenuBar *createEditorMenuBar(QWidget *parent = 0);
 
     bool currentHasWritableCursor();
+    void setNeedRunPreparations(bool need) { needRunPreparations = need; }
 
     enum { MaxRecentFiles=6 };
     enum ActionContext { BeforeExit, BeforeRun };
@@ -100,7 +101,7 @@ public slots:
     void setEditorFont(QFont font);
 
     void runFilePrep(QString fileName, TDriverRunConsole::RunRequestType type);
-    bool proceedRun();
+    bool proceedRun(bool okToProceed);
 
     void addBreakpoint(struct MEC::Breakpoint);
     void addBreakpointList(QList<struct MEC::Breakpoint>);
@@ -184,6 +185,7 @@ private:
     TDriverHighlighter *plainHighlighter;
     void createActions();
 
+    bool needRunPreparations;
     QWidget *runConsoleContainer;
     TDriverRunConsole *runConsole;
     bool runConsoleVisible;

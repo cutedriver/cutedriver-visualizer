@@ -37,6 +37,8 @@ public:
     static QString smartJoin(const QString &str1, QChar sep, const QString &str2 = QString());
     static int quotedToInt(QString str);
 
+    static const char visualizationId[];
+    static const char interactionId[];
 
     static bool isExclusiveConnectionSut(const QString &sut) {
         return isSymbianSut(sut);
