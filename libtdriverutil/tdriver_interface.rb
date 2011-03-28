@@ -557,8 +557,8 @@ end # class Code_evaluation_sandbox
 
 @listener = Object.new
 
-@listener.VISUALIZATION_ID = 'visualization'
-@listener.INTERACTION_ID = 'interaction'
+VISUALIZATION_ID = 'visualization'
+INTERACTION_ID = 'interaction'
 
 def @listener.set_working_directory( dir )
   @working_directory = dir
