@@ -330,6 +330,7 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
     }
 }
 
+
 QList<QMap<QString, QString> > MainWindow::collectObjectData( QDomElement element )
 {
 
@@ -496,8 +497,7 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
                 currentApplication.set(data.id, data.name);
             }
 
-            childItem = createObjectTreeItem( parentItem, data, duplicateItems );
-
+            childItem = createObjectTreeItem( parentItem, data, duplicateItems);
             storeItemToObjectTreeMap( childItem, data );
 
             // iterate the node recursively if child nodes exists
@@ -596,12 +596,10 @@ void MainWindow::updateObjectTree( QString filename )
 
                 QList<QMap<QString,QString> > objectNamesList = collectObjectData( element );
 
-                QMap<QString, QStringList> duplicates; 
-
-                duplicates = findDuplicateObjectNames( objectNamesList );
+                QMap<QString, QStringList> duplicateItems; 
 
                 // build object tree with xml
-                buildObjectTree( sutItem, element, duplicates );
+                buildObjectTree( sutItem, element, duplicateItems );
 
                 break; // while node is not null
             }
@@ -611,7 +609,8 @@ void MainWindow::updateObjectTree( QString filename )
     }
 
     if (!sutItem) {
-        qWarning("%s:%i: got no tasInfo elements from XML, returning from method", __FILE__, __LINE__);
+        qWarning("%s:%i: got no tasInfo elements from XML file '%s', returning from method",
+                 __FILE__, __LINE__, qPrintable(filename));
         return;
     }
 
@@ -678,150 +677,89 @@ void MainWindow::forceRefreshData()
     else {
         delayedRefreshAction->setDisabled(false);
         refreshAction->setDisabled(false);
-        refreshData();
+        sendAppListRequest();
     }
 }
 
 
-static void doProgress(QProgressDialog *progress, const QString &prefix, const QString &arg, int value)
+void MainWindow::sendAppListRequest(bool refreshAfter)
 {
-    if (!prefix.isNull()) {
-        if (!arg.isNull()) {
-            progress->setLabelText(prefix.arg(arg));
-        }
-        else {
-            progress->setLabelText(prefix);
-        }
+    if (refreshAfter) {
+        if (doRefreshAfterAppList) return; // don't re-send
+        else doRefreshAfterAppList = true;
     }
-    progress->setValue(value);
-    progress->show();
-    progress->repaint();
-}
 
-
-void MainWindow::refreshData()
-{
-    bool canceled = false;
-    bool giveup = false;
-    bool isSymbian = false;
-    bool listAppsOk = false;
-    QString refreshUiFileName;
-    bool refreshImageOk = false;
-    bool behavioursOk = false;
-    BAListMap reply;
-    QString progressTemplate = tr("Refreshing: %1...");
-    QString refreshCmdTemplate = activeDevice + " %1";
-
-    QProgressDialog *progress = new QProgressDialog("Visualizer Progress Dialog", tr("Cancel"), 0, 100, this);
-    progress->setWindowModality(Qt::WindowModal);
-    progress->setAutoReset(false);
-    progress->setAutoClose(true);
-    progress->setMinimumDuration(0);
-    progress->setCancelButtonText(QString()); // hide cancle button here, because it seems to work badly
-
-    QTime t;
-    t.start();
-
-    // purpose of the doProgress below is to force QProgress dialog window to be wide enough to not need resize
-    doProgress(progress, QString(50, '_'), QString(), 0);
-
-    // request application list (unless symbian)
-    if ( TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )) ) {
-        qDebug() << FCFL << "Application list refresh skipped for sut type" << activeDeviceParams.value( "type" );
-        resetApplicationsList();
-        //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
-        foregroundApplication = true;
-        isSymbian = true;
+    if (TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" ))) {
+        // receive fake message to trigger any followup action
+        sentTDriverMsgs[0] = SentTDriverMsg(commandListApps);
+        receiveTDriverMessage(0, TDriverUtil::visualizationId);
     }
     else {
         QString listCommand = QString( activeDevice + " list_apps" );
-        doProgress(progress, progressTemplate, tr("requesting application list"), 1);
-        statusbar( "Refreshing application list...", 0);
-        qDebug() << FCFL << "app list refresh started at" << float(t.elapsed())/1000.0;
-        listAppsOk = executeTDriverCommand( commandListApps, listCommand, "", &reply );
-        if (!listAppsOk) giveup = true;
+        if (sendTDriverCommand(commandListApps, listCommand, "application list")) {
+            statusbar(tr("Refreshing application list..."));
+        }
+        //else {            statusbar( "Error: Failed send application list request", 1000 );        }
     }
-    //canceled = progress->wasCanceled();
+}
 
-    if (!giveup && !canceled && !isSymbian && listAppsOk) {
-        qDebug() << FCFL << "app list parse started at" << float(t.elapsed())/1000.0;
-        doProgress(progress, progressTemplate, tr("parsing application list"), 20);
-        statusbar( "Updating applications list...", 0);
-        parseApplicationsXml( reply.value("applications_filename").value(0) );
-    }
-    //canceled = progress->wasCanceled();
 
-    // use target application if user has chosen one
-    if (foregroundApplication) {
-        qDebug() << FCFL << "Refreshing foreground app";
+QString MainWindow::constructRefreshCmd(const QString &command)
+{
+    QString ret;
+
+    if (!activeDevice.isEmpty()) {
+        if (currentApplication.isNull()) {
+            if (!foregroundApplication) {
+                qWarning("Current application not set and foregroundApplication false!"
+                         " Refreshing foreground application.");
+            }
+            ret = QString("%1 %2").arg(activeDevice, command);
+        }
+        else {
+            ret = QString("%1 %2 %3").arg(activeDevice, command, currentApplication.id);
+        }
     }
-    else if (!currentApplication.isNull() && applicationsNamesMap.contains( currentApplication.id )) {
-        qDebug() << FCFL << "Refreshing current application, id:" << currentApplication.id;
-        refreshCmdTemplate += " " + currentApplication.id;
+    qDebug() << FCFL << "result" << ret;
+
+    return ret;
+}
+
+
+void MainWindow::sendImageRequest()
+{
+    QString cmd = constructRefreshCmd("refresh_image");
+    if (!cmd.isEmpty() && sendTDriverCommand(commandRefreshImage, cmd, "image refresh")) {
+        statusbar(tr("Sent image refresh request..."));
+        imageViewDock->setDisabled(true);
+    }
+    else imageViewDock->setDisabled(false);
+    //else {        statusbar( "Error: Failed to send image refresh request", 1000 );    }
+}
+
+
+void MainWindow::sendUiDumpRequest()
+{
+    QString cmd = constructRefreshCmd("refresh_ui");
+    if (!cmd.isEmpty() && sendTDriverCommand(commandRefreshUI, cmd, "UI XML refresh")) {
+        statusbar(tr("Sent UI XML refresh request..."));
+        objectTree->setDisabled(true);
+        propertiesDock->setDisabled(true);
     }
     else {
-        qWarning("Current application not set and foregroundApplication false! Refreshing foreground application.");
+        objectTree->setDisabled(false);
+        propertiesDock->setDisabled(false);
     }
 
-    // request ui xml dump
-    if (!giveup && !canceled) {
-        doProgress(progress, progressTemplate, tr("requesting UI XML data"), 25);
-        statusbar( "Getting UI XML data...", 0);
-        qDebug() << FCFL << "xml refresh started at" << float(t.elapsed())/1000.0;
-        if (executeTDriverCommand( commandRefreshUI, refreshCmdTemplate.arg("refresh_ui"), "", &reply ))
-            refreshUiFileName = reply.value("ui_filename").value(0);
-        else
-            giveup = true;
-    }
-    //canceled = progress->wasCanceled();
+    // else {        statusbar( "Error: Failed to send UI refresh request", 1000 );    }
+}
 
-    // request screen capture image
-    if (!giveup && !canceled) {
-        doProgress(progress, progressTemplate, tr("getting screen capture image"), 65);
-        statusbar( "Getting UI image data...", 0);
-        qDebug() << FCFL << "image refresh started at" << float(t.elapsed())/1000.0;
-        refreshImageOk = executeTDriverCommand( commandRefreshImage, refreshCmdTemplate.arg("refresh_image"), "", &reply );
-    }
-    //progress->setCancelButtonText(QString()); // hide cancle button here
-    //canceled = progress->wasCanceled();
 
-    if (!giveup && !canceled && refreshImageOk) {
-        qDebug() << FCFL << "image load started at" << float(t.elapsed())/1000.0;
-        doProgress(progress, progressTemplate, tr("loading screen capture image"), 90);
-        statusbar( "Loading screen capture image...", 0);
-        imageWidget->disableDrawHighlight();
-        imageWidget->refreshImage( reply.value("image_filename").value(0));
-        imageWidget->repaint();
-    }
-
-    if (!giveup && !canceled && !refreshUiFileName.isEmpty()) {
-
-        doProgress(progress, progressTemplate, tr("parsing UI XML data"), 95);
-        statusbar( "Updating object tree...", 0);
-        qDebug() << FCFL << "object tree update / ui xml parse started at" << float(t.elapsed())/1000.0;
-        updateObjectTree( refreshUiFileName );
-
-        qDebug() << FCFL << "behaviour update started at" << float(t.elapsed())/1000.0;
-        statusbar( "Updating behaviours...", 0);
-        behavioursOk = updateBehaviourXml();
-
-        qDebug() << FCFL << "properties and title update started at" << float(t.elapsed())/1000.0;
-        statusbar( "Almost done...", 0);
-        updatePropertiesTable();
-        updateWindowTitle();
-    }
-
-    qDebug() << FCFL << "done (listAppsOk" << listAppsOk << "refreshUiFileName" << refreshUiFileName << "refreshImageOk" << refreshImageOk << "behavioursOk" << behavioursOk << ") at" << float(t.elapsed())/1000.0;
-    progress->reset();
-
-    /*if (canceled) statusbar( "Refresh canceled!", 1500 );
-    else*/ if ((listAppsOk || isSymbian) && !refreshUiFileName.isEmpty()) statusbar( "Refresh done!", 1500 );
-    else if (!refreshUiFileName.isEmpty()) statusbar( "Refreshed only UI XML data!", 1500 );
-    else if (listAppsOk) statusbar( "Refreshed only Application List!", 1500 );
-    else statusbar( "Refresh failed!", 1500 );
-
-    disconnectExclusiveSUT();
-    if (progress) delete progress;
+void MainWindow::sendRefreshCommands()
+{
+    doExlusiveDisconnectAfterRefreshes = 1|2; // bitfield: 1 for image, 2 for UI XML refresh
+    sendUiDumpRequest();
+    sendImageRequest();
 }
 
 
@@ -1046,7 +984,3 @@ void MainWindow::objectTreeKeyPressEvent( QKeyEvent * event ) {
     }
 
 }
-
-
-
-
