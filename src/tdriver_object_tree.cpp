@@ -155,7 +155,7 @@ void MainWindow::objectTreeItemChanged()
 }
 
 
-QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem, const TreeItemInfo &data)
+QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem, const TreeItemInfo &data, QMap<QString, QStringList> duplicateItems )
 {
 
     //qDebug() << "createObjectTreeItem";
@@ -194,7 +194,36 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem,
       
     } else {
     
-      item->setForeground( 1, QColor(Qt::darkGreen) );
+      if ( duplicateItems.count( name ) != 0 ){
+
+        QStringList items = duplicateItems.value( name );
+
+        QString toolTipMessage;
+
+        if ( items.size() == 1 ){
+
+          toolTipMessage = "\n  Warning!  \n\n  Multiple objects found with same object name and id. Identifying and accessing this test object without \n  full stack of parent object(s) may lead your test scripts to fail. The reason for this issue is how \n  objects are traversed but usually due to there are no unique object id available.  \n\n  Please contact your manager, traverser development team or responsible person and request for  \n  unique object names and ids in order to make this application more testable.  \n\n";
+
+          //name = name + " <Duplicate object name and ID>";
+
+        } else {
+
+          toolTipMessage = "\n  Warning!  \n\n  Multiple objects found with same object name. Objects without unique name may lead your test scripts to \n  fail due to multiple test objects found exception.  \n\n  Please contact your manager, development team or responsible person and request for  \n  uniquely named objects in order to make this application more testable.  \n\n";
+
+          //name = name + " <Duplicate object name>";
+
+        }
+
+        item->setBackground( 1, QColor(Qt::red) );
+          item->setForeground( 1, QColor(Qt::white) );
+
+        item->setData( 1, Qt::ToolTipRole, toolTipMessage );  
+
+      } else {
+
+        item->setForeground( 1, QColor(Qt::darkGreen) );
+
+      }
     
     }
 
@@ -302,7 +331,126 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
 }
 
 
-void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement )
+QList<QMap<QString, QString> > MainWindow::collectObjectData( QDomElement element )
+{
+
+    QList<QMap<QString, QString> > results;
+
+    QDomNode node = element.firstChild();
+
+    while ( !node.isNull() ) {
+
+      if ( node.isElement() and node.nodeName() == "objects" ){
+
+        results << collectObjectData( node.toElement() );
+
+      }
+
+      if ( node.isElement() and node.nodeName() == "object" ){
+
+        QDomElement tmpElement( node.toElement() );
+
+        if ( tmpElement.attribute( "name" ) != "" ){
+
+          QMap<QString, QString> tmpValue;
+
+          tmpValue.insert( "name", tmpElement.attribute( "name" ) );
+          tmpValue.insert( "id", tmpElement.attribute( "id" ) );
+
+          results << tmpValue;
+
+        }
+
+        results << collectObjectData( node.toElement() );
+
+      }
+    
+      node = node.nextSibling();
+
+    }
+
+    return results;
+
+}
+
+QMap<QString, QStringList> MainWindow::findDuplicateObjectNames( QList<QMap<QString, QString> > objects )
+{
+
+  QMap<QString, QStringList> results;
+
+  QMap<QString, QStringList> foundObjects;
+
+  if ( objects.size() > 0 ){
+
+    for ( int i = 0; i < objects.size(); i++ ){ 
+
+      qDebug() << "--";
+
+      QMap<QString, QString> object = objects.at( i );
+
+      QString objectName = object.value( "name" );
+
+      QString objectId = object.value( "id" );
+
+      bool duplicate = false;
+
+      QStringList objectIds;
+
+      if ( foundObjects.count( objectName ) != 0 ){
+
+        objectIds = foundObjects[ objectName ];
+
+        qDebug() << "objectIds: " << objectIds;
+
+        if ( objectIds.contains( objectId ) == true ){
+
+          qDebug() << "objects name and id are identical, show warning...";
+
+          duplicate = true;
+
+        } else {
+
+          duplicate = true;
+
+          objectIds << objectId;
+
+          foundObjects[ objectName ] = objectIds;
+
+        }
+
+        results[ objectName ] = objectIds;
+
+        qDebug() << objectIds;
+
+      } else {
+
+        objectIds << objectId;
+
+        foundObjects.insert( objectName, objectIds );
+      
+      }
+
+      if ( duplicate == false ){
+
+        qDebug() << " not duplicate... " << object;
+
+      } else {
+
+        qDebug() << " duplicate... " << object;
+
+      }
+
+      qDebug() << object;
+
+    }
+
+  }
+
+  return results;
+
+}
+
+void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement, QMap<QString, QStringList> duplicateItems )
 {
     //qDebug() << "buildObjectTree";
 
@@ -314,11 +462,11 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
 
     while ( !node.isNull() ) {
         if ( node.isElement() && node.nodeName() == "attributes" ) {
-            buildObjectTree( parentItem, node.toElement() );
+            buildObjectTree( parentItem, node.toElement(), duplicateItems );
         }
 
         if ( node.isElement() && node.nodeName() == "objects" ) {
-            buildObjectTree( parentItem, node.toElement() );
+            buildObjectTree( parentItem, node.toElement(), duplicateItems );
         }
 
         if ( node.isElement() && node.nodeName() == "attribute" ) {
@@ -349,12 +497,12 @@ void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement paren
                 currentApplication.set(data.id, data.name);
             }
 
-            childItem = createObjectTreeItem( parentItem, data);
+            childItem = createObjectTreeItem( parentItem, data, duplicateItems);
             storeItemToObjectTreeMap( childItem, data );
 
             // iterate the node recursively if child nodes exists
             if ( node.hasChildNodes() ) {
-                buildObjectTree( childItem, element );
+                buildObjectTree( childItem, element, duplicateItems );
             }
 
 
@@ -443,12 +591,15 @@ void MainWindow::updateObjectTree( QString filename )
 
                 TestObjectKey itemPtr = ptr2TestObjectKey( sutItem );
 
-
                 // store object tree data
                 objectTreeData.insert( itemPtr, treeItemData );
 
+                QList<QMap<QString,QString> > objectNamesList = collectObjectData( element );
+
+                QMap<QString, QStringList> duplicateItems; 
+
                 // build object tree with xml
-                buildObjectTree( sutItem, element );
+                buildObjectTree( sutItem, element, duplicateItems );
 
                 break; // while node is not null
             }
@@ -833,7 +984,3 @@ void MainWindow::objectTreeKeyPressEvent( QKeyEvent * event ) {
     }
 
 }
-
-
-
-

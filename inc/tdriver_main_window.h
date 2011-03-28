@@ -322,10 +322,15 @@ private:
 
     bool parseObjectTreeXml( QString filename, QDomDocument &resultDomTree );
     void buildScreenshotObjectList(TestObjectKey parentKey=0);
-    void buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement );
+
+    void buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement, QMap<QString, QStringList> duplicateItems );
+
+    QList<QMap<QString, QString> > collectObjectData( QDomElement element );
+    QMap<QString, QStringList> findDuplicateObjectNames( QList<QMap<QString, QString> > objects );
+
     void storeItemToObjectTreeMap( QTreeWidgetItem *item, const TreeItemInfo &data);
 
-    QTreeWidgetItem * createObjectTreeItem( QTreeWidgetItem *parentItem, const TreeItemInfo &data);
+    QTreeWidgetItem * createObjectTreeItem( QTreeWidgetItem *parentItem, const TreeItemInfo &data, QMap<QString, QStringList> duplicateItems );
 
     void objectTreeItemChanged();
 
