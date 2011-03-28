@@ -215,7 +215,7 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem,
         }
 
         item->setBackground( 1, QColor(Qt::red) );
-          item->setForeground( 1, QColor(Qt::white) );
+        item->setForeground( 1, QColor(Qt::white) );
 
         item->setData( 1, Qt::ToolTipRole, toolTipMessage );  
 
@@ -597,6 +597,8 @@ void MainWindow::updateObjectTree( QString filename )
                 QList<QMap<QString,QString> > objectNamesList = collectObjectData( element );
 
                 QMap<QString, QStringList> duplicateItems; 
+
+                duplicateItems = findDuplicateObjectNames( objectNamesList );
 
                 // build object tree with xml
                 buildObjectTree( sutItem, element, duplicateItems );

@@ -555,397 +555,403 @@ end # class Code_evaluation_sandbox
 # old listener.rb
 ############################################################################
 
-@listener = Object.new
+class ListenerObject
 
-VISUALIZATION_ID = 'visualization'
-INTERACTION_ID = 'interaction'
+  VISUALIZATION_ID = 'visualization'
+  INTERACTION_ID = 'interaction'
 
-def @listener.set_working_directory( dir )
-  @working_directory = dir
-end
+  def initialize
+
+    # set directory where to save xml & png
+    if /win/ =~ Config::CONFIG[ 'target_os' ] && /darwin/io !~ Config::CONFIG[ 'target_os' ]
+      # windows
+      set_working_directory( File.expand_path( ENV[ 'TEMP' ] ) )
+    else
+      # unix/linux/other
+      set_working_directory( File.expand_path( '/tmp/' ) )
+    end
+    
+    instance_eval { | | $lg.debug "initial working directory: " + @working_directory }
+
+  end
+
+  def set_working_directory( dir )
+    @working_directory = dir
+  end
+
+  def check_version
+    @listener_reply['version'] = [ ENV['TDRIVER_VERSION'] ]
+  end
 
 
-# set directory where to save xml & png
-if /win/ =~ Config::CONFIG[ 'target_os' ] && /darwin/io !~ Config::CONFIG[ 'target_os' ]
-  # windows
-  @listener.set_working_directory( File.expand_path( ENV[ 'TEMP' ] ) )
-else
-  # unix/linux/other
-  @listener.set_working_directory( File.expand_path( '/tmp/' ) )
-end
-@listener.instance_eval { | | $lg.debug "initial working directory: " + @working_directory }
-
-def @listener.check_version
-  @listener_reply['version'] = [ ENV['TDRIVER_VERSION'] ]
-end
+  def check_api_fixture( sut )
+    return sut.application.fixture('tasqtapiaccessor', 'version' )
+  end
 
 
-def @listener.check_api_fixture( sut )
-  return sut.application.fixture('tasqtapiaccessor', 'version' )
-end
+  def get_behaviours_xml( sut, sut_id, object_types )
+    filename_xml, file_xml = create_output_file(@working_directory, "visualizer_behaviours_#{ sut_id }", 'xml' )
+    begin
+      behaviour_attributes_hash = { :input_type => ['*', sut.input.to_s ], :sut_type => [ '*', sut.ui_type.upcase ], :version => [ '*', sut.ui_version ] }
+      behaviours_xml = ""
+      object_types.each do | object_type |
+        behaviours_xml <<
+          "<behaviour object_type=\"#{ object_type.to_s }\">\n" <<
+            MobyUtil::XML::parse_string(
+              MobyBase::BehaviourFactory.instance.to_xml( behaviour_attributes_hash.merge( { :object_type => ( object_type == 'sut' ? [ 'sut' ] : [ '*', object_type ] ) } ) )
+            ).root.xpath('/behaviours/behaviour/object_methods/object_method').to_s <<
+          "\n</behaviour>\n"
+      end
+
+      file_xml << MobyUtil::XML::parse_string( "<behaviours>\n#{ behaviours_xml }\n</behaviours>" ).to_s
+    rescue
+      file_xml.close
+      raise
+    end
+    file_xml.close
+    $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
+
+    @listener_reply['behaviour_filename'] = [ filename_xml ]
+  end
 
 
-def @listener.get_behaviours_xml( sut, sut_id, object_types )
-  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_behaviours_#{ sut_id }", 'xml' )
-  begin
-    behaviour_attributes_hash = { :input_type => ['*', sut.input.to_s ], :sut_type => [ '*', sut.ui_type.upcase ], :version => [ '*', sut.ui_version ] }
-    behaviours_xml = ""
-    object_types.each do | object_type |
-      behaviours_xml <<
-        "<behaviour object_type=\"#{ object_type.to_s }\">\n" <<
-          MobyUtil::XML::parse_string(
-            MobyBase::BehaviourFactory.instance.to_xml( behaviour_attributes_hash.merge( { :object_type => ( object_type == 'sut' ? [ 'sut' ] : [ '*', object_type ] ) } ) )
-          ).root.xpath('/behaviours/behaviour/object_methods/object_method').to_s <<
-        "\n</behaviour>\n"
+  def get_fixture_xml( sut, sut_id, object_name )
+    filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_methods_#{ sut_id }", 'xml' )
+    begin
+      data = sut.application.fixture('tasqtapiaccessor', 'list_class_methods', { :class => object_name } )
+      file_xml << data
+    ensure
+      file_xml.close
     end
 
-    file_xml << MobyUtil::XML::parse_string( "<behaviours>\n#{ behaviours_xml }\n</behaviours>" ).to_s
-  rescue
-    file_xml.close
-    raise
-  end
-  file_xml.close
-  $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
-
-  @listener_reply['behaviour_filename'] = [ filename_xml ]
-end
-
-
-def @listener.get_fixture_xml( sut, sut_id, object_name )
-  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_methods_#{ sut_id }", 'xml' )
-  begin
-    data = sut.application.fixture('tasqtapiaccessor', 'list_class_methods', { :class => object_name } )
-    file_xml << data
-  ensure
-    file_xml.close
+    $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
+    @listener_reply['fixture_filename'] = [ filename_xml ]
   end
 
-  $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
-  @listener_reply['fixture_filename'] = [ filename_xml ]
-end
 
+  def get_signal_xml( sut, sut_id, app_name, object_id, object_type )
+    $lg.debug this_method +
+      " : sut.application(:name => '#{app_name}').child( :type => '#{object_type}', :id => '#{object_id}', :__index => 0).fixture('signal', 'list_signals')"
+    obj = sut.application(:name => app_name.to_s).child( :type => object_type.to_s, :id => object_id.to_s, :__index => 0)
 
-def @listener.get_signal_xml( sut, sut_id, app_name, object_id, object_type )
-  $lg.debug this_method +
-    " : sut.application(:name => '#{app_name}').child( :type => '#{object_type}', :id => '#{object_id}', :__index => 0).fixture('signal', 'list_signals')"
-  obj = sut.application(:name => app_name.to_s).child( :type => object_type.to_s, :id => object_id.to_s, :__index => 0)
-
-  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_signals_#{ sut_id }", 'xml' )
-  begin
-    data = obj.fixture('signal', 'list_signals')
-    file_xml << data
-  ensure
-    file_xml.close
-  end
-  $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
-  @listener_reply['signal_filename'] = [ filename_xml ]
-end
-
-
-def @listener.get_ui_dump( sut, sut_id, app_id = nil )
-  MobyUtil::Parameter[ sut.id ][ :filter_type] = 'none'
-  MobyUtil::Parameter[ sut.id ][ :use_find_object] = 'false'
-
-  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_dump_#{ sut_id }", 'xml' )
-  begin
-    data = sut.get_ui_dump( *[ ( { :id => app_id } unless app_id.nil? ) ].compact )
-    file_xml << data
-  ensure
-    file_xml.close
+    filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_signals_#{ sut_id }", 'xml' )
+    begin
+      data = obj.fixture('signal', 'list_signals')
+      file_xml << data
+    ensure
+      file_xml.close
+    end
+    $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
+    @listener_reply['signal_filename'] = [ filename_xml ]
   end
 
-  $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
-  @listener_reply['ui_filename'] = [ filename_xml ]
-end
+
+  def get_ui_dump( sut, sut_id, app_id = nil )
+    MobyUtil::Parameter[ sut.id ][ :filter_type] = 'none'
+    MobyUtil::Parameter[ sut.id ][ :use_find_object] = 'false'
+
+    filename_xml, file_xml = create_output_file(@working_directory, "visualizer_dump_#{ sut_id }", 'xml' )
+    begin
+      data = sut.get_ui_dump( *[ ( { :id => app_id } unless app_id.nil? ) ].compact )
+      file_xml << data
+    ensure
+      file_xml.close
+    end
+
+    $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
+    @listener_reply['ui_filename'] = [ filename_xml ]
+  end
 
 
-def @listener.capture_screen( sut, sut_id, app_id = nil )
-  filename_png, file_png = create_output_file(@working_directory, "visualizer_dump_#{ sut_id }", 'png' )
-  begin
-    file_png.close
-    source = 'nowhere!'
-    if app_id.nil?
-      sut.capture_screen( :Filename => filename_png, :Redraw => true )
-      source = 'sut'
-    else
-      begin
-        sut.application( :id => app_id ).capture_screen( "PNG", filename_png, true )
-        source = 'app'
-      rescue
-        app_id = nil
+  def capture_screen( sut, sut_id, app_id = nil )
+    filename_png, file_png = create_output_file(@working_directory, "visualizer_dump_#{ sut_id }", 'png' )
+    begin
+      file_png.close
+      source = 'nowhere!'
+      if app_id.nil?
         sut.capture_screen( :Filename => filename_png, :Redraw => true )
         source = 'sut'
-      end
-    end
-    $lg.debug this_method + " got #{File.size?(filename_png)/1024.0} KiB to '#{filename_png}' from #{source}"
-
-  rescue => ex
-    # screen capture failed
-    File.delete(filename_png) if File.exist?(filename_png )
-    raise ex unless ex.message == "QtTasserver does not support the given service: screenShot"
-    filename_png = ""
-  end
-  @listener_reply['image_filename'] = [ filename_png ]
-end
-
-
-def @listener.get_app_list( sut, sut_id )
-  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_applications_#{ sut_id }", 'xml' )
-  begin
-    output = sut.list_apps
-    file_xml << output
-  ensure
-    file_xml.close
-  end
-
-  @listener_reply['applications_filename'] = [ filename_xml ]
-end
-
-
-def @listener.start_recording( sut, app_id )
-  MobyUtil::Recorder.start_rec( sut.application( :id => app_id ) )
-end
-
-
-def @listener.get_recorded_script( sut, app_id )
-  application = sut.application( :id => app_id )
-  filename_rb, file_rb = create_output_file(@working_directory, 'visualizer_rec_fragment', 'rb')
-  begin
-    script = MobyUtil::Recorder.print_script( sut, application )
-    file_rb << script
-  ensure
-    file_rb.close
-  end
-  $lg.debug this_method + " wrote #{File.size?(filename_rb)/1024.0} KiB to '#{filename_rb}'"
-  @listener_reply['record_filename'] = [ filename_rb ]
-end
-
-
-def @listener.test_script( sut, filename_rb )
-  #filename_rb = File.join( @working_directory, 'visualizer_rec_fragment.rb' )
-  $lg.debug this_method + "filename: '#{filename_rb}'"
-  File.new( filename_rb ).each_line { | line |
-    $lg.debug this_method + " line: '#{line}'"
-    eval( line )
-  }
-end
-
-
-def @listener.get_parameter( sut_id, para )
-  para_value = MobyUtil::Parameter[ sut_id.to_sym ][ para.to_sym, nil ]
-  @listener_reply['parameter'] = [ para.to_s, para_value.inspect ]
-end
-
-
-def @listener.get_all_parameters( sut_id )
-  values = []
-  keys = []
-  paras=MobyUtil::Parameter[ sut_id.to_sym ]
-  paras.each do | key, value |
-    keys << key.to_s
-    values << value.inspect
-  end
-  @listener_reply['keys'] = keys
-  @listener_reply['values'] = values
-end
-
-
-def @listener.set_output_path( new_path )
-  old = @working_directory
-  set_working_directory( MobyUtil::FileHelper.fix_path( File.expand_path( new_path.to_s ) + "/" ) )
-  $lg.debug this_method + " @working_directory changed '#{old}' -> '#{@working_directory}'"
-  @listener_reply['output_path'] = [ @working_directory.to_s ]
-end
-
-
-def @listener.main_loop (conn)
-  recorder = nil
-  interact = Code_evaluation_sandbox.new
-
-  while not conn.closed? do
-    STDOUT.flush
-    STDERR.flush
-    #$lg.debug this_method + " reading message"
-    seqNumIn = nameIn = dataIn = nil
-    benchtime = Benchmark.measure {
-      seqNumIn, nameIn, dataIn = readMessage(conn)
-    }.real
-    $lg.debug this_method + " GOT message after time: #{benchtime}"
-    msgIn = parseArrayHash(dataIn)
-    $lg.debug this_method + " MSG #{seqNumIn} #{nameIn} : #{msgIn.inspect}"
-
-    #listener.rb was old script, which had STDIN/STDOUT interface
-    if ((nameIn == VISUALIZATION_ID) and
-          msgIn.key?('input') and
-          not (input_array = msgIn['input']).empty?)
-    then
-      @listener_reply = Hash.new
-      # handle commands where input_array length is 1
-      break if ( input_array[0] == "quit" )
-
-      if input_array.size >= 2
-        sut_id = input_array.first.to_sym
-        cmd = input_array[1].downcase.to_sym
-        eval_cmd = ""
-        error = false
-
-        sut = nil
+      else
         begin
-          # connect to sut, unless command does not require it
-          sut = TDriver.connect_sut( :Id => sut_id ) unless [ :get_parameter, :get_all_parameters, :set_output_path, :check_version ].include?( cmd )
+          sut.application( :id => app_id ).capture_screen( "PNG", filename_png, true )
+          source = 'app'
+        rescue
+          app_id = nil
+          sut.capture_screen( :Filename => filename_png, :Redraw => true )
+          source = 'sut'
+        end
+      end
+      $lg.debug this_method + " got #{File.size?(filename_png)/1024.0} KiB to '#{filename_png}' from #{source}"
 
+    rescue => ex
+      # screen capture failed
+      File.delete(filename_png) if File.exist?(filename_png )
+      raise ex unless ex.message == "QtTasserver does not support the given service: screenShot"
+      filename_png = ""
+    end
+    @listener_reply['image_filename'] = [ filename_png ]
+  end
+
+
+  def get_app_list( sut, sut_id )
+    filename_xml, file_xml = create_output_file(@working_directory, "visualizer_applications_#{ sut_id }", 'xml' )
+    begin
+      output = sut.list_apps
+      file_xml << output
+    ensure
+      file_xml.close
+    end
+
+    @listener_reply['applications_filename'] = [ filename_xml ]
+  end
+
+
+  def start_recording( sut, app_id )
+    MobyUtil::Recorder.start_rec( sut.application( :id => app_id ) )
+  end
+
+
+  def get_recorded_script( sut, app_id )
+    application = sut.application( :id => app_id )
+    filename_rb, file_rb = create_output_file(@working_directory, 'visualizer_rec_fragment', 'rb')
+    begin
+      script = MobyUtil::Recorder.print_script( sut, application )
+      file_rb << script
+    ensure
+      file_rb.close
+    end
+    $lg.debug this_method + " wrote #{File.size?(filename_rb)/1024.0} KiB to '#{filename_rb}'"
+    @listener_reply['record_filename'] = [ filename_rb ]
+  end
+
+
+  def test_script( sut, filename_rb )
+    #filename_rb = File.join( @working_directory, 'visualizer_rec_fragment.rb' )
+    $lg.debug this_method + "filename: '#{filename_rb}'"
+    File.new( filename_rb ).each_line { | line |
+      $lg.debug this_method + " line: '#{line}'"
+      eval( line )
+    }
+  end
+
+
+  def get_parameter( sut_id, para )
+    para_value = MobyUtil::Parameter[ sut_id.to_sym ][ para.to_sym, nil ]
+    @listener_reply['parameter'] = [ para.to_s, para_value.inspect ]
+  end
+
+
+  def get_all_parameters( sut_id )
+    values = []
+    keys = []
+    paras=MobyUtil::Parameter[ sut_id.to_sym ]
+    paras.each do | key, value |
+      keys << key.to_s
+      values << value.inspect
+    end
+    @listener_reply['keys'] = keys
+    @listener_reply['values'] = values
+  end
+
+
+  def set_output_path( new_path )
+    old = @working_directory
+    set_working_directory( MobyUtil::FileHelper.fix_path( File.expand_path( new_path.to_s ) + "/" ) )
+    $lg.debug this_method + " @working_directory changed '#{old}' -> '#{@working_directory}'"
+    @listener_reply['output_path'] = [ @working_directory.to_s ]
+  end
+
+  def main_loop (conn)
+    recorder = nil
+    interact = Code_evaluation_sandbox.new
+
+    while not conn.closed? do
+      STDOUT.flush
+      STDERR.flush
+      #$lg.debug this_method + " reading message"
+      seqNumIn = nameIn = dataIn = nil
+      benchtime = Benchmark.measure {
+        seqNumIn, nameIn, dataIn = readMessage(conn)
+      }.real
+      $lg.debug this_method + " GOT message after time: #{benchtime}"
+      msgIn = parseArrayHash(dataIn)
+      $lg.debug this_method + " MSG #{seqNumIn} #{nameIn} : #{msgIn.inspect}"
+
+      #listener.rb was old script, which had STDIN/STDOUT interface
+      if ((nameIn == VISUALIZATION_ID) and
+            msgIn.key?('input') and
+            not (input_array = msgIn['input']).empty?)
+      then
+        @listener_reply = Hash.new
+        # handle commands where input_array length is 1
+        break if ( input_array[0] == "quit" )
+
+        if input_array.size >= 2
+          sut_id = input_array.first.to_sym
+          cmd = input_array[1].downcase.to_sym
+          eval_cmd = ""
+          error = false
+
+          sut = nil
           begin
-            if sut then
-              #$lg.debug this_method + " before adjust: #{MobyUtil::Parameter[ sut.id ][:filter_type]} #{MobyUtil::Parameter[ sut.id ][:socket_read_timeout]} #{MobyUtil::Parameter[ sut.id ][:socket_write_timeout]} #{MobyUtil::Parameter[ sut.id ][:default_timeout]}"
-              MobyUtil::Parameter[ sut.id ][ :filter_type] = 'none'
-              #              MobyUtil::Parameter[ sut.id ][ :socket_read_timeout] = '10'
-              #              MobyUtil::Parameter[ sut.id ][ :socket_write_timeout] = '10'
-              #              MobyUtil::Parameter[ sut.id ][ :default_timeout] = '10'
-              #$lg.debug this_method + " after adjust: #{MobyUtil::Parameter[ sut.id ][:filter_type]} #{MobyUtil::Parameter[ sut.id ][:socket_read_timeout]} #{MobyUtil::Parameter[ sut.id ][:socket_write_timeout]} #{MobyUtil::Parameter[ sut.id ][:default_timeout]}"
+            # connect to sut, unless command does not require it
+            sut = TDriver.connect_sut( :Id => sut_id ) unless [ :get_parameter, :get_all_parameters, :set_output_path, :check_version ].include?( cmd )
+
+            begin
+              if sut then
+                #$lg.debug this_method + " before adjust: #{MobyUtil::Parameter[ sut.id ][:filter_type]} #{MobyUtil::Parameter[ sut.id ][:socket_read_timeout]} #{MobyUtil::Parameter[ sut.id ][:socket_write_timeout]} #{MobyUtil::Parameter[ sut.id ][:default_timeout]}"
+                MobyUtil::Parameter[ sut.id ][ :filter_type] = 'none'
+                #              MobyUtil::Parameter[ sut.id ][ :socket_read_timeout] = '10'
+                #              MobyUtil::Parameter[ sut.id ][ :socket_write_timeout] = '10'
+                #              MobyUtil::Parameter[ sut.id ][ :default_timeout] = '10'
+                #$lg.debug this_method + " after adjust: #{MobyUtil::Parameter[ sut.id ][:filter_type]} #{MobyUtil::Parameter[ sut.id ][:socket_read_timeout]} #{MobyUtil::Parameter[ sut.id ][:socket_write_timeout]} #{MobyUtil::Parameter[ sut.id ][:default_timeout]}"
+              end
+            rescue
             end
-          rescue
+
+          rescue => ex
+            $lg.error this_method + " sut connect exception #{ex.class}: #{ex.message}"
+            @listener_reply['exception'] = [ ex.class.to_s, ex.message.to_s, ex.backtrace.join('\n') ]
+            @listener_reply['error'] = [ "Error: connection to sut (#{sut_id}) failed" ]
+            error = true
           end
 
-        rescue => ex
-          $lg.error this_method + " sut connect exception #{ex.class}: #{ex.message}"
-          @listener_reply['exception'] = [ ex.class.to_s, ex.message.to_s, ex.backtrace.join('\n') ]
-          @listener_reply['error'] = [ "Error: connection to sut (#{sut_id}) failed" ]
-          error = true
-        end
+          if not error
 
-        if not error
+            case cmd
 
-          case cmd
+            when :check_version
+              eval_cmd = "check_version"
 
-          when :check_version
-            eval_cmd = "check_version"
+            when :set_output_path
+              eval_cmd = "set_output_path( '#{ input_array[2] }' )"
 
-          when :set_output_path
-            eval_cmd = "set_output_path( '#{ input_array[2] }' )"
+            when :get_behaviours
+              eval_cmd = "get_behaviours_xml( sut, '#{ sut_id }', [#{ input_array[2] }] )"
 
-          when :get_behaviours
-            eval_cmd = "get_behaviours_xml( sut, '#{ sut_id }', [#{ input_array[2] }] )"
+            when :refresh_ui
+              eval_cmd = "get_ui_dump( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[2] }'" : "nil" } )"
 
-          when :refresh_ui
-            eval_cmd = "get_ui_dump( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[2] }'" : "nil" } )"
+            when :refresh_image
+              eval_cmd = "capture_screen( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[2] }'" : "nil" } )"
 
-          when :refresh_image
-            eval_cmd = "capture_screen( sut, '#{ sut_id.to_s }', #{ input_array.size > 2 ? "'#{ input_array[2] }'" : "nil" } )"
+            when :list_apps
+              eval_cmd = "get_app_list( sut, '#{ sut_id }' )"
 
-          when :list_apps
-            eval_cmd = "get_app_list( sut, '#{ sut_id }' )"
+            when :disconnect
+              eval_cmd = "TDriver.disconnect_sut( :Id => '#{ sut_id }' )" # this does not work with qt
 
-          when :disconnect
-            eval_cmd = "TDriver.disconnect_sut( :Id => '#{ sut_id }' )" # this does not work with qt
+            when :get_parameter
+              eval_cmd = "get_parameter( sut_id , '#{ input_array[2] }' )"
 
-          when :get_parameter
-            eval_cmd = "get_parameter( sut_id , '#{ input_array[2] }' )"
+            when :get_all_parameters
+              eval_cmd = "get_all_parameters( sut_id )"
 
-          when :get_all_parameters
-            eval_cmd = "get_all_parameters( sut_id )"
+            when :tap
+              eval_cmd = "sut.application"
+              eval_cmd += "(:id=>'#{input_array[3]}')" if input_array.size > 3
+              eval_cmd += ".#{input_array[2]}.tap"
 
-          when :tap
-            eval_cmd = "sut.application"
-            eval_cmd += "(:id=>'#{input_array[3]}')" if input_array.size > 3
-            eval_cmd += ".#{input_array[2]}.tap"
+            when :check_fixture
+              eval_cmd = "check_api_fixture( sut )"
 
-          when :check_fixture
-            eval_cmd = "check_api_fixture( sut )"
+            when :fixture
+              eval_cmd = "get_fixture_xml( sut, '#{ sut_id }', '#{ input_array[2] }' )"
 
-          when :fixture
-            eval_cmd = "get_fixture_xml( sut, '#{ sut_id }', '#{ input_array[2] }' )"
+            when :press_key
+              eval_cmd = "sut.press_key( #{ input_array[2].to_sym } )"
 
-          when :press_key
-            eval_cmd = "sut.press_key( #{ input_array[2].to_sym } )"
+            when :list_signals
+              eval_cmd = "get_signal_xml( sut, '#{ sut_id }', '#{ input_array[2] }', '#{ input_array[3] }', '#{ input_array[4] }')"
 
-          when :list_signals
-            eval_cmd = "get_signal_xml( sut, '#{ sut_id }', '#{ input_array[2] }', '#{ input_array[3] }', '#{ input_array[4] }')"
+            when :set_attribute
+              attributeName = input_array[4]
+              attributeValue = input_array[ 5..input_array.size ].join(' ')
+              attributeType = input_array[3]
+              eval_cmd = "sut.application.#{ input_array[2] }.set_attribute( '#{attributeName}', '#{attributeValue}', '#{attributeType}' )"
 
-          when :set_attribute
-            attributeName = input_array[4]
-            attributeValue = input_array[ 5..input_array.size ].join(' ')
-            attributeType = input_array[3]
-            eval_cmd = "sut.application.#{ input_array[2] }.set_attribute( '#{attributeName}', '#{attributeValue}', '#{attributeType}' )"
+            when :start_record
+              eval_cmd = "start_recording(sut, #{ ( input_array.size > 2 ? "'#{ input_array[2] }'" : "nil" ) })"
 
-          when :start_record
-            eval_cmd = "start_recording(sut, #{ ( input_array.size > 2 ? "'#{ input_array[2] }'" : "nil" ) })"
+            when :stop_record
+              eval_cmd = "get_recorded_script(sut, #{ ( input_array.size > 2 ? "'#{ input_array[2]}'" : "nil" ) })"
 
-          when :stop_record
-            eval_cmd = "get_recorded_script(sut, #{ ( input_array.size > 2 ? "'#{ input_array[2]}'" : "nil" ) })"
+            when :test_record
+              eval_cmd = "test_script(sut, '#{ input_array[2]}' )"
 
-          when :test_record
-            eval_cmd = "test_script(sut, '#{ input_array[2]}' )"
+            when :start_application
+              eval_cmd = "sut.run(:name=>'#{input_array[2]}', :arguments=>'#{input_array[3]}' )"
 
-          when :start_application
-            eval_cmd = "sut.run(:name=>'#{input_array[2]}', :arguments=>'#{input_array[3]}' )"
+            else
+              @listener_reply['exception'] = []
+              @listener_reply['error'] = [ "Error: no command matched (#{cmd})" ]
+              error = true
+
+            end #case cmd
+
+            if not error and not eval_cmd.empty?
+              benchtime = Benchmark.measure {
+                begin
+                  #MobyUtil::Retryable.while( :times => 10, :timeout => 1, :exception => Exception ) do end
+                  $lg.debug this_method + " cmd #{cmd} => eval_cmd '#{eval_cmd}'"
+                  eval( eval_cmd )
+                rescue => ex
+                  @listener_reply['exception'] = [ ex.class.to_s, ex.message.to_s, ex.backtrace.join('\n') ]
+                  @listener_reply['error'] = [ "Error: evaluating command (#{eval_cmd}) failed" ]
+                  $lg.error this_method + " eval exception"
+                  error = true
+                end
+              }.real
+              $lg.debug this_method + " eval time: #{benchtime}"
+            end
 
           else
-            @listener_reply['exception'] = []
-            @listener_reply['error'] = [ "Error: no command matched (#{cmd})" ]
-            error = true
+          # error== true, because TDriver.connect_sut failed
 
-          end #case cmd
-
-          if not error and not eval_cmd.empty?
-            benchtime = Benchmark.measure {
-              begin
-                #MobyUtil::Retryable.while( :times => 10, :timeout => 1, :exception => Exception ) do end
-                $lg.debug this_method + " cmd #{cmd} => eval_cmd '#{eval_cmd}'"
-                eval( eval_cmd )
-              rescue => ex
-                @listener_reply['exception'] = [ ex.class.to_s, ex.message.to_s, ex.backtrace.join('\n') ]
-                @listener_reply['error'] = [ "Error: evaluating command (#{eval_cmd}) failed" ]
-                $lg.error this_method + " eval exception"
-                error = true
-              end
-            }.real
-            $lg.debug this_method + " eval time: #{benchtime}"
-          end
+          end # if !error
 
         else
-        # error== true, because TDriver.connect_sut failed
+          @listener_reply['exception'] = []
+          @listener_reply['error'] = [ "Error: not enough parameters in command (#{cmd})" ]
+          error = true
 
-        end # if !error
+        end # if array_size >= 2
 
+        msgOut = @listener_reply
+
+      #ruby_interact.rb was old script, which had STDIN/STDOUT interface
+      elsif ((nameIn == INTERACTION_ID) and
+                msgIn.key?('command') and
+                not (inputcmd = msgIn['command']).empty?)
+      then
+        case inputcmd[0]
+          when "line_completion"
+            msgOut = interact.line_completion(inputcmd[1], seqNumIn)
+          when "line_execution"
+            msgOut = interact.line_execution(inputcmd[1], seqNumIn)
+          else
+            msgOut = interact.invalidcmd(inputcmd)
+        end
+
+      elsif (nameIn == 'interact reset') then
+        interact = Code_evaluation_sandbox.new
+        msgOut = {}
       else
-        @listener_reply['exception'] = []
-        @listener_reply['error'] = [ "Error: not enough parameters in command (#{cmd})" ]
-        error = true
+        msgOut = { 'error_message' => ['invalid request'] }
 
-      end # if array_size >= 2
+      end # if !input
 
-      msgOut = @listener_reply
+      writeRawData(conn, makeMsg(seqNumIn, nameIn, msgOut))
+      msgStr = msgOut.inspect.to_s
+      msgStr = msgStr[0,1020] + " ..." if msgStr.size > 1024
+      $lg.info this_method + " SNT #{seqNumIn} #{nameIn} : #{msgStr}"
+    end # while
 
-    #ruby_interact.rb was old script, which had STDIN/STDOUT interface
-    elsif ((nameIn == INTERACTION_ID) and
-              msgIn.key?('command') and
-              not (inputcmd = msgIn['command']).empty?)
-    then
-      case inputcmd[0]
-        when "line_completion"
-          msgOut = interact.line_completion(inputcmd[1], seqNumIn)
-        when "line_execution"
-          msgOut = interact.line_execution(inputcmd[1], seqNumIn)
-        else
-          msgOut = interact.invalidcmd(inputcmd)
-      end
+  end # def listener_main_loop
 
-    elsif (nameIn == 'interact reset') then
-      interact = Code_evaluation_sandbox.new
-      msgOut = {}
-    else
-      msgOut = { 'error_message' => ['invalid request'] }
+end
 
-    end # if !input
-
-    writeRawData(conn, makeMsg(seqNumIn, nameIn, msgOut))
-    msgStr = msgOut.inspect.to_s
-    msgStr = msgStr[0,1020] + " ..." if msgStr.size > 1024
-    $lg.info this_method + " SNT #{seqNumIn} #{nameIn} : #{msgStr}"
-  end # while
-
-end # def listener_main_loop
-
+@listener = ListenerObject.new
 
 ############################################################################
 # main program
