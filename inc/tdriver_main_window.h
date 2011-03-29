@@ -127,13 +127,17 @@ private:
         ExecuteCommandType type;
         BAListMap msg;
         QString err;
+        QString typeStr;
         int resends;
 
-        SentTDriverMsg(ExecuteCommandType type = commandInvalid, BAListMap msg = BAListMap(),
-                       const QString &err = QString(), int resends=0) :
-            type(type), msg(msg), err(err), resends(resends) {}
-        SentTDriverMsg(const SentTDriverMsg &other) :
-            type(other.type), msg(other.msg), err(other.err), resends(other.resends) {}
+        SentTDriverMsg(ExecuteCommandType type=commandInvalid, BAListMap msg=BAListMap(),
+                       const QString &err=QString(), const QString &typeStr=QString(), int resends=0):
+            type(type), msg(msg), err(err), typeStr(typeStr), resends(resends)
+        {}
+
+        SentTDriverMsg(const SentTDriverMsg &src) :
+            type(src.type), msg(src.msg), err(src.err), typeStr(src.typeStr), resends(src.resends)
+        {}
     };
 
 
@@ -188,7 +192,8 @@ private:
 
     bool sendTDriverCommand(ExecuteCommandType commandType,
                             const QString &commandString,
-                            const QString &errorName);
+                            const QString &errorName,
+                            const QString &typeStr = QString());
 
     bool resendTDriverCommand(SentTDriverMsg &msg);
 
@@ -244,8 +249,7 @@ private:
     void updateWindowTitle();
 
     void setActiveDevice( const QString &deviceName );
-    QString getDeviceParameter( QString deviceName, QString parameter );
-    bool getActiveDeviceParameters();
+   bool getActiveDeviceParameters();
     QString getDriverVersionNumber();
 
     void noDeviceSelectedPopup();
@@ -285,16 +289,13 @@ private:
     QWidget *signalsTab;
     QWidget *apiTab;
 
-    void updatePropertiesTable();
+    void doPropertiesTableUpdate();
     void clearPropertiesTableContents();
 
     void updateAttributesTableContent();
     void updateMethodsTableContent();
-    void updateSignalsTableContent();
-    void updateApiTableContent();
-
-    void getClassMethods( QString objectType );
-    bool getClassSignals( QString objectType, QString objectId );
+    bool sendUpdateSignalsTableContent();
+    void sendUpdateApiTableContent();
 
     // object tree
 
@@ -373,7 +374,7 @@ private:
 
     // behaviours.xml
     void buildBehavioursMap();
-    bool updateBehaviourXml();
+    bool sendUpdateBehaviourXml();
 
     // visualizer_dump_sut_id.xml
     void parseUiDump( QString filename );
@@ -381,7 +382,6 @@ private:
     // api fixture
     bool apiFixtureEnabled;
     bool apiFixtureChecked;
-    bool checkApiFixture();
     void parseApiMethodsXml( QString filename );
     QStringList parseSignalsXml( QString filename );
 
@@ -603,9 +603,9 @@ private slots:
     void sendAppListRequest(bool refreshAfter=true);
 
     QString constructRefreshCmd(const QString &command);
-    void sendImageRequest();
-    void sendUiDumpRequest();
-    void sendRefreshCommands();
+    bool sendImageRequest();
+    bool sendUiDumpRequest();
+    void startRefreshSequence();
 
     void refreshDataDisplay();
 
@@ -701,7 +701,7 @@ private:
     QMap<quint32, SentTDriverMsg> sentTDriverMsgs; // maps seqnum of sent message to message type
     QTimer *messageTimeoutTimer;
     bool doRefreshAfterAppList;
-    unsigned doExlusiveDisconnectAfterRefreshes; // bitfield: 1 for image, 2 for UI XML refresh
+
 private:
     void keyPressEvent ( QKeyEvent *event );
     bool eventFilter ( QObject *obj, QEvent *event );

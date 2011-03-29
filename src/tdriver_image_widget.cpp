@@ -116,8 +116,8 @@ void MainWindow::tapScreenWithRefresh( QString target )
     statusbar(tr("Tapping..."));
     typedef QList<QByteArray> QByteArrayList;
 
-    if ( !sendTDriverCommand( commandTapScreen, QString( activeDevice + " " + target ), "screen tapping")) {
-        //statusbar( "Error: Failed to send tap to the screen", 1000 );
+    if ( !sendTDriverCommand(commandTapScreen, activeDevice + " " + target, "screen tapping") ) {
+        statusbar( "Error: Failed to send tap to the screen", 2000);
     }
 }
 

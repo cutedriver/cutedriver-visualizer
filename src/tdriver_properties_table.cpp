@@ -26,7 +26,7 @@
 void MainWindow::tabWidgetChanged( int currentTableWidget ) {
 
     Q_UNUSED( currentTableWidget );
-    updatePropertiesTable();
+    doPropertiesTableUpdate();
 
 }
 
@@ -53,7 +53,7 @@ void MainWindow::clearPropertiesTableContents() {
 }
 
 
-void MainWindow::updatePropertiesTable()
+void MainWindow::doPropertiesTableUpdate()
 {
     if ( objectTree->currentItem() != NULL ) {
         // retrieve pointer of current item selected in object tree
@@ -64,68 +64,22 @@ void MainWindow::updatePropertiesTable()
 
         if ( currentTab == 0 && propertyTabLastTimeUpdated.value( "attributes" ) != currentItemPtr ) {
             updateAttributesTableContent();
-
-        } else if ( currentTab == 1 && propertyTabLastTimeUpdated.value( "methods" ) != currentItemPtr ) {
+        }
+        else if ( currentTab == 1 && propertyTabLastTimeUpdated.value( "methods" ) != currentItemPtr ) {
             updateMethodsTableContent();
-
-        } else if ( currentTab == 2 && propertyTabLastTimeUpdated.value( "signals" ) != currentItemPtr ) {
-            updateSignalsTableContent();
-
-        } else if ( currentTab == 3  && propertyTabLastTimeUpdated.value( "api_methods" ) != currentItemPtr ) {
-            updateApiTableContent();
+        }
+        else if ( currentTab == 2 && propertyTabLastTimeUpdated.value( "signals" ) != currentItemPtr ) {
+            sendUpdateSignalsTableContent();
+        }
+        else if ( currentTab == 3  && propertyTabLastTimeUpdated.value( "api_methods" ) != currentItemPtr ) {
+            sendUpdateApiTableContent();
         }
     }
 }
 
 
-bool MainWindow::checkApiFixture()
+void MainWindow::sendUpdateApiTableContent()
 {
-    return executeTDriverCommand( commandCheckApiFixture, activeDevice + " check_fixture");
-}
-
-
-void MainWindow::getClassMethods( QString objectType )
-{
-    BAListMap reply;
-    if ( executeTDriverCommand( commandClassMethods,
-                               activeDevice + " fixture " + objectType,
-                               objectType, &reply ) ) {
-        parseApiMethodsXml( reply.value("fixture_filename").value(0));
-    }
-}
-
-
-bool MainWindow::getClassSignals(QString objectType, QString objectId)
-{
-    if (objectType != "sut" && objectType != "application" && objectType != "QAction") {
-
-        // list_signals
-        if (activeDevice.contains("qt")){
-            if (!apiSignalsMap.contains(objectType)) {
-                BAListMap reply;
-                if ( executeTDriverCommand(commandSignalList,
-                                           activeDevice
-                                           + " list_signals " + currentApplication.name
-                                           + " " + objectId
-                                           + " " + objectType,
-                                           QString(),
-                                           &reply)) {
-
-                    QString fileName(reply.value("signal_filename").value(0));
-                    if (!fileName.isEmpty()) {
-                        apiSignalsMap[objectType] = parseSignalsXml( fileName );
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    return false;
-}
-
-
-void MainWindow::updateApiTableContent() {
-
     TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
 
     // clear methods table contents
@@ -140,36 +94,26 @@ void MainWindow::updateApiTableContent() {
         if ( !objectType.isEmpty() ) {
 
             if ( !apiFixtureChecked ) {
-
-                if ( !checkApiFixture() ) {
-
-                    // fixture not found
-                    QMessageBox::critical(0,
-                                          tr( "Error" ),
-                                          "API fixture is not installed, unable to retrieve class methods.\n\nDisabling API tab from Properties table.");
-                    tabWidget->setTabEnabled( tabWidget->indexOf( apiTab ), false );
-                    apiFixtureEnabled = false;
-                    apiFixtureChecked = true;
-                    return;
-
-                } else {
-
-                    // fixture found
-                    apiFixtureChecked = true;
-
-                }
-
+                qDebug() << "requesting API fixture check";
+                sendTDriverCommand(commandCheckApiFixture,
+                                   activeDevice + " check_fixture",
+                                   "checking API fixture");
+                // response handler for commandCheckApiFixture will call this method again
+                return;
             }
 
             // retrieve methods using fixture if not already found from api methods cache
             if ( !apiMethodsMap.contains( objectType ) ) {
-
-                getClassMethods( objectType );
+                qDebug() << "requesting apiMethods for " << objectType;
+                sendTDriverCommand(commandClassMethods,
+                                   activeDevice + " fixture " + objectType,
+                                   "class methods for " + objectType,
+                                   objectType);
+                // response handler for commandClassMethods will call this method again
+                return;
 
             } else {
-
-                // qDebug() << "apiMethods for " << objectType << " found from cache";
-
+                qDebug() << "apiMethods for " << objectType << " found";
             }
 
             QMap<QString, QHash<QString, QString> > methodsMap = apiMethodsMap.value( objectType );
@@ -291,10 +235,11 @@ void MainWindow::updateMethodsTableContent() {
 
     // store pointer of current item to table, so methods table won't be updated unless item is changed on object tree
     propertyTabLastTimeUpdated.insert( "methods", currentItemPtr );
-
 }
-void MainWindow::updateSignalsTableContent() {
 
+
+bool MainWindow::sendUpdateSignalsTableContent()
+{
     // qDebug() << "updateSignalsTableContent";
 
     TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
@@ -310,33 +255,25 @@ void MainWindow::updateSignalsTableContent() {
     if ( currentItemPtr != 0 ) {
 
         // retrieve current item object type
-        QString currentItemObjectType = objectTree->currentItem()->data( 0, Qt::DisplayRole ).toString();
-
+        QString objectType = objectTree->currentItem()->data( 0, Qt::DisplayRole ).toString();
         QString objectId   = objectTreeData.value(currentItemPtr).id;
 
         // Retrieve the signals from the device
-        if (getClassSignals(currentItemObjectType, objectId)) {
+        if (objectType != "sut" && objectType != "application" && objectType != "QAction") {
 
-            QStringList signalsList = apiSignalsMap[currentItemObjectType];
+            // list_signals
+            if (activeDevice.contains("qt")){
+                if (!apiSignalsMap.contains(objectType)) {
+                    BAListMap reply;
+                    QString cmd(QString("%1 list_signals %2 %3 %4")
+                                .arg(activeDevice, currentApplication.name, objectId, objectType));
 
-            for ( int signalIndex = 0; signalIndex < signalsList.size(); signalIndex++ ) {
-
-                // add signal name
-                QTableWidgetItem *signalName = new QTableWidgetItem( signalsList.at( signalIndex ) );
-                signalName->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEnabled );
-                signalName->setFont( *defaultFont );
-
-                // append new line to table
-                int rowNumber = signalsTable->rowCount();
-                signalsTable->insertRow( rowNumber );
-                signalsTable->setItem( rowNumber, 0, signalName );
-
+                    return sendTDriverCommand(commandSignalList, cmd, "signal list", objectType);
+                }
             }
-            // sort signals table
-            signalsTable->sortItems( 0 );
-            signalsTable->resizeColumnToContents (0);
         }
     }
+    return false;
 }
 
 
@@ -351,9 +288,6 @@ void MainWindow::updateAttributesTableContent() {
     // retrieve pointer of currently selected objectTree item
     TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
 
-    QMap<QString, QHash<QString, QString> > attributeMap;
-    QHash<QString, QString> attributeHash;
-
     // clear properties table contents
     propertiesTable->clearContents();
     propertiesTable->setRowCount( 0 );
@@ -367,9 +301,7 @@ void MainWindow::updateAttributesTableContent() {
         QMapIterator<QString, AttributeInfo > iterator( attributesMap.value( currentItemPtr ) );
 
         int index = 0;
-
         while ( iterator.hasNext() ) {
-
             iterator.next();
 
             QString attributeName      = iterator.value().name;
@@ -400,35 +332,30 @@ void MainWindow::updateAttributesTableContent() {
             }
 
             propertiesTable->setItem( index, 1, attributeValueItem );
-
             index++;
-
         }
 
-        QObject::connect(propertiesTable, SIGNAL( itemChanged( QTableWidgetItem * ) ),
-                         this, SLOT( changePropertiesTableValue( QTableWidgetItem* ) ) );
-
+        connect(propertiesTable, SIGNAL(itemChanged(QTableWidgetItem*)),
+                SLOT(changePropertiesTableValue(QTableWidgetItem*)) );
         propertiesTable->update();
-
     }
-
     propertyTabLastTimeUpdated.insert( "attributes", currentItemPtr );
-
 }
 
 
 void MainWindow::connectTabWidgetSignals()
 {
+    connect(tabWidget, SIGNAL(currentChanged(int)),
+            SLOT(tabWidgetChanged(int)));
 
-    QObject::connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT( tabWidgetChanged(int)));
+    connect(methodsTable, SIGNAL(itemPressed(QTableWidgetItem*)),
+            SLOT(methodItemPressed(QTableWidgetItem*)) );
 
-    QObject::connect(methodsTable, SIGNAL( itemPressed( QTableWidgetItem* ) ),
-                     this, SLOT( methodItemPressed( QTableWidgetItem* ) ) );
-    QObject::connect(propertiesTable, SIGNAL( itemPressed( QTableWidgetItem * ) ),
-                     this, SLOT( propertiesItemPressed( QTableWidgetItem* ) ) );
-    QObject::connect(apiTable, SIGNAL( itemPressed( QTableWidgetItem * ) ),
-                     this, SLOT( apiItemPressed( QTableWidgetItem* ) ) );
+    connect(propertiesTable, SIGNAL(itemPressed(QTableWidgetItem*)),
+            SLOT(propertiesItemPressed(QTableWidgetItem*)) );
 
+    connect(apiTable, SIGNAL(itemPressed(QTableWidgetItem*)),
+            SLOT(apiItemPressed(QTableWidgetItem*)) );
 }
 
 
@@ -465,7 +392,7 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
                                        .arg(targetDataType)
                                        .arg(attributeName)
                                        .arg(item->text()) ) ) {
-                sendRefreshCommands();
+                startRefreshSequence();
             }
         }
     }

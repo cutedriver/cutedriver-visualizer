@@ -27,15 +27,12 @@
 
 #include <QDebug>
 
-bool MainWindow::updateBehaviourXml()
-{
 
+bool MainWindow::sendUpdateBehaviourXml()
+{
     if (objectTree->invisibleRootItem()->childCount() <= 0) return false;
 
-    bool result = false;
-
     QStringList objectTypes;
-
     QTreeWidgetItem *root = objectTree->invisibleRootItem();
     QTreeWidgetItem *node = root;
 
@@ -49,29 +46,23 @@ bool MainWindow::updateBehaviourXml()
         }
     }
 
-
-    QString objectTypesString;
+    QString objectType;
 
     // build a string of object types
     for ( int index = 0; index < objectTypes.size(); index++ ) {
-        if ( !objectTypesString.isEmpty() ) {
-            objectTypesString += ",";
+        if ( !objectType.isEmpty() ) {
+            // if objectType isn't empty, then this was not the first one
+            objectType += ",";
         }
-        objectTypesString += "'" + objectTypes.at( index ) + "'";
-    }
-
-    BAListMap reply;
-    if ( executeTDriverCommand( commandBehavioursXml,
-                                activeDevice + " get_behaviours " + objectTypesString,
-                                QString(), &reply )
-         && objectTypes.size() > 0 ) {
-        if (parseXml( reply.value("behaviour_filename").value(0) , behaviorDomDocument )) {
-            buildBehavioursMap();
-        }
+        objectType += "'" + objectTypes.at( index ) + "'";
     }
 
     propertyTabLastTimeUpdated.insert( "methods", 0 );
-    return result;
+
+    return sendTDriverCommand(commandBehavioursXml,
+                              activeDevice + " get_behaviours " + objectType,
+                              tr("behaviour get"),
+                              objectType);
 }
 
 void MainWindow::buildBehavioursMap() {

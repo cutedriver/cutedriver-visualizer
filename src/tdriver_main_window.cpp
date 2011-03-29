@@ -47,7 +47,8 @@ MainWindow::MainWindow() :
     tdriverMsgShown(1),
     keyLastUiStateDir("files/last_uistate_dir"),
     keyLastTDriverDir("files/last_tdriver_dir"),
-    messageTimeoutTimer(new QTimer(this))
+    messageTimeoutTimer(new QTimer(this)),
+    doRefreshAfterAppList(false)
 {
     resetMessageSequenceFlags();
     messageTimeoutTimer->setSingleShot(true);
@@ -393,29 +394,6 @@ QByteArray MainWindow::cleanDoneResult(QByteArray output)
 }
 
 
-QString MainWindow::getDeviceParameter( QString deviceName, QString parameter )
-{
-    qDebug() << FCFL << deviceName;
-    QByteArray result = "Unknown";
-    BAListMap reply;
-    QString command = deviceName + " get_parameter " + parameter;
-
-    if ( executeTDriverCommand( commandGetDeviceParameter, command, deviceName, &reply ) ) {
-        if (reply.contains("parameter")) {
-            if (reply.value("parameter").size() == 2 && reply.value("parameter").at(0) == parameter) {
-                result = reply.value("parameter").at(1);
-            }
-            else qDebug() << "BAD get_parameter VALUE" << reply.value("parameters");
-        }
-        else qDebug() << "BAD get_parameter REPLY" << reply;
-    }
-    else qDebug() << "FAILED get_parameter";
-
-    qDebug() << FCFL << "got" << result;
-    return QString(result);
-}
-
-
 bool MainWindow::getActiveDeviceParameters()
 {
     qDebug() << FCFL << activeDevice;
@@ -648,71 +626,22 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
         QString clearError, shortError, fullError;
         processErrorMessage(sentMsg.type, "<N/A>", reply, "<unknownn>",
                             resultEnum, clearError, shortError, fullError);
-#if 0
-        qDebug() << FCFL << "error: " << resultEnum << fullError;
-        tdriverMsgAppend(fullError);
-        if (resultEnum & RETRY) {
-            if (sentMsg.resends <= 0) {
-                if (resendTDriverCommand(sentMsg)) {
-                    qDebug() << FCFL << "Resending ok";
-                    return;
-                }
-                else {
-                    qDebug() << FCFL << "Resend failed!";
-                }
-            }
-            else {
-                qDebug() << FCFL << "Ignoring RETRY for resend count" << sentMsg.resends;
-            }
-        }
 
-        if ( resultEnum & FAIL) {
-
-        }
-
-        if ( resultEnum & DISCONNECT ) {
-            // disconnect
-            qDebug() << FCFL << "DISCONNECT";
-
-            BAListMap msg;
-            msg["input"] << activeDevice.toAscii() << "disconnect";
-            /*bool response2 =*/
-            TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, 9999);
-            if (msg.contains("error")) {
-                fullError += "\n\nDisconnect after error failed!";
-            }
-            else {
-                fullError += "\n\nDisconnect after error succeeded.";
-                // disconnect passed -- retry
-                currentApplication.clear();
-            }
-        }
-        //        qDebug() << FCFL << resultEnum << clearError << shortError << fullError;
-#else
         qDebug() << FCFL << "Sending disconnect after error:" << resultEnum << fullError;
         statusbar(tr("Sending disconnect after error!"));
 
         BAListMap msg;
         msg["input"] << activeDevice.toAscii() << "disconnect";
-        TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, 9999);
-        if (msg.contains("error")) {
-            fullError += "\n\nDisconnect after error failed!";
-            statusbar(tr("Disconnect failed"), 2000);
-        }
-        else {
-            fullError += "\n\nDisconnect after error succeeded.";
-            // disconnect passed -- retry
-            currentApplication.clear();
-            statusbar(tr("Disconnected after error!"), 2000);
-        }
+        TDriverRubyInterface::globalInstance()->sendCmd(TDriverUtil::visualizationId, msg);
+        fullError += "\n\nDisconnect request sent!";
+        statusbar(tr("Disconnect request sent"));
+        currentApplication.clear();
         tdriverMsgAppend(fullError);
-#endif
-        return;
     }
+
     else if (seqNum > 0) {
         handleNormally = true;
     }
-
 
     switch (sentMsg.type) {
     case commandSetOutputPath:
@@ -727,18 +656,160 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
         }
         if (doRefreshAfterAppList) {
             // leave doRefreshAfterAppList to true for the call, in case it's used.
-            if (!handleError) sendRefreshCommands();
+            if (!handleError) startRefreshSequence();
             doRefreshAfterAppList = false;
         }
         break;
 
-    case commandClassMethods:
+    case commandDisconnectSUT:
+        // if disconnection request had error, assume disconnected state anyway
+        qDebug() << FCFL << "Disconnection" << !handleError;
+        statusbar(tr("SUT disconnected"), 2000);
+        emit disconnectionOk(handleError);
         break;
 
-    case commandDisconnectSUT:
-        qDebug() << FCFL << "Disconnection" << !handleError;
-        statusbar(tr("SUT disconnected"), 1000);
-        emit disconnectionOk(handleError);
+
+    case commandTapScreen:
+        if (handleNormally && !doRefreshAfterAppList) {
+            statusbar(tr("Tap done, auto-refreshing..."), 1000 );
+            startRefreshSequence();
+        }
+        break;
+
+    case commandRefreshUI:
+        if (handleNormally) {
+            statusbar(tr("UI XML refresh done, updating object tree..."));
+            updateObjectTree( reply.value("ui_filename").value(0) );
+            updateWindowTitle();
+
+            statusbar(tr("UI XML refresh done, updating properties"));
+
+            //note: sendImageRequest() may be already queued
+            //note: propertiesDock should be disabled by code that sent commandRefreshUi
+            if (!sendUpdateBehaviourXml()) {
+                statusbar(tr("Could not send behaviour update!"), 2000);
+                propertiesDock->setDisabled(false);
+            }
+        }
+        else {
+            // re-enable if not normal handling above
+            propertiesDock->setDisabled(false);
+        }
+        objectTree->setDisabled(false);
+        break;
+
+    case commandRefreshImage:
+        if (handleNormally) {
+            statusbar(tr("Image refresh done, updating..."), 1000);
+            imageWidget->disableDrawHighlight();
+            imageWidget->refreshImage( reply.value("image_filename").value(0));
+            imageWidget->repaint();
+            statusbar(tr("Image refresh complete!"), 1000);
+        }
+        // re-enable image dockwidget always
+        imageViewDock->setDisabled(false);
+        break;
+
+    case commandKeyPress:
+        break;
+
+    case commandSetAttribute:
+        break;
+
+    case commandCheckApiFixture:
+        // note: this command works closely with updateApiTableContent() method
+        if (handleNormally) {
+            statusbar(tr("Api fixture checked..."), 1000);
+            apiFixtureChecked = true;
+            // commandCheckApiFixture should have been sent by updateApiTableContent(),
+            // call it again now that we have done the check
+            sendUpdateApiTableContent();
+        }
+        else {
+            qDebug() << FCFL << "got error reply";
+            tabWidget->setTabEnabled( tabWidget->indexOf( apiTab ), false );
+            apiFixtureEnabled = false;
+            apiFixtureChecked = true;
+            QMessageBox::critical(
+                        0,
+                        tr( "Error" ),
+                        tr("API fixture is not installed, unable to retrieve class methods.\n\n"
+                           "Disabling API tab from Properties table."));
+        }
+        break;
+
+    case commandClassMethods:
+        // note: this command works closely with updateApiTableContent() method
+        if (handleNormally) {
+            statusbar(tr("Api methods received"), 2000);
+            parseApiMethodsXml( reply.value("fixture_filename").value(0));
+
+            if (apiMethodsMap.contains( sentMsg.typeStr )) {
+                // call updateApiTableContent() only if parseApiMethodsXml is of correct object,
+                // must be checked to avoid looping
+                sendUpdateApiTableContent();
+            }
+            else {
+                qDebug() << FCFL << "Did not get api methods for " << sentMsg.typeStr;
+            }
+        }
+        else {
+            qDebug() << FCFL << "got error reply";
+        }
+        break;
+
+    case commandBehavioursXml:
+        if (handleNormally) {
+            statusbar(tr("Behaviours received"), 2000);
+            if (parseXml( reply.value("behaviour_filename").value(0) , behaviorDomDocument )) {
+                buildBehavioursMap();
+                doPropertiesTableUpdate();
+                // todo: handle properties dock disabling better
+                propertiesDock->setDisabled(false);
+            }
+            else qDebug() << FCFL << "parseXml fail";
+        }
+        break;
+
+    case commandGetVersionNumber:
+        break;
+
+    case commandSignalList:
+        if (handleNormally) {
+            statusbar(tr("Signal list received, parsing..."), 2000);
+            QString fileName(reply.value("signal_filename").value(0));
+            if (!fileName.isEmpty()) {
+                const QStringList signalsList = parseSignalsXml( fileName );
+                apiSignalsMap[sentMsg.typeStr] = signalsList;
+
+                foreach(const QString &signalName, signalsList) {
+                    // add signal name
+                    QTableWidgetItem *signalItem = new QTableWidgetItem( signalName );
+                    signalItem->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEnabled );
+                    signalItem->setFont( *defaultFont );
+
+                    // append new line to table
+                    int rowNumber = signalsTable->rowCount();
+                    signalsTable->insertRow( rowNumber );
+                    signalsTable->setItem( rowNumber, 0, signalItem );
+                }
+                // sort signals table
+                signalsTable->sortItems( 0 );
+                signalsTable->resizeColumnToContents (0);
+            }
+        }
+        else {
+            qDebug() << FCFL << "got error reply";
+        }
+        break;
+
+    case commandGetDeviceParameter:
+        break;
+
+    case commandGetAllDeviceParameters:
+        break;
+
+    case commandStartApplication:
         break;
 
     case commandRecordingStart:
@@ -750,80 +821,6 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
     case commandRecordingTest:
         break;
 
-    case commandTapScreen:
-        if (handleNormally && !doRefreshAfterAppList) {
-            statusbar(tr("Tap done, auto-refreshing..."), 1000 );
-            sendRefreshCommands();
-        }
-        break;
-
-    case commandRefreshUI:
-        if (handleNormally) {
-            statusbar(tr("UI XML refresh done, updating object tree..."));
-            updateObjectTree( reply.value("ui_filename").value(0) );
-
-            statusbar(tr("UI XML refresh done, updating behaviours..."));
-            /*bool behavioursOk =*/
-            updateBehaviourXml();
-
-            statusbar(tr("UI XML refresh done, updating properties..."));
-            updatePropertiesTable();
-
-            statusbar(tr("UI XML refresh complete!"), 1000 );
-            updateWindowTitle();
-
-        }
-        // bitfield: 2 for UI XML refresh
-        if (doExlusiveDisconnectAfterRefreshes == 2) {
-            disconnectExclusiveSUT();
-        }
-        doExlusiveDisconnectAfterRefreshes &= ~2;
-        objectTree->setDisabled(false);
-        propertiesDock->setDisabled(false);
-        break;
-
-    case commandRefreshImage:
-        if (handleNormally) {
-            statusbar(tr("Image refresh done, updating..."), 1000);
-            imageWidget->disableDrawHighlight();
-            imageWidget->refreshImage( reply.value("image_filename").value(0));
-            imageWidget->repaint();
-            statusbar(tr("Image refresh complete!"), 1000);
-        }
-        // bitfield: 1 for image
-        if (doExlusiveDisconnectAfterRefreshes == 1) {
-            disconnectExclusiveSUT();
-        }
-        doExlusiveDisconnectAfterRefreshes &= ~1;
-        imageViewDock->setDisabled(false);
-        break;
-
-    case commandKeyPress:
-        break;
-
-    case commandSetAttribute:
-        break;
-
-    case commandCheckApiFixture:
-        break;
-
-    case commandBehavioursXml:
-        break;
-
-    case commandGetVersionNumber:
-        break;
-
-    case commandSignalList:
-        break;
-
-    case commandGetDeviceParameter:
-        break;
-
-    case commandGetAllDeviceParameters:
-        break;
-
-    case commandStartApplication:
-        break;
 
     case commandInvalid:
         qDebug() << FCFL << "got message type commandInvalid!";
@@ -841,8 +838,7 @@ void MainWindow::messageTimeoutSlot()
 
 void MainWindow::resetMessageSequenceFlags()
 {
-    doRefreshAfterAppList=false;
-    doExlusiveDisconnectAfterRefreshes=0;
+    doRefreshAfterAppList = false;
     if (messageTimeoutTimer) messageTimeoutTimer->stop();
 }
 
@@ -943,7 +939,8 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QStri
 
 bool MainWindow::sendTDriverCommand( ExecuteCommandType commandType,
                                     const QString &commandString,
-                                    const QString &errorName)
+                                    const QString &errorName,
+                                    const QString &typeStr)
 {
     BAListMap msg;
     msg["input"] = commandString.toAscii().split(' ');
@@ -954,7 +951,7 @@ bool MainWindow::sendTDriverCommand( ExecuteCommandType commandType,
 
     if (seqNum > 0) {
 
-        sentTDriverMsgs[seqNum] = SentTDriverMsg(commandType, msg, errorName);
+        sentTDriverMsgs[seqNum] = SentTDriverMsg(commandType, msg, errorName, typeStr);
 
         int default_timeout = TDriverUtil::quotedToInt(activeDeviceParams.value("default_timeout"))*1000;
         if (default_timeout <= 0) default_timeout=35000;
@@ -966,7 +963,7 @@ bool MainWindow::sendTDriverCommand( ExecuteCommandType commandType,
         if (!errorName.isNull()) {
             statusbar(tr("ERROR: Sending %1 command to TDriver failed!").arg(errorName), 1000);
         }
-        sentTDriverMsgs[0] = SentTDriverMsg(commandType, msg, errorName, -1);
+        sentTDriverMsgs[0] = SentTDriverMsg(commandType, msg, errorName, typeStr, -1);
         receiveTDriverMessage(0, TDriverUtil::visualizationId);
         return false;
     }
@@ -1003,6 +1000,15 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType,
                                        const QString &additionalInformation,
                                        BAListMap *reply )
 {
+    QMessageBox infoBox(QMessageBox::Information,
+                        tr("Synchronous TDriver Command"),
+                        tr("Executing TDriver command:\n\n")+commandString);
+
+    infoBox.setStandardButtons(0);
+    infoBox.show();
+    infoBox.repaint();
+    qApp->processEvents();
+
     QString clearError;
     QString shortError;
     QString fullError;

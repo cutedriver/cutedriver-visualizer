@@ -150,7 +150,7 @@ void MainWindow::objectTreeItemChanged()
     // if item changed, tabs in properties table willss be updated when activated next time
     propertyTabLastTimeUpdated.clear();
     // update current properties table
-    updatePropertiesTable();
+    doPropertiesTableUpdate();
     drawHighlight( ptr2TestObjectKey(objectTree->currentItem()), true );
 }
 
@@ -167,33 +167,33 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem,
     QString id = data.id;
     QString name = data.name;
 
-    if ( type.isEmpty() ) { 
+    if ( type.isEmpty() ) {
 
-      type = "<NoName>"; 
+      type = "<NoName>";
 
     } else {
-    
+
     }
-    
+
     if ( id.isEmpty()   ) { id = "<None>";     }
 
     item->setBackground( 0, QBrush() );
     item->setBackground( 1, QBrush() );
     item->setBackground( 2, QBrush() );
 
-    if ( name.isEmpty() ) { 
+    if ( name.isEmpty() ) {
 
-      name = "<Object name not defined...>"; 
+      name = "<Object name not defined...>";
 
       //item->setBackground( 1, QColor(Qt::red).lighter( 120 ) );
       item->setBackground( 1, QColor(Qt::red) );
       item->setForeground( 1, QColor(Qt::white) );
 
       item->setData( 1, Qt::ToolTipRole, QString("\n  Warning!  \n\n  Name for this object is not defined in the applications source code. Identifying objects with other  \n  attributes such as \"x\", \"y\", \"width\", \"height\", \"text\" or \"icon\" may lead to failure of the tests.  \n\n  Object names are more likely to remain the same throughout the software life cycle.  \n\n  Please contact your manager, development team or responsible person and request for  \n  properly named objects in order to make this application more testable.  \n\n") );
-      
-      
+
+
     } else {
-    
+
       if ( duplicateItems.count( name ) != 0 ){
 
         QStringList items = duplicateItems.value( name );
@@ -217,14 +217,14 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem,
         item->setBackground( 1, QColor(Qt::red) );
         item->setForeground( 1, QColor(Qt::white) );
 
-        item->setData( 1, Qt::ToolTipRole, toolTipMessage );  
+        item->setData( 1, Qt::ToolTipRole, toolTipMessage );
 
       } else {
 
         item->setForeground( 1, QColor(Qt::darkGreen) );
 
       }
-    
+
     }
 
     item->setData( 0, Qt::DisplayRole, type);
@@ -364,7 +364,7 @@ QList<QMap<QString, QString> > MainWindow::collectObjectData( QDomElement elemen
         results << collectObjectData( node.toElement() );
 
       }
-    
+
       node = node.nextSibling();
 
     }
@@ -382,7 +382,7 @@ QMap<QString, QStringList> MainWindow::findDuplicateObjectNames( QList<QMap<QStr
 
   if ( objects.size() > 0 ){
 
-    for ( int i = 0; i < objects.size(); i++ ){ 
+    for ( int i = 0; i < objects.size(); i++ ){
 
       qDebug() << "--";
 
@@ -427,7 +427,7 @@ QMap<QString, QStringList> MainWindow::findDuplicateObjectNames( QList<QMap<QStr
         objectIds << objectId;
 
         foundObjects.insert( objectName, objectIds );
-      
+
       }
 
       if ( duplicate == false ){
@@ -596,7 +596,7 @@ void MainWindow::updateObjectTree( QString filename )
 
                 QList<QMap<QString,QString> > objectNamesList = collectObjectData( element );
 
-                QMap<QString, QStringList> duplicateItems; 
+                QMap<QString, QStringList> duplicateItems;
 
                 duplicateItems = findDuplicateObjectNames( objectNamesList );
 
@@ -640,7 +640,7 @@ void MainWindow::updateObjectTree( QString filename )
 
     // highlight current object
     drawHighlight( ptr2TestObjectKey(objectTree->currentItem()), true );
-    updatePropertiesTable();
+    doPropertiesTableUpdate();
 }
 
 
@@ -728,40 +728,51 @@ QString MainWindow::constructRefreshCmd(const QString &command)
 }
 
 
-void MainWindow::sendImageRequest()
+bool MainWindow::sendImageRequest()
 {
     QString cmd = constructRefreshCmd("refresh_image");
     if (!cmd.isEmpty() && sendTDriverCommand(commandRefreshImage, cmd, "image refresh")) {
         statusbar(tr("Sent image refresh request..."));
         imageViewDock->setDisabled(true);
+        return true;
     }
-    else imageViewDock->setDisabled(false);
+    else {
+        statusbar(tr("Sending image refresh failed"), 2000);
+        imageViewDock->setDisabled(false);
+        return false;
+    }
     //else {        statusbar( "Error: Failed to send image refresh request", 1000 );    }
 }
 
 
-void MainWindow::sendUiDumpRequest()
+bool MainWindow::sendUiDumpRequest()
 {
     QString cmd = constructRefreshCmd("refresh_ui");
+    bool result;
     if (!cmd.isEmpty() && sendTDriverCommand(commandRefreshUI, cmd, "UI XML refresh")) {
         statusbar(tr("Sent UI XML refresh request..."));
-        objectTree->setDisabled(true);
-        propertiesDock->setDisabled(true);
+        result = true;
     }
     else {
-        objectTree->setDisabled(false);
-        propertiesDock->setDisabled(false);
+        statusbar(tr("Sending UI XML refresh failed"), 2000);
+        result = false;
     }
+    objectTree->setDisabled(result);
+    propertiesDock->setDisabled(result);
 
-    // else {        statusbar( "Error: Failed to send UI refresh request", 1000 );    }
+    return result;
 }
 
 
-void MainWindow::sendRefreshCommands()
+void MainWindow::startRefreshSequence()
 {
-    doExlusiveDisconnectAfterRefreshes = 1|2; // bitfield: 1 for image, 2 for UI XML refresh
-    sendUiDumpRequest();
-    sendImageRequest();
+    if (sendUiDumpRequest()) {
+        sendImageRequest();
+    }
+    else {
+        // make sure imageViewDock isn't accidentally left in disabled state
+        imageViewDock->setDisabled(false);
+    }
 }
 
 
@@ -772,8 +783,8 @@ void MainWindow::refreshDataDisplay()
     imageWidget->disableDrawHighlight();
     //load XMLfile and populate tree
     updateObjectTree( uiDumpFileName);
-    updateBehaviourXml();
-    updatePropertiesTable();
+    sendUpdateBehaviourXml();
+    doPropertiesTableUpdate();
 }
 
 

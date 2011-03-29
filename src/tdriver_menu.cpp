@@ -208,7 +208,7 @@ bool MainWindow::disconnectSUT()
     else {
         result =  sendTDriverCommand(commandDisconnectSUT,
                                      activeDevice + " disconnect",
-                                     tr("disconnect '%1'").arg(activeDevice) );
+                                     tr("disconnect '%1'").arg(activeDevice));
         if (result) {
             statusbar( tr("Sent SUT disconnect...") );
         }

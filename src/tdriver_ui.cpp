@@ -140,7 +140,7 @@ void MainWindow::updateWindowTitle() {
         tempTitle += tr("Foreground app. - ");
     }
     else {
-        tempTitle +=  ( currentApplication.name.isEmpty() ? "" : currentApplication.name + " (" + currentApplication.id + ") - " );
+        tempTitle += currentApplication.name + " (" + currentApplication.id + ") - ";
     }
 
     tempTitle += ( offlineMode ) ?
