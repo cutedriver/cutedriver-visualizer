@@ -826,13 +826,19 @@ QString MainWindow::treeObjectRubyId(TestObjectKey treeItemPtr, TestObjectKey su
     QString objText = attributesMap.value( treeItemPtr ).value("text").value;
 
     if ( sutItemPtr == treeItemPtr && objRubyId == "sut" ) {
-        objRubyId = "TDriver.sut( :Id => '"  + activeDevice + "' )";
+        objRubyId = "TDriver.sut( :Id => "
+                + TDriverUtil::rubySingleQuote(activeDevice)
+                + " )";
     }
     else if ( objName != "NoName" && !objName.isEmpty() ) {
-        objRubyId.append("( :name => '" + objName + "' )");
+        objRubyId.append("( :name => "
+                         + TDriverUtil::rubySingleQuote(objName)
+                         + " )");
     }
     else if(objText != "" && !objText.isEmpty()) {
-        objRubyId.append("( :text => '" + attributesMap.value( treeItemPtr ).value("text").value + "' )");
+        objRubyId.append("( :text => "
+                         + TDriverUtil::rubySingleQuote(attributesMap.value( treeItemPtr ).value("text").value)
+                         + " )");
     }
     else {
         objRubyId.append("( :name => '' )");

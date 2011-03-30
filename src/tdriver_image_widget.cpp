@@ -96,7 +96,7 @@ void MainWindow::imageTapFromId(TestObjectKey id)
     if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 && !currentApplication.isNull()) {
         TreeItemInfo treeItemData = objectTreeData.value( lastHighlightedObjectKey );
         sendTapScreen(QStringList() << "tap"
-                      << treeItemData.type + "(:id=>'" + treeItemData.id + "')"
+                      << treeItemData.type + "(:id=>" + TDriverUtil::rubySingleQuote(treeItemData.id) + ")"
                       << currentApplication.id);
         highlightByKey( id, true );
     }
@@ -132,7 +132,7 @@ void MainWindow::clickedImage()
     if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
         const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
         sendTapScreen( QStringList() << "tap"
-                      << treeItemData.type + "(:id=>'" + treeItemData.id + "')"
+                      << treeItemData.type + "(:id=>" + TDriverUtil::rubySingleQuote(treeItemData.id) + ")"
                       << currentApplication.id);
         highlightAtCoords( pos, true );
     }

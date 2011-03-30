@@ -368,12 +368,12 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
         QString attributeName = currentItem->text();
         QString objRubyId = treeItemData.type;
 
+        objRubyId.append('(');
         if ( treeItemData.name != "application" ) {
-            objRubyId.append("(:name=>'" + treeItemData.name + "',:id=>'" + treeItemData.id + "')");
+            objRubyId.append(":name=>" + TDriverUtil::rubySingleQuote(treeItemData.name) +",");
         }
-        else {
-            objRubyId.append("(:id=>'" + treeItemData.id + "')");
-        }
+        objRubyId.append(":id=>"+TDriverUtil::rubySingleQuote(treeItemData.id));
+        objRubyId.append(')');
 
         QString targetDataType = attributesMap.value(currentItemPtr).value(attributeName).dataType;
 
@@ -476,9 +476,8 @@ void MainWindow::propertiesItemPressed ( QTableWidgetItem * item )
 
                 objRubyId += ":"
                         + propertiesTable->item( selectedItems[ i ]->row(), 0 )->text()
-                        + " => '"
-                        + propertiesTable->item( selectedItems[ i ]->row(), 1 )->text()
-                        + "'";
+                        + " => "
+                        + TDriverUtil::rubySingleQuote(propertiesTable->item( selectedItems[ i ]->row(), 1 )->text());
                 qDebug() << FCFL << objRubyId;
             }
 

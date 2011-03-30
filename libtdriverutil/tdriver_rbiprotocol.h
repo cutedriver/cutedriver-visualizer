@@ -37,7 +37,8 @@ class QThread;
 
 class LIBTDRIVERUTILSHARED_EXPORT TDriverRbiProtocol : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
+
 public:
     explicit TDriverRbiProtocol(QAbstractSocket *connection, QMutex *cm, QWaitCondition *mwc, QWaitCondition *hwc, QObject *parent = 0);
     ~TDriverRbiProtocol();

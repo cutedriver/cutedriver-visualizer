@@ -25,7 +25,7 @@
 
 #include <QObject>
 #include <QString>
-#include <QStringList>
+class QStringList;
 
 class LIBTDRIVERUTILSHARED_EXPORT  TDriverUtil : public QObject
 {
@@ -33,13 +33,15 @@ Q_OBJECT
 public:
     explicit TDriverUtil(QObject *parent = 0);
 
+    static const char visualizationId[];
+    static const char interactionId[];
+
     static QString helpUrlString(const char *file);
     static QString tdriverHelperFilePath(const QString &filename, const QString &overrideEnvVar=QString());
     static QString smartJoin(const QString &str1, QChar sep, const QString &str2 = QString());
     static int quotedToInt(QString str);
-
-    static const char visualizationId[];
-    static const char interactionId[];
+    static BAList toBAList(const QStringList &list);
+    static QString rubySingleQuote(const QString &str);
 
     static bool isExclusiveConnectionSut(const QString &sut) {
         return isSymbianSut(sut);
@@ -54,14 +56,7 @@ public:
         return (sut.contains("qt", Qt::CaseInsensitive));
     }
 
-    static BAList toBAList(const QStringList &list) {
-        BAList ret;
-        ret.reserve(list.size());
-        for(int ii=0; ii < list.size(); ++ii) {
-            ret << list.at(ii).toAscii();
-        }
-        return ret;
-    }
+
 
 signals:
 

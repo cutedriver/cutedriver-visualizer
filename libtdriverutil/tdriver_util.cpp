@@ -22,6 +22,8 @@
 
 #include <QFile>
 #include <QCoreApplication>
+#include <QStringList>
+
 #include <cstdlib>
 
 const char TDriverUtil::visualizationId[] = "visualization";
@@ -90,4 +92,24 @@ int TDriverUtil::quotedToInt(QString str)
     str.replace("'", " ");
     str.replace("\"", " ");
     return str.trimmed().toInt();
+}
+
+
+BAList TDriverUtil::toBAList(const QStringList &list)
+{
+    BAList ret;
+    ret.reserve(list.size());
+    for(int ii=0; ii < list.size(); ++ii) {
+        ret << list.at(ii).toAscii();
+    }
+    return ret;
+}
+
+
+QString TDriverUtil::rubySingleQuote(const QString &str)
+{
+    QString result(str);
+    result.replace("\\", "\\\\");
+    result.replace("'", "\\'");
+    return "'" + result + "'";
 }
