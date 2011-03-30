@@ -38,9 +38,8 @@ bool MainWindow::getItemPos(QTreeWidgetItem *item, int &x, int &y)
     bool xOk = false;
     bool yOk = false;
 
-
     if (TDriverUtil::isSymbianSut(activeDeviceParams.value("type"))
-            && objectTreeData.value(itemKey).env.compare("qt", Qt::CaseInsensitive)) {
+            && 0 == objectTreeData.value(itemKey).env.compare("qt", Qt::CaseInsensitive)) {
         // handle special case for Qt testobject with Symbian SUT
         ret = QPoint(attributes.value("x_absolute").value.toInt(&xOk),
                      attributes.value("y_absolute").value.toInt(&yOk));
@@ -202,13 +201,32 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem,
 
         if ( items.size() == 1 ){
 
-          toolTipMessage = "\n  Warning!  \n\n  Multiple objects found with same object name and id. Identifying and accessing this test object without \n  full stack of parent object(s) may lead your test scripts to fail. The reason for this issue is how \n  objects are traversed but usually due to there are no unique object id available.  \n\n  Please contact your manager, traverser development team or responsible person and request for  \n  unique object names and ids in order to make this application more testable.  \n\n";
+            toolTipMessage = tr(
+                        "\n  Warning!\n"
+                        "\n"
+                        "  Multiple objects found with same object name and id.\n"
+                        "\n"
+                        "  Identifying and accessing this test object without full stack of parent object(s)\n"
+                        "  may lead your test scripts to fail. The reason for this issue is how objects are\n"
+                        "  traversed but usually due to there are no unique object id available.\n"
+                        "\n"
+                        "  Please contact your manager, traverser development team or responsible person\n"
+                        "  and request for unique object names and ids in order to make this application\n"
+                        "  more testable.\n" );
 
           //name = name + " <Duplicate object name and ID>";
 
         } else {
 
-          toolTipMessage = "\n  Warning!  \n\n  Multiple objects found with same object name. Objects without unique name may lead your test scripts to \n  fail due to multiple test objects found exception.  \n\n  Please contact your manager, development team or responsible person and request for  \n  uniquely named objects in order to make this application more testable.  \n\n";
+          toolTipMessage = tr(
+                      "\n  Warning!\n"
+                      "\n"
+                      "  Multiple objects found with same object name.\n"
+                      "\n"
+                      "  Objects without unique name may lead your test scripts to fail due to multiple\n"
+                      "  test objects found exception.  Please contact your manager, development team\n"
+                      "  or responsible person and request for uniquely named objects in order to make\n"
+                      "  this application more testable.\n");
 
           //name = name + " <Duplicate object name>";
 
