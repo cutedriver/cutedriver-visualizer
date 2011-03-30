@@ -371,6 +371,7 @@ void MainWindow::deviceSelected()
             //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
 
             // empty current image
+            lastHighlightedObjectKey = 0;
             imageWidget->clearImage();
 
             // clear object tree mappings

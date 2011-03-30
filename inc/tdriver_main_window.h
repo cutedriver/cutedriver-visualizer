@@ -249,7 +249,7 @@ private:
     void updateWindowTitle();
 
     void setActiveDevice( const QString &deviceName );
-   bool getActiveDeviceParameters();
+    bool getActiveDeviceParameters();
     QString getDriverVersionNumber();
 
     void noDeviceSelectedPopup();

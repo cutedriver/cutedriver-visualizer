@@ -277,13 +277,11 @@ bool MainWindow::sendUpdateSignalsTableContent()
 }
 
 
-void MainWindow::updateAttributesTableContent() {
-
-    // qDebug() << "updateAttributesTableContent()";
-
+void MainWindow::updateAttributesTableContent()
+{
     // disconnect itemChanged signal listening, reconnect after table is updated
-    QObject::disconnect(propertiesTable, SIGNAL( itemChanged( QTableWidgetItem * ) ),
-                        this, SLOT( changePropertiesTableValue( QTableWidgetItem* ) ) );
+    disconnect(propertiesTable, SIGNAL(itemChanged(QTableWidgetItem*)),
+               this, SLOT(changePropertiesTableValue(QTableWidgetItem*)) );
 
     // retrieve pointer of currently selected objectTree item
     TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
@@ -389,16 +387,25 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
             // note: item->text() is split by C++ code and joined by Ruby code, but it should keep
             // empty parts, so even multiple whitespace should not get lost
 
-            if ( executeTDriverCommand(commandSetAttribute,
-                                       QString(activeDevice + " set_attribute %1 %2 %3 %4")
-                                       .arg(objRubyId, targetDataType, attributeName, item->text()) ) )
-            {
-                startRefreshSequence();
+            if (sendTDriverCommand(commandSetAttribute,
+                                   QString(activeDevice + " set_attribute %1 %2 %3 %4")
+                                   .arg(objRubyId, targetDataType, attributeName, item->text()),
+                                   tr("set attribute")) ) {
+                propertiesDock->setDisabled(true);
+                statusbar(tr("Attribute change request sent..."));
+            }
+            else {
+                QMessageBox::critical(this,
+                                      tr("Attribute Change Error"),
+                                      tr("Failed to send attribute change request!"));
             }
         }
     }
     else {
         qDebug() << FCFL << "tried to change non-qt property, fail";
+        QMessageBox::warning(this,
+                             tr("Not Supported by Current Device"),
+                             tr("Current device / SUT does not support changing attributes"));
     }
 }
 

@@ -718,6 +718,12 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
         break;
 
     case commandSetAttribute:
+        if (handleNormally) {
+            startRefreshSequence();
+        }
+        else {
+            propertiesDock->setDisabled(false);
+        }
         break;
 
     case commandCheckApiFixture:

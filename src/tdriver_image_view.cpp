@@ -95,6 +95,7 @@ void TDriverImageView::clearImage()
     delete image;
     image = new QImage();
     imageTasId.clear();
+    rects.clear();
 
     if (!scaleImage)
         resize(image->size());

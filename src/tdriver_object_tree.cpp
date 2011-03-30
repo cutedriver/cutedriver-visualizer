@@ -637,6 +637,9 @@ void MainWindow::updateObjectTree( QString filename )
     RectList dummy;
     collectGeometries(sutItem, dummy);
     refreshScreenshotObjectList();
+    if (lastHighlightedObjectKey && !screenshotObjects.contains(lastHighlightedObjectKey)) {
+        lastHighlightedObjectKey = 0;
+    }
 
     bool itemFocusChanged = false;
 
