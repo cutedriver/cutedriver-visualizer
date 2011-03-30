@@ -250,7 +250,7 @@ bool MainWindow::setup()
     while ( !QFile((parametersFile = tdriverPath + "/tdriver_parameters.xml")).exists() ) {
 
         QMessageBox::StandardButton result = QMessageBox::critical(
-                    0,
+                    this,
                     tr("Missing file"),
                     tr("Could not locate TDriver parameters file:\n\n  %1\n\n").arg(parametersFile) +
                     tr("Please click Ok to select correct folder, or Cancel to quit.\n\nNote: Location will be saved to Visualizer configuration."),
@@ -544,7 +544,11 @@ bool MainWindow::isDeviceSelected()
 void MainWindow::noDeviceSelectedPopup()
 {
     if ( !offlineMode ){
-        QMessageBox::critical(0, tr( "Error" ), "Unable to refresh due to no device selected.\n\nPlease select one from devices menu." );
+        QMessageBox::critical(
+                    this,
+                    tr("No device selected"),
+                    tr("Unable to refresh due to no device selected.\n\n"
+                       "Please select one from devices menu." ));
     }
 }
 
@@ -731,9 +735,9 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
             apiFixtureEnabled = false;
             apiFixtureChecked = true;
             QMessageBox::critical(
-                        0,
-                        tr( "Error" ),
-                        tr("API fixture is not installed, unable to retrieve class methods.\n\n"
+                        this,
+                        tr( "API Fixture Error" ),
+                        tr("API Fixture is not installed, unable to retrieve class methods.\n\n"
                            "Disabling API tab from Properties table."));
         }
         break;
@@ -776,7 +780,6 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
 
     case commandSignalList:
         if (handleNormally) {
-            statusbar(tr("Signal list received, parsing..."), 2000);
             QString fileName(reply.value("signal_filename").value(0));
             if (!fileName.isEmpty()) {
                 const QStringList signalsList = parseSignalsXml( fileName );
@@ -796,7 +799,11 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
                 // sort signals table
                 signalsTable->sortItems( 0 );
                 signalsTable->resizeColumnToContents (0);
+
+                statusbar(tr("Signal list received."), 2000);
             }
+            else statusbar(tr("Didn't get any signals."), 2000);
+
         }
         else {
             qDebug() << FCFL << "got error reply";

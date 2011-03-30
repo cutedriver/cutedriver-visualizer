@@ -452,7 +452,7 @@ private:
     QComboBox *imageLeftClickChooser;
     //QString lastScreenShotApplication;
 
-    void tapScreenWithRefresh( QString target );
+    void sendTapScreen( QString target );
 
     void createImageViewDockWidget();
 

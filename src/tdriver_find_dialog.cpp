@@ -77,7 +77,9 @@ void MainWindow::findNextTreeObject()
     if ( objectTree->columnCount() < 1 || objectTree->invisibleRootItem()->childCount() < 1 ) {
 
         qDebug() << FCFL << "findFromObjectTree: no objects in tree";
-        QMessageBox::warning( 0, "Find", " No matches found with '" + findString + "' " );
+        QMessageBox::warning(this,
+                             tr("Find"),
+                             tr("No matches found with '%1'").arg(findString));
         return;
     }
 
@@ -215,7 +217,9 @@ void MainWindow::findFromSubTree(QTreeWidgetItem *current, const QString &findSt
         }
 
         if (!current || current == startItem) {
-            QMessageBox::warning( 0, "Find", " No matches found with '" + findDialogText->currentText() + "' " );
+            QMessageBox::warning(this,
+                                 tr("Find"),
+                                 tr("No matches found with '%1'").arg(findDialogText->currentText()) );
             return;
         }
     }

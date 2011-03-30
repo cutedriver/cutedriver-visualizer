@@ -133,7 +133,7 @@ void TDriverRecorder::startRecording()
     }
     else {
         qWarning("Recording start failed");
-        QMessageBox::critical( 0, tr( "Can't start recording" ), msg.value("error").first() );
+        QMessageBox::critical(this, tr( "Can't start recording" ), msg.value("error").first());
         setActionsEnabled(true, false, true);
     }
 }
@@ -164,13 +164,14 @@ void TDriverRecorder::stopRecording()
             } while( !line.isNull() );
 
         } else {
-            QMessageBox::critical( 0, tr( "Error" ),
-                                   "Could not open recorded script file:\n\n  " + lastRecordFileName);
+            QMessageBox::critical(this,
+                                  tr("Recording Error" ),
+                                  tr("Could not open recorded script file:\n\n  ") + lastRecordFileName);
         }
     }
     else {
         TDriverRubyInterface::globalInstance()->requestClose();
-        QMessageBox::critical( 0,
+        QMessageBox::critical(this,
                               tr( "Can't stop recording" ),
                               tr( "Requesting tdriver_interact.rb termination after error:\n\n%1")
                               .arg(QString::fromLatin1(msg.value("error").first() )));
@@ -189,8 +190,9 @@ void TDriverRecorder::testRecording()
     QFile file( lastRecordFileName );
 
     if ( !file.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate) ){
-        QMessageBox::critical( 0, tr( "Error" ),
-                               "Could not store recorded script file:\n\n  " + lastRecordFileName);
+        QMessageBox::critical(this,
+                              tr( "Recording Error" ),
+                              tr("Could not store recorded script file:\n\n  ") + lastRecordFileName);
 
     }
     else {
@@ -208,10 +210,10 @@ void TDriverRecorder::testRecording()
         msg["input"] << mStrActiveDevice.toAscii() << "test_record" << file.fileName().toLocal8Bit();
         setActionsEnabled(false, false, false);
         if (TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, 15000, "test_record")) {
-            QMessageBox::critical( 0, tr( "Recording test ok" ), tr("Success"));
+            QMessageBox::critical( this, tr( "Recording test ok" ), tr("Success"));
         }
         else {
-            QMessageBox::critical( 0, tr( "Can't test recording" ), msg.value("error").first() );
+            QMessageBox::critical( this, tr( "Can't test recording" ), msg.value("error").first() );
         }
         setActionsEnabled(true, false, true);
     }

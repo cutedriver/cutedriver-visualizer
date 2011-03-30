@@ -187,11 +187,17 @@ void MainWindow::findStringFromXml() {
             } else {
 
                 // no matches found, check if text already selected? if not, show warning popup
-                if ( !sourceEdit->textCursor().selectedText().contains( findStringComboBox->currentText(), showXmlMatchCase->isChecked() ? Qt::CaseSensitive : Qt::CaseInsensitive ) ) {
+                if ( !sourceEdit->textCursor()
+                        .selectedText()
+                        .contains(findStringComboBox->currentText(),
+                                  showXmlMatchCase->isChecked() ? Qt::CaseSensitive : Qt::CaseInsensitive ) ) {
 
                     sourceEdit->setTextCursor( beginPos );
 
-                    QMessageBox::warning( 0, tr( "Find" ), " No matches found with '" + findStringComboBox->currentText() + "' " );
+                    QMessageBox::warning(
+                                this,
+                                tr("Find"),
+                                tr("No matches found with '%1'").arg(findStringComboBox->currentText()));
 
 
                 }

@@ -30,21 +30,21 @@ void MainWindow::connectImageWidgetSignals() {
 
     connect( imageWidget, SIGNAL( forceRefresh()), this, SLOT(forceRefreshData()));
 
-    connect( imageWidget, SIGNAL( imageTapCoords() ), this, SLOT( clickedImage() ) );
-    connect( imageWidget, SIGNAL( imageInspectCoords( ) ), this, SLOT( imageInspectFindItem() ) );
-    connect( imageWidget, SIGNAL( imageInsertCoordsAtClick()), this, SLOT( imageInsertCoords() ) );
-    connect( imageWidget, SIGNAL( imageInsertObjectAtClick()), this, SLOT( imageInsertFindItem() ) );
+    connect( imageWidget, SIGNAL( imageTapCoords() ), SLOT( clickedImage() ) );
+    connect( imageWidget, SIGNAL( imageInspectCoords( ) ), SLOT( imageInspectFindItem() ) );
+    connect( imageWidget, SIGNAL( imageInsertCoordsAtClick()), SLOT( imageInsertCoords() ) );
+    connect( imageWidget, SIGNAL( imageInsertObjectAtClick()), SLOT( imageInsertFindItem() ) );
 
-    connect( imageWidget, SIGNAL( imageInsertObjectById(TestObjectKey)), this, SLOT(imageInsertObjectFromId(TestObjectKey)));
-    connect( imageWidget, SIGNAL( imageInspectById(TestObjectKey)), this, SLOT(imageInspectFromId(TestObjectKey)));
-    connect( imageWidget, SIGNAL( imageTapById(TestObjectKey)), this, SLOT(imageTapFromId(TestObjectKey)));
+    connect( imageWidget, SIGNAL( imageInsertObjectById(TestObjectKey)), SLOT(imageInsertObjectFromId(TestObjectKey)));
+    connect( imageWidget, SIGNAL( imageInspectById(TestObjectKey)), SLOT(imageInspectFromId(TestObjectKey)));
+    connect( imageWidget, SIGNAL( imageTapById(TestObjectKey)), SLOT(imageTapFromId(TestObjectKey)));
 
-    connect( imageWidget, SIGNAL(imageTasIdChanged(QString)), this, SLOT(refreshScreenshotObjectList()));
+    connect( imageWidget, SIGNAL(imageTasIdChanged(QString)), SLOT(refreshScreenshotObjectList()));
 }
 
 
-// This is triggered from ImageWidget when hoovering on image - gets x,y from imagewidget and searches for item.
-// If an item is found it is higlighted
+// This is triggered from ImageWidget when hovering on image.
+// Gets x,y from imagewidget and searches for item. If an item is found it is higlighted.
  void MainWindow::imageInspectFindItem()
  {
     QRect area(0, 0, imageWidget->imageWidth()-1, imageWidget->imageHeight()-1);
@@ -93,24 +93,24 @@ void MainWindow::imageInspectFromId(TestObjectKey id)
 
 void MainWindow::imageTapFromId(TestObjectKey id)
 {
-    //qDebug() << __FUNCTION__ << id;
-
     if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 && !currentApplication.isNull()) {
         TreeItemInfo treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-        // note: tapScreenWithRefresh will invalidate id, because underneath id is a pointer to QTreeWidgetItem
-        tapScreenWithRefresh( QString("tap %1 %2")
-                             .arg(treeItemData.type + "(:id=>'" + treeItemData.id + "')")
-                             .arg(currentApplication.id) );
-        id = objectIdMap.value(treeItemData.id);
+        sendTapScreen( QString("tap %1 %2")
+                      .arg(treeItemData.type + "(:id=>'" + treeItemData.id + "')")
+                      .arg(currentApplication.id) );
         highlightByKey( id, true );
     }
     else {
-        QMessageBox::critical( 0, "Tap to screen", "Bad tap attempt, object id:" + testObjectKey2Str(id) + ", app id:" + currentApplication.id);
+        QMessageBox::critical(this,
+                              tr("Tap to screen"),
+                              tr("Bad tap attempt, object id %1, app id %2")
+                              .arg(testObjectKey2Str(id), currentApplication.id));
     }
 }
 
 
-void MainWindow::tapScreenWithRefresh( QString target )
+// Send tap command to SUT.
+void MainWindow::sendTapScreen( QString target )
 {
     qDebug() << FCFL << target;
     statusbar(tr("Tapping..."));
@@ -122,20 +122,24 @@ void MainWindow::tapScreenWithRefresh( QString target )
 }
 
 
-// Image has been clicked - fetch X, Y from imageWidget, and try to tap object that was clicked
+// Image has been clicked.
+// Fetch X, Y from imageWidget, and try to tap object that was clicked
 void MainWindow::clickedImage()
 {
     QPoint pos(imageWidget->getEventPosInImage());
 
     if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
         const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-        tapScreenWithRefresh( QString("tap %1 %2")
+        sendTapScreen( QString("tap %1 %2")
                 .arg(treeItemData.type + "(:id=>'" + treeItemData.id + "')")
                 .arg(currentApplication.id) );
         highlightAtCoords( pos, true );
     }
     else {
-        QMessageBox::critical( 0, "Tap to screen", "No object found at coordinates x: " + QString::number( pos.x() ) + ", y: " + QString::number( pos.y() ) );
+        QMessageBox::critical(
+                    this,
+                    tr("Tap to screen"),
+                    tr("No object found at coordinates x: %1, y: %2").arg(pos.x()).arg(pos.y()) );
     }
 }
 
@@ -169,14 +173,16 @@ void MainWindow::drawHighlight( TestObjectKey itemKey, bool multiple )
 }
 
 
-
-bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey> & matchingObjects )
+// Get list of all visible objects that are under given position
+bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey> &matchingObjects)
 {
     QSet<TestObjectKey>::const_iterator visibleObject;
 
     matchingObjects.clear();
 
-    for ( visibleObject = screenshotObjects.constBegin(); visibleObject != screenshotObjects.constEnd(); ++visibleObject ) {
+    for (visibleObject = screenshotObjects.constBegin();
+         visibleObject != screenshotObjects.constEnd();
+         ++visibleObject ) {
 
         // add only objects that are in geometriesMap
         const RectList &geometries = geometriesMap.value( *visibleObject );
@@ -198,7 +204,7 @@ bool MainWindow::collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey>
 }
 
 
-
+// Get smallest object from list of objects
 bool MainWindow::getSmallestObjectFromMatches( QList<TestObjectKey> *matchingObjects, TestObjectKey & objectPtr ) {
 
     //qDebug() << "getSmallestObjectFromMatches";
@@ -230,6 +236,9 @@ bool MainWindow::getSmallestObjectFromMatches( QList<TestObjectKey> *matchingObj
 }
 
 
+// Highlight object specified by itemKey in the image.
+// Optionally select it in the object tree.
+// Optionally call popup method to do editor insertion.
 bool MainWindow::highlightByKey( TestObjectKey itemKey, bool selectItem, QString insertMethodToEditor )
 {
     if (!itemKey) {
@@ -253,22 +262,19 @@ bool MainWindow::highlightByKey( TestObjectKey itemKey, bool selectItem, QString
     return true;
 }
 
-bool MainWindow::highlightAtCoords( QPoint pos, bool selectItem, QString insertMethodToEditor ) {
 
-    //qDebug() << __FUNCTION__;
-
+// Get item key for coordinates and call highlightByKey if successful
+bool MainWindow::highlightAtCoords( QPoint pos, bool selectItem, QString insertMethodToEditor )
+{
     bool result = false;
-
     QList<TestObjectKey> matchingObjects;
 
     if ( collectMatchingVisibleObjects( pos, matchingObjects ) ) {
 
         qSort( matchingObjects.begin(), matchingObjects.end() );
-
         TestObjectKey matchingObject = 0;
 
         if ( getSmallestObjectFromMatches( &matchingObjects, matchingObject ) ) {
-
             result = highlightByKey(matchingObject, selectItem, insertMethodToEditor);
         }
     }

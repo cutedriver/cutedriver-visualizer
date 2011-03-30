@@ -411,8 +411,8 @@ bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
     if ( !xmlFile.exists() ) {
 
         QMessageBox::critical(
-                0,
-                tr( "Error" ),
+                this,
+                tr( "XML Error" ),
                 tr( "File not found:\n\n  %1\n" ).arg( fileName )
                 );
 
@@ -421,8 +421,8 @@ bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
         if ( !xmlFile.open( QIODevice::ReadOnly ) ) {
 
             QMessageBox::critical(
-                    0,
-                    tr( "Error" ),
+                    this,
+                    tr( "XML Error" ),
                     tr( "Cannot open XML file %1" ).arg( fileName )
                     );
 
@@ -433,8 +433,8 @@ bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
             if ( !result )  {
 
                 QMessageBox::critical(
-                        0,
-                        tr( "Error" ),
+                        this,
+                        tr( "XML Error" ),
                         tr( "Cannot parse xml file %1" ).arg( fileName )
                         );
 
@@ -499,7 +499,7 @@ bool MainWindow::getXmlParameters( QString filename )
     }
     else {
         QMessageBox::warning(
-                0,
+                this,
                 tr("Loading XML Failed"),
                 tr("Failed to load and parse file:\n\n  %1").arg(filename));
     }

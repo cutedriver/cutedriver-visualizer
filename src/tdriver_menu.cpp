@@ -291,7 +291,9 @@ void MainWindow::saveStateAsArchive()
 
         if ( !createStateArchive( folderName ) ) {
 
-            QMessageBox::warning( this, "Save as folder", "Failed when saving state in folder:\n" + folderName );
+            QMessageBox::warning(this,
+                                 tr("Save as folder"),
+                                 tr("Failed when saving state in folder:\n") + folderName );
 
         }
 
@@ -306,7 +308,10 @@ void MainWindow::openRecordWindow()
 
         if (currentApplication.isNull()) {
 
-            QMessageBox::warning( this, tr( "TDriver Visualizer Recorder" ), "In order to start recording a target application must be selected\nfrom applications menu.\n\nPlease select one and try again." );
+            QMessageBox::warning(this,
+                                 tr("TDriver Visualizer Recorder" ),
+                                 tr("In order to start recording a target application must be selected\n"
+                                    "from applications menu.\n\nPlease select one and try again."));
 
         } else {
 
@@ -434,8 +439,8 @@ bool MainWindow::createStateArchive( QString targetPath )
         QMessageBox::StandardButton selectedButton =
                 QMessageBox::question(
                     this,
-                    "Overwrite?",
-                    "Following target files already exist, do you wish to overwrite?\n\n  " + problemFiles.join("\n  "),
+                    tr("Overwrite?"),
+                    tr("Following target files already exist, do you wish to overwrite?\n\n  ") + problemFiles.join("\n  "),
                     QMessageBox::Yes | QMessageBox::No,
                     QMessageBox::No);
         if ( selectedButton == QMessageBox::No ) {
@@ -464,8 +469,8 @@ bool MainWindow::createStateArchive( QString targetPath )
 
         QMessageBox::warning(
                     this,
-                    "Failed to copy some files!",
-                    "Following files failed to copy:\n\n  " + problemFiles.join("\n  "));
+                    tr("Failed to copy some files!"),
+                    tr("Following files failed to copy:\n\n  " )+ problemFiles.join("\n  "));
 
         return false;
     }
