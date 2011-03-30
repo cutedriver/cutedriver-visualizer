@@ -95,9 +95,9 @@ void MainWindow::imageTapFromId(TestObjectKey id)
 {
     if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 && !currentApplication.isNull()) {
         TreeItemInfo treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-        sendTapScreen( QString("tap %1 %2")
-                      .arg(treeItemData.type + "(:id=>'" + treeItemData.id + "')")
-                      .arg(currentApplication.id) );
+        sendTapScreen(QStringList() << "tap"
+                      << treeItemData.type + "(:id=>'" + treeItemData.id + "')"
+                      << currentApplication.id);
         highlightByKey( id, true );
     }
     else {
@@ -110,13 +110,14 @@ void MainWindow::imageTapFromId(TestObjectKey id)
 
 
 // Send tap command to SUT.
-void MainWindow::sendTapScreen( QString target )
+void MainWindow::sendTapScreen(const QStringList &target)
 {
     qDebug() << FCFL << target;
     statusbar(tr("Tapping..."));
     typedef QList<QByteArray> QByteArrayList;
 
-    if ( !sendTDriverCommand(commandTapScreen, activeDevice + " " + target, "screen tapping") ) {
+    QStringList input(QStringList() << activeDevice << target);
+    if ( !sendTDriverCommand(commandTapScreen, input, "screen tapping") ) {
         statusbar( "Error: Failed to send tap to the screen", 2000);
     }
 }
@@ -130,9 +131,9 @@ void MainWindow::clickedImage()
 
     if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
         const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
-        sendTapScreen( QString("tap %1 %2")
-                .arg(treeItemData.type + "(:id=>'" + treeItemData.id + "')")
-                .arg(currentApplication.id) );
+        sendTapScreen( QStringList() << "tap"
+                      << treeItemData.type + "(:id=>'" + treeItemData.id + "')"
+                      << currentApplication.id);
         highlightAtCoords( pos, true );
     }
     else {

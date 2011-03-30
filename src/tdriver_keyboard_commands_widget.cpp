@@ -42,8 +42,7 @@ void MainWindow::createKeyboardCommands() {
     {
         deviceActionButtons[i] = new QPushButton();
         deviceActionButtons[i]->setObjectName("kbcommands "+allowCommands.at(i));
-        // TODO: commented code on next line may be unnecessary, remove when confirmed
-        deviceActionButtons[i]->setText(allowCommands.at(i)/*.toLocal8Bit().constData()*/);
+        deviceActionButtons[i]->setText(allowCommands.at(i));
         connect(deviceActionButtons[i], SIGNAL(pressed()), this, SLOT(deviceActionButtonPressed()));
         layout->addWidget(deviceActionButtons[i]);
     }

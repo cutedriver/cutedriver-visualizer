@@ -20,7 +20,7 @@
 
 
 #include "tdriver_main_window.h"
-
+#include <tdriver_debug_macros.h>
 
 #include <QToolBar>
 #include <QMenu>
@@ -59,10 +59,11 @@ bool MainWindow::sendUpdateBehaviourXml()
 
     propertyTabLastTimeUpdated.insert( "methods", 0 );
 
-    return sendTDriverCommand(commandBehavioursXml,
-                              activeDevice + " get_behaviours " + objectType,
-                              tr("behaviour get"),
-                              objectType);
+    QStringList cmd;
+    cmd << activeDevice << "get_behaviours" << objectType;
+    qDebug() << FCFL << cmd;
+
+    return sendTDriverCommand(commandBehavioursXml, cmd, tr("behaviour get"), objectType);
 }
 
 void MainWindow::buildBehavioursMap() {
@@ -80,7 +81,6 @@ void MainWindow::buildBehavioursMap() {
         if ( node.isElement() ) {
 
             /*
-
 <?xml version="1.0"?>
 <behaviours>
 <behaviour object_type="sut">
@@ -93,7 +93,6 @@ void MainWindow::buildBehavioursMap() {
 
 
 */
-
             // retrieve element from node
             QDomElement domElement = node.toElement();
 
@@ -108,26 +107,23 @@ void MainWindow::buildBehavioursMap() {
             Behaviour behaviour;
 
             // retrieve method from behaviours list if one already exists
-            if ( behavioursMap.contains( targetObject ) ) { behaviour = behavioursMap.value( targetObject ); }
+            if ( behavioursMap.contains( targetObject ) ) {
+                behaviour = behavioursMap.value( targetObject );
+            }
 
             for ( int methodIndex = 0; methodIndex < methodsNodeList.size(); methodIndex++ ) {
 
                 QDomElement methodElement = methodsNodeList.item( methodIndex ).toElement();
-
                 QString methodName = methodElement.attribute( "name" );
-
 /*
                 QString methodDescription("");
-
                 QXmlStreamReader xmlReader(methodElement.elementsByTagName( "description" ).item( 0 ).toElement().text());
                 while (!xmlReader.atEnd()) {
                     if ( xmlReader.readNext() == QXmlStreamReader::Characters ) {
                         methodDescription += xmlReader.text();
                     }
                 }
-
                 QString methodExample("");
-
                 xmlReader.clear();
                 xmlReader.addData(methodElement.elementsByTagName( "example" ).item( 0 ).toElement().text());
                 while (!xmlReader.atEnd()) {
@@ -135,27 +131,19 @@ void MainWindow::buildBehavioursMap() {
                         methodExample += xmlReader.text();
                     }
                 }
-
                 //qDebug() << methodName << methodDescription << methodExample;
-
                 QMap<QString, QString> methodDetails;
-
                 methodDetails.insert( "description", methodDescription );
                 methodDetails.insert( "example", methodExample );
 */
-
                 //QString methodDescription = methodElement.elementsByTagName( "description" ).item( 0 ).toElement().text();
-
                 //QString methodExample = methodElement.elementsByTagName( "example" ).item( 0 ).toElement().text();
-
                 //qDebug() << methodName << methodDescription << methodExample;
 
                 QMap<QString, QString> methodDetails;
 
-                methodDetails.insert( "description", (QString) methodElement.elementsByTagName( "description" ).item( 0 ).toElement().text() );
-
-                methodDetails.insert( "example", (QString) methodElement.elementsByTagName( "example" ).item( 0 ).toElement().text() );
-
+                methodDetails.insert("description", methodElement.elementsByTagName( "description" ).item( 0 ).toElement().text() );
+                methodDetails.insert("example", methodElement.elementsByTagName( "example" ).item( 0 ).toElement().text() );
                 behaviour.addMethod( methodName, methodDetails );
 
             }

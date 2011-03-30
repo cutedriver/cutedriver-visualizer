@@ -96,7 +96,7 @@ void MainWindow::sendUpdateApiTableContent()
             if ( !apiFixtureChecked ) {
                 qDebug() << "requesting API fixture check";
                 sendTDriverCommand(commandCheckApiFixture,
-                                   activeDevice + " check_fixture",
+                                   QStringList() << activeDevice << "check_fixture",
                                    "checking API fixture");
                 // response handler for commandCheckApiFixture will call this method again
                 return;
@@ -106,7 +106,7 @@ void MainWindow::sendUpdateApiTableContent()
             if ( !apiMethodsMap.contains( objectType ) ) {
                 qDebug() << "requesting apiMethods for " << objectType;
                 sendTDriverCommand(commandClassMethods,
-                                   activeDevice + " fixture " + objectType,
+                                   QStringList() << activeDevice << "fixture" << objectType,
                                    "class methods for " + objectType,
                                    objectType);
                 // response handler for commandClassMethods will call this method again
@@ -264,10 +264,9 @@ bool MainWindow::sendUpdateSignalsTableContent()
             // list_signals
             if (activeDevice.contains("qt")){
                 if (!apiSignalsMap.contains(objectType)) {
-                    BAListMap reply;
-                    QString cmd(QString("%1 list_signals %2 %3 %4")
-                                .arg(activeDevice, currentApplication.name, objectId, objectType));
 
+                    QStringList cmd(QStringList()
+                                    << activeDevice << "list_signals" << currentApplication.name << objectId << objectType);
                     return sendTDriverCommand(commandSignalList, cmd, "signal list", objectType);
                 }
             }
@@ -384,13 +383,11 @@ void MainWindow::changePropertiesTableValue( QTableWidgetItem *item )
                                  tr("No data type found for attribute ") + attributeName );
 
         } else {
-            // note: item->text() is split by C++ code and joined by Ruby code, but it should keep
-            // empty parts, so even multiple whitespace should not get lost
+            QStringList cmd(QStringList()
+                            << activeDevice << "set_attribute"
+                            << objRubyId << targetDataType << attributeName << item->text());
 
-            if (sendTDriverCommand(commandSetAttribute,
-                                   QString(activeDevice + " set_attribute %1 %2 %3 %4")
-                                   .arg(objRubyId, targetDataType, attributeName, item->text()),
-                                   tr("set attribute")) ) {
+            if (sendTDriverCommand(commandSetAttribute, cmd, tr("set attribute")) ) {
                 propertiesDock->setDisabled(true);
                 statusbar(tr("Attribute change request sent..."));
             }

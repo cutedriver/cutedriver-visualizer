@@ -191,7 +191,7 @@ private:
                              QString &fullError );
 
     bool sendTDriverCommand(ExecuteCommandType commandType,
-                            const QString &commandString,
+                            const QStringList &inputList,
                             const QString &errorName,
                             const QString &typeStr = QString());
 
@@ -452,7 +452,7 @@ private:
     QComboBox *imageLeftClickChooser;
     //QString lastScreenShotApplication;
 
-    void sendTapScreen( QString target );
+    void sendTapScreen(const QStringList &target);
 
     void createImageViewDockWidget();
 
@@ -602,7 +602,7 @@ private slots:
 
     void sendAppListRequest(bool refreshAfter=true);
 
-    QString constructRefreshCmd(const QString &command);
+    QStringList constructRefreshCmd(const QString &command);
     bool sendImageRequest();
     bool sendUiDumpRequest();
     void startRefreshSequence();

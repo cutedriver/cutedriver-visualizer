@@ -25,6 +25,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 
 class LIBTDRIVERUTILSHARED_EXPORT  TDriverUtil : public QObject
 {
@@ -51,6 +52,15 @@ public:
 
     static bool isQtSut(const QString &sut) {
         return (sut.contains("qt", Qt::CaseInsensitive));
+    }
+
+    static BAList toBAList(const QStringList &list) {
+        BAList ret;
+        ret.reserve(list.size());
+        for(int ii=0; ii < list.size(); ++ii) {
+            ret << list.at(ii).toAscii();
+        }
+        return ret;
     }
 
 signals:

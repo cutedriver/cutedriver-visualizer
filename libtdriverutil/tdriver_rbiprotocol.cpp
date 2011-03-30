@@ -144,18 +144,23 @@ void TDriverRbiProtocol::makeStringListMapMsg(QByteArray &target, const QByteArr
     msgStream << seqNum;
     msgStream << name;
 
+    qDebug() << FFL << msg;
+    //qDebug() << FFL << seqNum << name;
+
     QByteArray mapBuf;
     {
         QDataStream mapStream(&mapBuf, QIODevice::WriteOnly | QIODevice::Append);
 
         BAListMap::const_iterator  mapIter;
         for (mapIter = msg.constBegin(); mapIter != msg.constEnd(); ++mapIter) {
+            //qDebug() << "KEY"<< mapIter.key();
             mapStream << mapIter.key();
 
             QByteArray listBuf;
             {
                 QDataStream listStream(&listBuf, QIODevice::WriteOnly | QIODevice::Append);
                 foreach(QByteArray listItem, mapIter.value()) {
+                    //qDebug() << "    VALUE" << listItem;
                     listStream << listItem;
                 }
             }

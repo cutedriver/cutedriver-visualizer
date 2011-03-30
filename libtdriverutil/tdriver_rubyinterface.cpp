@@ -514,6 +514,7 @@ quint32 TDriverRubyInterface::sendCmdMessage( const QByteArray &name, const BALi
         return 0;
     }
 
+    qDebug() << FFL << cmd;
     quint32 seqNum = handler->sendStringListMapMsg(name, cmd);
     Q_ASSERT(seqNum > 0);
     return seqNum;
@@ -523,7 +524,6 @@ quint32 TDriverRubyInterface::sendCmdMessage( const QByteArray &name, const BALi
 quint32 TDriverRubyInterface::sendCmd(const QByteArray &name, const BAListMap &cmd)
 {
     VALIDATE_THREAD_NOT;
-
     quint32 seqNum = 0;
 
     QString goOnlineError;

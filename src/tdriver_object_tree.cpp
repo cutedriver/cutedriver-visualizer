@@ -154,11 +154,11 @@ void MainWindow::objectTreeItemChanged()
 }
 
 
-QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem, const TreeItemInfo &data, QMap<QString, QStringList> duplicateItems )
+QTreeWidgetItem * MainWindow::createObjectTreeItem(QTreeWidgetItem *parentItem,
+                                                   const TreeItemInfo &data,
+                                                   QMap<QString, QStringList> duplicateItems )
 {
-
     //qDebug() << "createObjectTreeItem";
-
     QTreeWidgetItem *item = new QTreeWidgetItem( parentItem );
 
     // if type or id is empty...
@@ -167,14 +167,12 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem,
     QString name = data.name;
 
     if ( type.isEmpty() ) {
-
-      type = "<NoName>";
-
-    } else {
-
+        type = "<NoName>";
     }
 
-    if ( id.isEmpty()   ) { id = "<None>";     }
+    if ( id.isEmpty() ) {
+        id = "<None>";
+    }
 
     item->setBackground( 0, QBrush() );
     item->setBackground( 1, QBrush() );
@@ -182,67 +180,73 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem( QTreeWidgetItem *parentItem,
 
     if ( name.isEmpty() ) {
 
-      name = "<Object name not defined...>";
+        name = "<Object name not defined...>";
 
-      //item->setBackground( 1, QColor(Qt::red).lighter( 120 ) );
-      item->setBackground( 1, QColor(Qt::red) );
-      item->setForeground( 1, QColor(Qt::white) );
-
-      item->setData( 1, Qt::ToolTipRole, QString("\n  Warning!  \n\n  Name for this object is not defined in the applications source code. Identifying objects with other  \n  attributes such as \"x\", \"y\", \"width\", \"height\", \"text\" or \"icon\" may lead to failure of the tests.  \n\n  Object names are more likely to remain the same throughout the software life cycle.  \n\n  Please contact your manager, development team or responsible person and request for  \n  properly named objects in order to make this application more testable.  \n\n") );
-
-
-    } else {
-
-      if ( duplicateItems.count( name ) != 0 ){
-
-        QStringList items = duplicateItems.value( name );
-
-        QString toolTipMessage;
-
-        if ( items.size() == 1 ){
-
-            toolTipMessage = tr(
-                        "\n  Warning!\n"
-                        "\n"
-                        "  Multiple objects found with same object name and id.\n"
-                        "\n"
-                        "  Identifying and accessing this test object without full stack of parent object(s)\n"
-                        "  may lead your test scripts to fail. The reason for this issue is how objects are\n"
-                        "  traversed but usually due to there are no unique object id available.\n"
-                        "\n"
-                        "  Please contact your manager, traverser development team or responsible person\n"
-                        "  and request for unique object names and ids in order to make this application\n"
-                        "  more testable.\n" );
-
-          //name = name + " <Duplicate object name and ID>";
-
-        } else {
-
-          toolTipMessage = tr(
-                      "\n  Warning!\n"
-                      "\n"
-                      "  Multiple objects found with same object name.\n"
-                      "\n"
-                      "  Objects without unique name may lead your test scripts to fail due to multiple\n"
-                      "  test objects found exception.  Please contact your manager, development team\n"
-                      "  or responsible person and request for uniquely named objects in order to make\n"
-                      "  this application more testable.\n");
-
-          //name = name + " <Duplicate object name>";
-
-        }
-
+        //item->setBackground( 1, QColor(Qt::red).lighter( 120 ) );
         item->setBackground( 1, QColor(Qt::red) );
         item->setForeground( 1, QColor(Qt::white) );
 
-        item->setData( 1, Qt::ToolTipRole, toolTipMessage );
+        item->setData( 1, Qt::ToolTipRole, tr(
+                          "\n  Warning!  \n"
+                          "\n"
+                          "  Name for this object is not defined in the applications source code.\n"
+                          "  Identifying objects with other attributes such as \"x\", \"y\", \"width\",\n"
+                          "  \"height\", \"text\" or \"icon\" may lead to failure of the tests.  \n"
+                          "\n"
+                          "  Object names are more likely to remain the same throughout the software life cycle.\n"
+                          "\n"
+                          "  Please contact your manager, development team or responsible person and\n"
+                          "  request for properly named objects in order to make this application more testable.\n") );
+    }
+    else {
 
-      } else {
+        if ( duplicateItems.count( name ) != 0 ){
 
-        item->setForeground( 1, QColor(Qt::darkGreen) );
+            QStringList items = duplicateItems.value( name );
+            QString toolTipMessage;
 
-      }
+            if ( items.size() == 1 ){
 
+                toolTipMessage = tr(
+                            "\n  Warning!\n"
+                            "\n"
+                            "  Multiple objects found with same object name and id.\n"
+                            "\n"
+                            "  Identifying and accessing this test object without full stack of parent object(s)\n"
+                            "  may lead your test scripts to fail. The reason for this issue is how objects are\n"
+                            "  traversed, but usually due to there are no unique object id available.\n"
+                            "\n"
+                            "  Please contact your manager, traverser development team or responsible person\n"
+                            "  and request for unique object names and ids in order to make this application\n"
+                            "  more testable.\n" );
+
+                //name = name + " <Duplicate object name and ID>";
+            }
+            else {
+
+                if (!TDriverUtil::isSymbianSut(activeDeviceParams.value("type"))) {
+                    toolTipMessage = tr(
+                                "\n  Warning!\n"
+                                "\n"
+                                "  Multiple objects found with same object name.\n"
+                                "\n"
+                                "  Objects without unique name may lead your test scripts to fail due to multiple\n"
+                                "  test objects found exception.  Please contact your manager, development team\n"
+                                "  or responsible person and request for uniquely named objects in order to make\n"
+                                "  this application more testable.\n");
+
+                }
+                //name = name + " <Duplicate object name>";
+
+            }
+
+            item->setBackground( 1, QColor(Qt::red) );
+            item->setForeground( 1, QColor(Qt::white) );
+            item->setData( 1, Qt::ToolTipRole, toolTipMessage );
+        }
+        else {
+            item->setForeground( 1, QColor(Qt::darkGreen) );
+        }
     }
 
     item->setData( 0, Qt::DisplayRole, type);
@@ -276,6 +280,7 @@ void MainWindow::storeItemToObjectTreeMap( QTreeWidgetItem *item, const TreeItem
     objectIdMap.insert(data.id, itemPtr);
 }
 
+
 void MainWindow::refreshScreenshotObjectList()
 {
     screenshotObjects.clear();
@@ -283,7 +288,6 @@ void MainWindow::refreshScreenshotObjectList()
     if (imageWidget) {
         // collect geometries for item and its childs
         buildScreenshotObjectList();
-
         imageWidget->update();
     }
 }
@@ -351,124 +355,91 @@ void MainWindow::buildScreenshotObjectList(TestObjectKey parentKey)
 
 QList<QMap<QString, QString> > MainWindow::collectObjectData( QDomElement element )
 {
-
     QList<QMap<QString, QString> > results;
-
     QDomNode node = element.firstChild();
 
     while ( !node.isNull() ) {
 
-      if ( node.isElement() and node.nodeName() == "objects" ){
-
-        results << collectObjectData( node.toElement() );
-
-      }
-
-      if ( node.isElement() and node.nodeName() == "object" ){
-
-        QDomElement tmpElement( node.toElement() );
-
-        if ( tmpElement.attribute( "name" ) != "" ){
-
-          QMap<QString, QString> tmpValue;
-
-          tmpValue.insert( "name", tmpElement.attribute( "name" ) );
-          tmpValue.insert( "id", tmpElement.attribute( "id" ) );
-
-          results << tmpValue;
-
+        if ( node.isElement() and node.nodeName() == "objects" ){
+            results << collectObjectData( node.toElement() );
         }
 
-        results << collectObjectData( node.toElement() );
+        if ( node.isElement() and node.nodeName() == "object" ){
+            QDomElement tmpElement( node.toElement() );
 
-      }
+            if ( tmpElement.attribute( "name" ) != "" ){
+                QMap<QString, QString> tmpValue;
+                tmpValue.insert( "name", tmpElement.attribute( "name" ) );
+                tmpValue.insert( "id", tmpElement.attribute( "id" ) );
+                results << tmpValue;
+            }
 
-      node = node.nextSibling();
+            results << collectObjectData( node.toElement() );
+        }
 
+        node = node.nextSibling();
     }
 
     return results;
-
 }
+
 
 QMap<QString, QStringList> MainWindow::findDuplicateObjectNames( QList<QMap<QString, QString> > objects )
 {
+    QMap<QString, QStringList> results;
+    QMap<QString, QStringList> foundObjects;
 
-  QMap<QString, QStringList> results;
+    if ( objects.size() > 0 ) {
 
-  QMap<QString, QStringList> foundObjects;
+        for ( int i = 0; i < objects.size(); i++ ) {
 
-  if ( objects.size() > 0 ){
+            //qDebug() << "--";
+            QMap<QString, QString> object = objects.at( i );
+            QString objectName = object.value( "name" );
+            QString objectId = object.value( "id" );
+            bool duplicate = false;
+            QStringList objectIds;
 
-    for ( int i = 0; i < objects.size(); i++ ){
+            if ( foundObjects.count( objectName ) != 0 ) {
 
-      qDebug() << "--";
+                objectIds = foundObjects[ objectName ];
+                //qDebug() << "objectIds: " << objectIds;
 
-      QMap<QString, QString> object = objects.at( i );
+                if ( objectIds.contains( objectId ) == true ){
+                    //qDebug() << "objects name and id are identical, show warning...";
+                    duplicate = true;
+                }
+                else {
+                    duplicate = true;
+                    objectIds << objectId;
+                    foundObjects[ objectName ] = objectIds;
+                }
 
-      QString objectName = object.value( "name" );
+                results[ objectName ] = objectIds;
+                //qDebug() << objectIds;
+            }
+            else {
+                objectIds << objectId;
+                foundObjects.insert( objectName, objectIds );
+            }
 
-      QString objectId = object.value( "id" );
-
-      bool duplicate = false;
-
-      QStringList objectIds;
-
-      if ( foundObjects.count( objectName ) != 0 ){
-
-        objectIds = foundObjects[ objectName ];
-
-        qDebug() << "objectIds: " << objectIds;
-
-        if ( objectIds.contains( objectId ) == true ){
-
-          qDebug() << "objects name and id are identical, show warning...";
-
-          duplicate = true;
-
-        } else {
-
-          duplicate = true;
-
-          objectIds << objectId;
-
-          foundObjects[ objectName ] = objectIds;
-
+            if ( duplicate == false ) {
+                //qDebug() << " not duplicate... " << object;
+            }
+            else {
+                //qDebug() << " duplicate... " << object;
+            }
+            //qDebug() << object;
         }
-
-        results[ objectName ] = objectIds;
-
-        qDebug() << objectIds;
-
-      } else {
-
-        objectIds << objectId;
-
-        foundObjects.insert( objectName, objectIds );
-
-      }
-
-      if ( duplicate == false ){
-
-        qDebug() << " not duplicate... " << object;
-
-      } else {
-
-        qDebug() << " duplicate... " << object;
-
-      }
-
-      qDebug() << object;
-
     }
 
-  }
-
-  return results;
-
+    return results;
 }
 
-void MainWindow::buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement, QMap<QString, QStringList> duplicateItems )
+
+void MainWindow::buildObjectTree(QTreeWidgetItem *parentItem,
+                                 QDomElement parentElement,
+                                 QMap<QString, QStringList> duplicateItems )
 {
     //qDebug() << "buildObjectTree";
 
@@ -669,12 +640,18 @@ void MainWindow::updateObjectTree( QString filename )
 void MainWindow::connectObjectTreeSignals()
 {
     // Item select - command
-    QObject::connect( objectTree, SIGNAL( itemPressed ( QTreeWidgetItem *, int )), this, SLOT(objectViewItemClicked ( QTreeWidgetItem *, int )));
-    QObject::connect( objectTree, SIGNAL( currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem *)), this, SLOT( objectViewCurrentItemChanged( QTreeWidgetItem *, QTreeWidgetItem * ) ) );
+    connect( objectTree, SIGNAL(itemPressed(QTreeWidgetItem*,int)),
+            SLOT(objectViewItemClicked(QTreeWidgetItem*,int)));
+
+    connect( objectTree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
+            SLOT(objectViewCurrentItemChanged( QTreeWidgetItem *, QTreeWidgetItem * ) ) );
 
     // Item expand/collapse
-    QObject::connect( objectTree, SIGNAL( itemExpanded( QTreeWidgetItem* ) ), this, SLOT( expandTreeWidgetItem( QTreeWidgetItem* ) ) );
-    QObject::connect( objectTree, SIGNAL( itemCollapsed( QTreeWidgetItem* ) ), this, SLOT( collapseTreeWidgetItem( QTreeWidgetItem* ) ) );
+    connect(objectTree, SIGNAL(itemExpanded(QTreeWidgetItem*)),
+            SLOT(expandTreeWidgetItem(QTreeWidgetItem*)) );
+
+    connect(objectTree, SIGNAL( itemCollapsed(QTreeWidgetItem*) ),
+            SLOT(collapseTreeWidgetItem(QTreeWidgetItem*)) );
 }
 
 
@@ -718,8 +695,10 @@ void MainWindow::sendAppListRequest(bool refreshAfter)
         receiveTDriverMessage(0, TDriverUtil::visualizationId);
     }
     else {
-        QString listCommand = QString( activeDevice + " list_apps" );
-        if (sendTDriverCommand(commandListApps, listCommand, "application list")) {
+
+        if (sendTDriverCommand(commandListApps,
+                               QStringList() << activeDevice << "list_apps",
+                               tr("application list")) ) {
             statusbar(tr("Refreshing application list..."));
         }
         //else {            statusbar( "Error: Failed send application list request", 1000 );        }
@@ -727,20 +706,19 @@ void MainWindow::sendAppListRequest(bool refreshAfter)
 }
 
 
-QString MainWindow::constructRefreshCmd(const QString &command)
+QStringList MainWindow::constructRefreshCmd(const QString &command)
 {
-    QString ret;
+    QStringList ret;
 
     if (!activeDevice.isEmpty()) {
-        if (currentApplication.isNull()) {
-            if (!foregroundApplication) {
-                qWarning("Current application not set and foregroundApplication false!"
-                         " Refreshing foreground application.");
-            }
-            ret = QString("%1 %2").arg(activeDevice, command);
+        ret << activeDevice << command;
+
+        if (!currentApplication.isNull()) {
+            ret << currentApplication.id;
         }
-        else {
-            ret = QString("%1 %2 %3").arg(activeDevice, command, currentApplication.id);
+        else if (!foregroundApplication) {
+            qWarning("Current application not set and foregroundApplication false!"
+                     " Refreshing foreground application.");
         }
     }
     qDebug() << FCFL << "result" << ret;
@@ -751,7 +729,7 @@ QString MainWindow::constructRefreshCmd(const QString &command)
 
 bool MainWindow::sendImageRequest()
 {
-    QString cmd = constructRefreshCmd("refresh_image");
+    QStringList cmd = constructRefreshCmd("refresh_image");
     if (!cmd.isEmpty() && sendTDriverCommand(commandRefreshImage, cmd, "image refresh")) {
         statusbar(tr("Sent image refresh request..."));
         imageViewDock->setDisabled(true);
@@ -768,7 +746,7 @@ bool MainWindow::sendImageRequest()
 
 bool MainWindow::sendUiDumpRequest()
 {
-    QString cmd = constructRefreshCmd("refresh_ui");
+    QStringList cmd = constructRefreshCmd("refresh_ui");
     bool result;
     if (!cmd.isEmpty() && sendTDriverCommand(commandRefreshUI, cmd, "UI XML refresh")) {
         statusbar(tr("Sent UI XML refresh request..."));
@@ -821,7 +799,8 @@ void MainWindow::resizeObjectTree() {
 
     } else {
         // add some padding
-        objectTree->setColumnWidth( objectTree->currentColumn(), objectTree->columnWidth( objectTree->currentColumn() ) + 25 );
+        objectTree->setColumnWidth( objectTree->currentColumn(),
+                                   objectTree->columnWidth( objectTree->currentColumn() ) + 25 );
     }
 }
 
@@ -945,6 +924,7 @@ void MainWindow::objectTreeExpandAll() {
 
 }
 
+
 void MainWindow::objectTreeCollapseAll() {
 
     TestObjectKey currentItem = ptr2TestObjectKey( objectTree->currentItem() );
@@ -955,66 +935,60 @@ void MainWindow::objectTreeCollapseAll() {
     objectTree->collapseAll();
     objectTree->setCurrentItem( objectTree->topLevelItem( 0 ) );
     objectTree->scrollToItem( objectTree->currentItem() );
-
 }
 
-void MainWindow::objectTreeKeyPressEvent( QKeyEvent * event ) {
 
+void MainWindow::objectTreeKeyPressEvent( QKeyEvent * event )
+{
     TestObjectKey currentItem = ptr2TestObjectKey( objectTree->currentItem() );
 
     // exit if object tree is empty
-    if ( currentItem == 0 ) { return; }
+    if ( currentItem == 0 )
+        return;
 
     if ( event->modifiers() == Qt::ControlModifier ) {
 
         if ( event->key() == Qt::Key_Right ) {
-
             objectTreeExpandAll();
-
-        } else if ( event->key() == Qt::Key_Left ) {
-
+        }
+        else if ( event->key() == Qt::Key_Left ) {
             objectTreeCollapseAll();
         }
+    }
 
-    } else if ( event->key() == Qt::Key_Right ) {
+    else if ( event->key() == Qt::Key_Right ) {
 
         if ( objectTree->currentItem()->childCount() > 0 ) {
 
             // if item is exapanded and childs available, go to first child
             if ( expandedObjectTreeItemPtr != 0 || expandedObjectTreeItemPtr != currentItem ) {
-
                 objectTree->setCurrentItem( objectTree->currentItem()->child( 0 ) );
-
             }
-
-        } else {
-
+        }
+        else {
             int selectItem = objectTree->currentItem()->parent()->childCount() - 1;
 
-            for( int iter = objectTree->currentItem()->parent()->indexOfChild( objectTree->currentItem() ); iter < objectTree->currentItem()->parent()->childCount(); iter++ ) {
-
+            for( int iter = objectTree->currentItem()->parent()->indexOfChild( objectTree->currentItem() );
+                iter < objectTree->currentItem()->parent()->childCount();
+                iter++ )
+            {
                 // go to next item that has childs
-                if ( objectTree->currentItem()->parent()->child( iter )->childCount() > 0 ) { selectItem = iter; break;    }
-
+                if ( objectTree->currentItem()->parent()->child( iter )->childCount() > 0 ) {
+                    selectItem = iter; break;
+                }
             }
-
             objectTree->setCurrentItem( objectTree->currentItem()->parent()->child( selectItem ) );
-
         }
+    }
 
-    } else if (event->key() == Qt::Key_Left) {
+    else if (event->key() == Qt::Key_Left) {
 
         if ( objectTree->currentItem()->parent() != NULL ) {
 
             // if item did not collapse, just to parent
             if ( collapsedObjectTreeItemPtr != 0 || collapsedObjectTreeItemPtr != currentItem ) {
-
                 objectTree->setCurrentItem( objectTree->currentItem()->parent() );
-
             }
-
         }
-
     }
-
 }

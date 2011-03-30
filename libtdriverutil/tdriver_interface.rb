@@ -147,13 +147,13 @@ end
 # message format:
 #   Notation:
 #     N: unsigned 4-byte integer in network byte order
-#     N: .. { .. } a repating block, total length given by N
+#     N: { .. } a repating block, total length given by N
 #     NA*: a text string, length in bytes given by N
 #
 #   Format:
 #     N: sequence number
 #     NA*: name string, also implies format of raw data, though there's only one format currently, QMap<QString, QStringList>
-#     N: raw data {
+#     N: {
 #       NA*: key string
 #       N: raw list data {
 #         NA*: list item string
@@ -570,7 +570,7 @@ class ListenerObject
       # unix/linux/other
       set_working_directory( File.expand_path( '/tmp/' ) )
     end
-    
+
     instance_eval { | | $lg.debug "initial working directory: " + @working_directory }
 
   end
@@ -866,6 +866,7 @@ class ListenerObject
 
             when :set_attribute
               attributeName = input_array[4]
+              # note: with latest version of C++ code, join below is unnecessary, as input_array[5] ís the entire value
               attributeValue = input_array[ 5..input_array.size ].join(' ')
               attributeType = input_array[3]
               eval_cmd = "sut.application.#{ input_array[2] }.set_attribute( '#{attributeName}', '#{attributeValue}', '#{attributeType}' )"

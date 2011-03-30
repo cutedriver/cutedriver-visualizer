@@ -951,19 +951,18 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QStri
 
 
 bool MainWindow::sendTDriverCommand( ExecuteCommandType commandType,
-                                    const QString &commandString,
+                                    const QStringList &inputList,
                                     const QString &errorName,
                                     const QString &typeStr)
 {
     BAListMap msg;
-    msg["input"] = commandString.toAscii().split(' ');
+    msg["input"] = TDriverUtil::toBAList(inputList);
 
-    quint32 seqNum = TDriverRubyInterface::globalInstance()->sendCmd(
-                TDriverUtil::visualizationId, msg);
+    quint32 seqNum = TDriverRubyInterface::globalInstance()->sendCmd(TDriverUtil::visualizationId, msg);
+
     qDebug() << FCFL << "SENT SEQNUM" << seqNum;
 
     if (seqNum > 0) {
-
         sentTDriverMsgs[seqNum] = SentTDriverMsg(commandType, msg, errorName, typeStr);
 
         int default_timeout = TDriverUtil::quotedToInt(activeDeviceParams.value("default_timeout"))*1000;
