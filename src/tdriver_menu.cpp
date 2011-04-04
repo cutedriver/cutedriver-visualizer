@@ -306,7 +306,7 @@ void MainWindow::openRecordWindow()
 {
     if ( recordMenu->isEnabled() ) {
 
-        if (currentApplication.isNull()) {
+        if (!currentApplication.useId()) {
 
             QMessageBox::warning(this,
                                  tr("TDriver Visualizer Recorder" ),
@@ -343,10 +343,10 @@ void MainWindow::appSelected() {
         currentApplication.set(processId, applicationsNamesMap.value( processId ));
 
         action->setChecked( true );
-        foregroundApplication = ( processId == "0" ) ? true : false;
-        updateWindowTitle();
+        currentApplication.setForeground((processId == "0") || TDriverUtil::isSymbianSut(activeDevice));
         sendAppListRequest();
     }
+    updateWindowTitle();
 }
 
 
@@ -365,7 +365,7 @@ void MainWindow::deviceSelected()
             // clear applications
             resetMessageSequenceFlags();
             resetApplicationsList();
-            currentApplication.clear();
+            currentApplication.clearInfo();
 
             // disable applications menu
             //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show

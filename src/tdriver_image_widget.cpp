@@ -93,7 +93,7 @@ void MainWindow::imageInspectFromId(TestObjectKey id)
 
 void MainWindow::imageTapFromId(TestObjectKey id)
 {
-    if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 && !currentApplication.isNull()) {
+    if ( highlightByKey( id, false ) && lastHighlightedObjectKey != 0 && currentApplication.haveId()) {
         TreeItemInfo treeItemData = objectTreeData.value( lastHighlightedObjectKey );
         sendTapScreen(QStringList() << "tap"
                       << treeItemData.type + "(:id=>" + TDriverUtil::rubySingleQuote(treeItemData.id) + ")"

@@ -41,7 +41,6 @@
 
 MainWindow::MainWindow() :
     QMainWindow(),
-    foregroundApplication(false),
     tdriverMsgBox(new QErrorMessage(this)),
     tdriverMsgTotal(0),
     tdriverMsgShown(1),
@@ -359,6 +358,7 @@ void MainWindow::setActiveDevice(const QString &deviceName )
         activeDevice.clear();
         activeDeviceParams.clear();
     }
+    currentApplication.setForeground(TDriverUtil::isSymbianSut(activeDevice));
     tabEditor->setSutParamMap(activeDeviceParams);
 }
 
@@ -639,7 +639,7 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
         TDriverRubyInterface::globalInstance()->sendCmd(TDriverUtil::visualizationId, msg);
         fullError += "\n\nDisconnect request sent!";
         statusbar(tr("Disconnect request sent"));
-        currentApplication.clear();
+        currentApplication.clearInfo();
         tdriverMsgAppend(fullError);
     }
 
@@ -663,6 +663,7 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
             if (!handleError) startRefreshSequence();
             doRefreshAfterAppList = false;
         }
+        updateWindowTitle();
         break;
 
     case commandDisconnectSUT:
@@ -1070,7 +1071,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType,
                 else {
                     fullError += "\n\nDisconnect after error succeeded.";
                     // disconnect passed -- retry
-                    currentApplication.clear();
+                    currentApplication.clearInfo();
                     result = false;
                     if (!(resultEnum & FAIL)) exit = false;
                 }

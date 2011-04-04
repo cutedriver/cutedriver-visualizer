@@ -31,11 +31,16 @@ struct AttributeInfo {
 
 
 struct ApplicationInfo {
+    bool foreground;
     QString id;
     QString name;
+    ApplicationInfo() :foreground(false) {}
+    void setForeground(bool fg) { foreground = fg; }
+    bool isForeground() { return foreground; }
     void set(const QString &id, const QString &name = QString()) { this->id=id; this->name=name; }
-    bool isNull() { return id.isEmpty(); }
-    void clear() { id.clear(); name.clear(); }
+    bool haveId() { return !id.isEmpty(); }
+    bool useId() { return (!foreground && !id.isEmpty()); }
+    void clearInfo() { id.clear(); name.clear(); }
 };
 
 

@@ -66,6 +66,7 @@ bool MainWindow::sendUpdateBehaviourXml()
     return sendTDriverCommand(commandBehavioursXml, cmd, tr("behaviour get"), objectType);
 }
 
+
 void MainWindow::buildBehavioursMap() {
 
     // qDebug() << "buildBehavioursMap()";
@@ -189,7 +190,7 @@ void MainWindow::updateApplicationsList()
         if (count < 9)
             appAction->setShortcut( QKeySequence( "ALT+" + QString::number( count + 1 ) ) );
 
-        if ( !foregroundApplication && iterator.key() == currentApplication.id ) {
+        if ( !currentApplication.isForeground() && iterator.key() == currentApplication.id ) {
             if (appWasSet) {
                 qWarning("Multiple applications with same id in applicationsNamesMap!");
             }
@@ -208,10 +209,16 @@ void MainWindow::updateApplicationsList()
 
     if ( !appWasSet ) {
         fgAction->setChecked( true );
-        foregroundApplication = true; // may already be true, doesn't matter
-        currentApplication.clear();
+        currentApplication.setForeground(true); // may already be true, doesn't matter
+        currentApplication.clearInfo();
     }
+    else if (TDriverUtil::isSymbianSut(activeDevice)) {
+        currentApplication.setForeground(true); // may already be true, doesn't matter
+    }
+
+    updateWindowTitle();
 }
+
 
 void MainWindow::resetApplicationsList()
 {

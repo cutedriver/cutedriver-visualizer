@@ -314,8 +314,6 @@ private:
 
     ApplicationInfo currentApplication;
 
-    bool foregroundApplication;
-
     //QString applicationIdFromXml;
 
     void clearObjectTreeMappings();

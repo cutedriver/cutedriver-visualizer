@@ -136,11 +136,13 @@ void MainWindow::updateWindowTitle() {
             tr("TDriver Visualizer v") + VISUALIZER_VERSION +
             tr(" - ");
 
-    if ( foregroundApplication && !applicationsNamesMap.isEmpty() ){
-        tempTitle += tr("Foreground app. - ");
+    if ( currentApplication.isForeground() ){
+        tempTitle += tr("Foreground app: ");
     }
-    else {
-        tempTitle += currentApplication.name + " (" + currentApplication.id + ") - ";
+    tempTitle += currentApplication.name + " - ";
+
+    if (!currentApplication.id.isEmpty()) {
+        tempTitle += "(" + currentApplication.id + ") - ";
     }
 
     tempTitle += ( offlineMode ) ?

@@ -599,42 +599,41 @@ void MainWindow::updateObjectTree( QString filename )
         }
     }
 
-    if (!sutItem) {
+    if (sutItem) {
+        RectList dummy;
+        collectGeometries(sutItem, dummy);
+        refreshScreenshotObjectList();
+        if (lastHighlightedObjectKey && !screenshotObjects.contains(lastHighlightedObjectKey)) {
+            lastHighlightedObjectKey = 0;
+        }
+
+        bool itemFocusChanged = false;
+
+        // restore focus if object is still visible/available
+        if ( !currentFocusId.isEmpty() ) {
+
+            TestObjectKey currentFocusKey = objectIdMap.value(currentFocusId);
+
+            if (currentFocusKey) {
+                objectTree->setCurrentItem(testObjectKey2Ptr(currentFocusKey));
+                itemFocusChanged = true;
+            }
+        }
+
+        // set focus to SUT item unless previously focused item visible
+        if ( !itemFocusChanged ) {
+            objectTree->setCurrentItem( sutItem );
+        }
+
+        // highlight current object
+        drawHighlight( ptr2TestObjectKey(objectTree->currentItem()), true );
+        doPropertiesTableUpdate();
+    }
+    else {
         qWarning("%s:%i: got no tasInfo elements from XML file '%s', returning from method",
                  __FILE__, __LINE__, qPrintable(filename));
-        return;
     }
-
-    RectList dummy;
-    collectGeometries(sutItem, dummy);
-    refreshScreenshotObjectList();
-    if (lastHighlightedObjectKey && !screenshotObjects.contains(lastHighlightedObjectKey)) {
-        lastHighlightedObjectKey = 0;
-    }
-
-    bool itemFocusChanged = false;
-
-    // restore focus if object is still visible/available
-    if ( !currentFocusId.isEmpty() ) {
-
-        TestObjectKey currentFocusKey = objectIdMap.value(currentFocusId);
-
-        if (currentFocusKey) {
-            objectTree->setCurrentItem(testObjectKey2Ptr(currentFocusKey));
-            itemFocusChanged = true;
-        }
-    }
-
-    // set focus to SUT item unless previously focused item visible
-    if ( !itemFocusChanged ) {
-        objectTree->setCurrentItem( sutItem );
-    }
-
-    // highlight current object
-    drawHighlight( ptr2TestObjectKey(objectTree->currentItem()), true );
-    doPropertiesTableUpdate();
 }
-
 
 
 void MainWindow::connectObjectTreeSignals()
@@ -713,10 +712,10 @@ QStringList MainWindow::constructRefreshCmd(const QString &command)
     if (!activeDevice.isEmpty()) {
         ret << activeDevice << command;
 
-        if (!currentApplication.isNull()) {
+        if (currentApplication.useId()) {
             ret << currentApplication.id;
         }
-        else if (!foregroundApplication) {
+        else if (!currentApplication.isForeground()) {
             qWarning("Current application not set and foregroundApplication false!"
                      " Refreshing foreground application.");
         }
