@@ -212,7 +212,7 @@ void MainWindow::updateApplicationsList()
         currentApplication.setForeground(true); // may already be true, doesn't matter
         currentApplication.clearInfo();
     }
-    else if (TDriverUtil::isSymbianSut(activeDevice)) {
+    else if (TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" ))) {
         currentApplication.setForeground(true); // may already be true, doesn't matter
     }
 

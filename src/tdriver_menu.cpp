@@ -343,7 +343,8 @@ void MainWindow::appSelected() {
         currentApplication.set(processId, applicationsNamesMap.value( processId ));
 
         action->setChecked( true );
-        currentApplication.setForeground((processId == "0") || TDriverUtil::isSymbianSut(activeDevice));
+        currentApplication.setForeground((processId == "0")
+                                         || TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )));
         sendAppListRequest();
     }
     updateWindowTitle();

@@ -359,7 +359,7 @@ void MainWindow::setActiveDevice(const QString &deviceName )
         activeDeviceParams.clear();
     }
     lastHighlightedObjectKey = 0;
-    currentApplication.setForeground(TDriverUtil::isSymbianSut(activeDevice));
+    currentApplication.setForeground(TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )));
     tabEditor->setSutParamMap(activeDeviceParams);
 }
 
