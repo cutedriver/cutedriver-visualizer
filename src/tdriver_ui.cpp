@@ -132,9 +132,7 @@ void MainWindow::createUi()
 
 void MainWindow::updateWindowTitle() {
 
-    QString tempTitle =
-            tr("TDriver Visualizer v") + VISUALIZER_VERSION +
-            tr(" - ");
+    QString tempTitle = tr("TDriver Visualizer v%1 - ").arg(VISUALIZER_VERSION);
 
     if ( currentApplication.isForeground() ){
         tempTitle += tr("Foreground app: ");

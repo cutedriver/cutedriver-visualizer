@@ -223,7 +223,7 @@ bool MainWindow::setup()
 #if DEVICE_BUTTONS_ENABLED
     bool buttonVisible = settings.value( "view/buttons", false ).toBool();
 #endif
-    bool shortcutsVisible = settings.value( "view/shortcuts", false ).toBool();
+    bool shortcutsVisible = settings.value( "view/shortcuts", true ).toBool();
     bool appsVisible = settings.value( "view/applications", false ).toBool();
     bool editorVisible = settings.value( "view/editor", false ).toBool();
 
@@ -295,7 +295,7 @@ bool MainWindow::setup()
 
         if ( !offlineMode && deviceList.count() > 0 ) {
             deviceMenu->setEnabled( true );
-            disconnectCurrentSUT->setEnabled( true );
+            sutDisconnectAction->setEnabled( true );
             delayedRefreshAction->setEnabled( true );
             parseSUT->setEnabled( true );
         }
@@ -1150,14 +1150,14 @@ void MainWindow::createActions()
 
     connect( delayedRefreshAction, SIGNAL(triggered()), this, SLOT(delayedRefreshData()));
 
-    disconnectCurrentSUT = new QAction( tr( "Dis&connect SUT" ), this );
-    disconnectCurrentSUT->setObjectName("main disconnectsut");
-    disconnectCurrentSUT->setShortcuts(QList<QKeySequence>() <<
-                                       QKeySequence(tr("Ctrl+M, C")) <<
-                                       QKeySequence(tr("Ctrl+M, Ctrl+C")));
-    disconnectCurrentSUT->setDisabled( true );
+    sutDisconnectAction = new QAction( tr( "Dis&connect SUT" ), this );
+    sutDisconnectAction->setObjectName("main disconnectsut");
+    sutDisconnectAction->setShortcuts(QList<QKeySequence>() <<
+                                      QKeySequence(tr("Ctrl+M, C")) <<
+                                      QKeySequence(tr("Ctrl+M, Ctrl+C")));
+    sutDisconnectAction->setDisabled( true );
 
-    connect( disconnectCurrentSUT, SIGNAL( triggered() ), this, SLOT(disconnectSUT()));
+    connect( sutDisconnectAction, SIGNAL( triggered() ), this, SLOT(disconnectSUT()));
 
     exitAction = new QAction(tr("E&xit"), this);
     exitAction->setObjectName("main exit");
@@ -1245,10 +1245,16 @@ void MainWindow::createShortcutsBar()
     shortcutsBar->setObjectName("shortcuts");
 
     shortcutsBar->addAction(refreshAction);
+
     shortcutsBar->addSeparator();
     shortcutsBar->addAction(delayedRefreshAction);
+
     shortcutsBar->addSeparator();
-    shortcutsBar->addAction(showXmlAction);
+    shortcutsBar->addAction(sutDisconnectAction);
+
+    //    shortcutsBar->addSeparator();
+    //    shortcutsBar->addAction(showXmlAction);
+
     shortcutsBar->addSeparator();
     shortcutsBar->addAction(loadXmlAction);
 

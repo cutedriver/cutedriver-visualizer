@@ -431,7 +431,7 @@ private:
     QAction *fontAction;
     QAction *refreshAction;
     QAction *delayedRefreshAction;
-    QAction *disconnectCurrentSUT;
+    QAction *sutDisconnectAction;
     QAction *exitAction;
 
     QAction *viewExpandAll;

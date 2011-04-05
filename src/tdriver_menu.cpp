@@ -78,7 +78,7 @@ void MainWindow::createFileMenu() {
 
     // disconnect
 
-    fileMenu->addAction( disconnectCurrentSUT );
+    fileMenu->addAction( sutDisconnectAction );
     fileMenu->addSeparator();
 
     // exit
@@ -402,6 +402,7 @@ void MainWindow::deviceSelected()
 
         // enable recording menu if device type is 'kind of' qt
         recordMenu->setEnabled( deviceIsQt && !applicationsNamesMap.empty() );
+        sendAppListRequest(false);
     }
     // update window title
     updateWindowTitle();
@@ -477,8 +478,8 @@ bool MainWindow::createStateArchive( QString targetPath )
     }
 
     return true;
-
 }
+
 
 // This function is used to get the file name for tdriver_parameters.xml file (activated from menu)
 void MainWindow::getParameterXML()
@@ -524,5 +525,5 @@ void MainWindow::updateDevicesList(const QStringList &newDeviceList)
         }
     }
 
-    disconnectCurrentSUT->setEnabled(deviceList.isEmpty());
+    sutDisconnectAction->setEnabled(deviceList.isEmpty());
 }
