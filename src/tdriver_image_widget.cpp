@@ -54,7 +54,9 @@ void MainWindow::connectImageWidgetSignals() {
         highlightAtCoords( pos, true );
         if (TDriverUtil::isSymbianSut(activeDeviceParams.value("type"))){
               statusbar( tr("inspect: (%1, %2) landscape: (%3, %4)").arg(pos.x()).arg(pos.y()).arg(pos.x()).arg(imageWidget->imageHeight() - 1 - pos.y()), 3000 );
-            else{
+        }
+        else
+        {
               statusbar( tr("inspect: (%1, %2)").arg(pos.x()).arg(pos.y()), 2000 );
         }
         
