@@ -22,3 +22,6 @@ include (../visualizer.pri)
 TEMPLATE = lib
 HEADERS += version.h \
     version.h
+
+SOURCES += \
+    version.cpp
