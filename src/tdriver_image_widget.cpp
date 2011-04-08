@@ -52,7 +52,14 @@ void MainWindow::connectImageWidgetSignals() {
 
     if (area.isValid() && area.contains(pos)) {
         highlightAtCoords( pos, true );
-        statusbar( tr("inspect: (%1, %2)").arg(pos.x()).arg(pos.y()), 2000 );
+        if (TDriverUtil::isSymbianSut(activeDeviceParams.value("type"))){
+              statusbar( tr("inspect: (%1, %2) landscape: (%3, %4)").arg(pos.x()).arg(pos.y()).arg(imageWidget->imageHeight() - 1 - pos.y()).arg(pos.x()), 3000 );
+        }
+        else
+        {
+              statusbar( tr("inspect: (%1, %2)").arg(pos.x()).arg(pos.y()), 2000 );
+        }
+        
     }
 }
 
