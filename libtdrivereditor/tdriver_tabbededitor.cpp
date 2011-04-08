@@ -1499,7 +1499,7 @@ void TDriverTabbedEditor::setRunningLine(QString fileName, int lineNum)
 }
 
 
-QList<TDriverCodeTextEdit*> TDriverTabbedEditor::setupLineJump(const QString &fileName, int lineNum)
+QList<TDriverCodeTextEdit*> TDriverTabbedEditor::setupLineJump(const QString &fileName, int /*lineNum*/)
 {
     QList<TDriverCodeTextEdit*> ret;
 
