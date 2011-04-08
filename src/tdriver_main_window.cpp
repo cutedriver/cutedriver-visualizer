@@ -671,7 +671,7 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
         // if disconnection request had error, assume disconnected state anyway
         qDebug() << FCFL << "Disconnection" << !handleError;
         statusbar(tr("SUT disconnected"), 2000);
-        emit disconnectionOk(handleError);
+        emit disconnectionOk(true);
         break;
 
 
