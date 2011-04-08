@@ -21,6 +21,7 @@
 #ifndef TDRIVER_RUNCONSOLE_H
 #define TDRIVER_RUNCONSOLE_H
 
+#include "libtdrivereditor_global.h"
 
 #include <QWidget>
 #include <QProcess>
@@ -33,7 +34,7 @@ class QLabel;
 
 #define TDRIVER_RUNCONSOLE_DEBUG1_ENABLED 0
 
-class TDriverRunConsole : public QWidget
+class LIBTDRIVEREDITORSHARED_EXPORT TDriverRunConsole : public QWidget
 {
 Q_OBJECT
 public:

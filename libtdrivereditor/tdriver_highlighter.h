@@ -21,6 +21,7 @@
 #ifndef TDRIVER_HIGHLIGHTER_H
 #define TDRIVER_HIGHLIGHTER_H
 
+#include "libtdrivereditor_global.h"
 
 #include <QSyntaxHighlighter>
 
@@ -29,7 +30,7 @@ class QTextCharFormat;
 
 #include <QList>
 
-class TDriverHighlighter : public QSyntaxHighlighter
+class LIBTDRIVEREDITORSHARED_EXPORT TDriverHighlighter : public QSyntaxHighlighter
 {
     Q_OBJECT
 

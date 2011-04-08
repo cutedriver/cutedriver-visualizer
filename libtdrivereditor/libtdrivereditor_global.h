@@ -17,38 +17,16 @@
 **
 ****************************************************************************/
 
+#ifndef LIBTDRIVEREDITOR_GLOBAL_H
+#define LIBTDRIVEREDITOR_GLOBAL_H
 
-#ifndef TDRIVER_COMBOLINEEDIT_H
-#define TDRIVER_COMBOLINEEDIT_H
+#include <QtCore/qglobal.h>
 
-#include "libtdrivereditor_global.h"
 
-#include <QComboBox>
-class QKeyEvent;
+#if defined(LIBTDRIVEREDITOR_LIBRARY)
+#  define LIBTDRIVEREDITORSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define LIBTDRIVEREDITORSHARED_EXPORT Q_DECL_IMPORT
+#endif
 
-class LIBTDRIVEREDITORSHARED_EXPORT TDriverComboLineEdit : public QComboBox
-{
-    Q_OBJECT
-    Q_PROPERTY(bool clearOnTrigger READ clearOnTrigger WRITE setClearOnTrigger)
-
-public:
-    explicit TDriverComboLineEdit(QWidget *parent = 0);
-    bool clearOnTrigger() { return clearOnTriggerPriv; }
-
-signals:
-    void triggered(QString text);
-    void escapePressed();
-
-public slots:
-    void trigger();
-    void externallyTriggered();
-    void setClearOnTrigger(bool clear);
-
-protected:
-    virtual void keyPressEvent(QKeyEvent *);
-
-private:
-    bool clearOnTriggerPriv;
-};
-
-#endif // TDRIVER_COMBOLINEEDIT_H
+#endif // LIBTDRIVEREDITOR_GLOBAL_H

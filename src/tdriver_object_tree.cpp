@@ -360,11 +360,11 @@ QList<QMap<QString, QString> > MainWindow::collectObjectData( QDomElement elemen
 
     while ( !node.isNull() ) {
 
-        if ( node.isElement() and node.nodeName() == "objects" ){
+        if ( node.isElement() && node.nodeName() == "objects" ){
             results << collectObjectData( node.toElement() );
         }
 
-        if ( node.isElement() and node.nodeName() == "object" ){
+        if ( node.isElement() && node.nodeName() == "object" ){
             QDomElement tmpElement( node.toElement() );
 
             if ( tmpElement.attribute( "name" ) != "" ){

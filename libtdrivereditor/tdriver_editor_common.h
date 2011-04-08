@@ -21,6 +21,8 @@
 #ifndef TDRIVER_EDITOR_COMMON_H
 #define TDRIVER_EDITOR_COMMON_H
 
+#include "libtdrivereditor_global.h"
+
 // Debug-related stuff
 
 // this will make rdebug control console visible and non-quiet

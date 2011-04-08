@@ -27,7 +27,7 @@
 #include <QString>
 class QStringList;
 
-class LIBTDRIVERUTILSHARED_EXPORT  TDriverUtil : public QObject
+class LIBTDRIVERUTILSHARED_EXPORT TDriverUtil : public QObject
 {
 Q_OBJECT
 public:

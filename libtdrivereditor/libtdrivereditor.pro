@@ -23,16 +23,20 @@ include (../visualizer.pri)
 
 TARGET = tdrivereditor
 
+QT += network
+
 TEMPLATE = lib
 CONFIG += shared
 CONFIG += create_prl
-QT += network
+
+DEFINES += LIBTDRIVEREDITOR_LIBRARY
 
 # For libutil
 CONFIG += link_prl
 INCLUDEPATH += $$UTILLIBDIR
 #LIBS += -L$$UTILLIBDIR -l$$UTIL_LIB
 LIBS += -l$$UTIL_LIB
+
 SOURCES += tdriver_tabbededitor.cpp \
     tdriver_runconsole.cpp \
     tdriver_rubyhighlighter.cpp \
@@ -54,7 +58,8 @@ HEADERS += tdriver_tabbededitor.h \
     tdriver_editor_common.h \
     tdriver_rubyinteract.h \
     tdriver_editbar.h \
-    tdriver_combolineedit.h
+    tdriver_combolineedit.h \
+    libtdrivereditor_global.h
 
 # install
 unix:!symbian {

@@ -21,13 +21,15 @@
 #ifndef TDRIVER_SEARCHWIDGET_H
 #define TDRIVER_SEARCHWIDGET_H
 
+#include "libtdrivereditor_global.h"
+
 #include <QToolBar>
 #include <QTextDocument>
 
 class TDriverComboLineEdit;
 class QAction;
 
-class TDriverEditBar : public QToolBar
+class LIBTDRIVEREDITORSHARED_EXPORT TDriverEditBar : public QToolBar
 {
     Q_OBJECT
     Q_PROPERTY(QString sutVariable READ sutVariable)

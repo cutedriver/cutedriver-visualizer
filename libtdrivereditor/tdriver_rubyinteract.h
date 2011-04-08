@@ -21,6 +21,8 @@
 #ifndef TDRIVER_RUBYINTERACT_H
 #define TDRIVER_RUBYINTERACT_H
 
+#include "libtdrivereditor_global.h"
+
 #include <QWidget>
 #include <QList>
 
@@ -31,7 +33,7 @@
 
 class QTextCharFormat;
 
-class TDriverRubyInteract : public TDriverRunConsole
+class LIBTDRIVEREDITORSHARED_EXPORT TDriverRubyInteract : public TDriverRunConsole
 {
 Q_OBJECT
 public:

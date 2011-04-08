@@ -17,6 +17,7 @@
 **
 ****************************************************************************/
 
+#include "libtdrivereditor_global.h"
 
 #ifndef TDRIVER_TABBEDEDITOR_H
 #define TDRIVER_TABBEDEDITOR_H
@@ -49,7 +50,7 @@ class TDriverExecuteDialog;
 
 #include "tdriver_runconsole.h"
 
-class TDriverTabbedEditor : public QTabWidget
+class LIBTDRIVEREDITORSHARED_EXPORT TDriverTabbedEditor : public QTabWidget
 {
     Q_OBJECT
     Q_PROPERTY(QString sutVariable READ sutVariable)

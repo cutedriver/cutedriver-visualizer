@@ -30,7 +30,7 @@ SUBDIRS += libtdriverutil
 SUBDIRS += libtdrivereditor
 
 # minimal wrapper around libtdrivereditor to create a standalone code editor application, mostly for testing
-SUBDIRS += editor_proto
+#SUBDIRS += editor_proto
 
 # full Testability Driver Visualizer application
 SUBDIRS += tdriver_editor

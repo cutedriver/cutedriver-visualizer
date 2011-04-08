@@ -21,6 +21,8 @@
 #ifndef TDRIVER_DEBUGCONSOLE_H
 #define TDRIVER_DEBUGCONSOLE_H
 
+#include "libtdrivereditor_global.h"
+
 #include "tdriver_editor_common.h"
 #include <QWidget>
 
@@ -36,7 +38,7 @@ class TDriverRunConsole;
 
 #include <QStringList>
 
-class TDriverDebugConsole : public QWidget
+class LIBTDRIVEREDITORSHARED_EXPORT TDriverDebugConsole : public QWidget
 {
     Q_OBJECT
 public:

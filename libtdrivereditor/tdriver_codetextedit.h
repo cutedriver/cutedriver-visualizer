@@ -21,6 +21,7 @@
 #ifndef CODETEXTEDIT_H
 #define CODETEXTEDIT_H
 
+#include "libtdrivereditor_global.h"
 #include "tdriver_editor_common.h"
 #include "tdriver_highlighter.h"
 
@@ -44,7 +45,7 @@ class SideArea;
 //class QMenu;
 class TDriverCompletionMenu;
 
-class TDriverCodeTextEdit : public QPlainTextEdit
+class LIBTDRIVEREDITORSHARED_EXPORT TDriverCodeTextEdit : public QPlainTextEdit
 {
     Q_OBJECT
     Q_PROPERTY(QString fileName READ fileName WRITE setFileName)
