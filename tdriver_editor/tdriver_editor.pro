@@ -30,7 +30,10 @@ CONFIG += link_prl
 INCLUDEPATH += $$UTILLIBDIR
 #LIBS += -L$$UTILLIBDIR -l$$UTIL_LIB
 LIBS += -l$$UTIL_LIB
-QT += sql
+
+!CONFIG(no_sql) {
+    QT += sql
+}
 
 # For libtdrivereditor:
 INCLUDEPATH += $$EDITORLIBDIR

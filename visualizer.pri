@@ -29,3 +29,7 @@ EDITOR_PROTO_DIR=../editor_proto
 
 DESTDIR = ../bin
 QMAKE_LIBDIR = $$DESTDIR $$QMAKE_LIBDIR
+
+CONFIG(no_sql) {
+    DEFINES *= TDRIVER_NO_SQL
+}

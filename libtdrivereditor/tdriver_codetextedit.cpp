@@ -39,7 +39,11 @@
 #include <QModelIndex>
 
 #include <tdriver_util.h>
+
+#ifndef TDRIVER_NO_SQL
 #include <tdriver_translationdb.h>
+#endif
+
 #include "tdriver_editor_common.h"
 #include <tdriver_debug_macros.h>
 
@@ -488,6 +492,9 @@ bool TDriverCodeTextEdit::getTranslationParameter(const QString &paramKey, const
 
 bool TDriverCodeTextEdit::setTranslationDatabase(const QMap<QString, QString> &tdriverParamMap, const QMap<QString, QString> &sutParamMap)
 {
+#ifdef TDRIVER_NO_SQL
+    return false;
+#else
     // tdriver_parameters.xml parameter names
     static const char *PK_HOST = "localisation_server_ip";
     static const char *PK_NAME = "localisation_server_database_name";
@@ -545,11 +552,16 @@ bool TDriverCodeTextEdit::setTranslationDatabase(const QMap<QString, QString> &t
     }
 
     return translationDBconfigured;
+#endif
 }
 
 
 void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
 {
+#ifdef TDRIVER_NO_SQL
+    return;
+#else
+
     cancelCompletion();
     if (!translationDBconfigured) {
         QMessageBox::warning(
@@ -682,6 +694,7 @@ void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
 
         completerCompleteRect(completer, cursorRect(complCur));
     }
+#endif
 }
 
 bool TDriverCodeTextEdit::doTranslationCompletion(QKeyEvent *event)

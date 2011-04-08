@@ -23,8 +23,8 @@ include (../visualizer.pri)
 
 TARGET = tdriverutil
 
-QT += network \
-    sql
+QT += network
+
 
 TEMPLATE = lib
 CONFIG += shared
@@ -32,15 +32,22 @@ CONFIG += create_prl
 
 DEFINES += LIBTDRIVERUTIL_LIBRARY
 
-SOURCES += tdriver_translationdb.cpp \
-    tdriver_util.cpp \
+
+!CONFIG(no_sql) {
+    QT += sql
+    SOURCES += tdriver_translationdb.cpp
+    HEADERS += tdriver_translationdb.h
+} else {
+    !build_pass:message(SQL dependent features disabled)
+}
+
+SOURCES += tdriver_util.cpp \
     tdriver_rubyinterface.cpp \
     tdriver_rbiprotocol.cpp \
     tdriver_executedialog.cpp \
     flowlayout.cpp
 
-HEADERS += tdriver_translationdb.h \
-    libtdriverutil_global.h \
+HEADERS += libtdriverutil_global.h \
     tdriver_util.h \
     tdriver_rubyinterface.h \
     tdriver_rbiprotocol.h \
