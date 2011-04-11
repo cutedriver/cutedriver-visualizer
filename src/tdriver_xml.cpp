@@ -394,7 +394,9 @@ void MainWindow::parseApplicationsXml( QString filename ) {
 }
 
 
-bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
+bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument )
+{
+    //    qDebug() << FCFL << fileName;
 
     // temporary xml dom document
     QDomDocument tempDomDocument;
@@ -404,17 +406,16 @@ bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
     QFile xmlFile( fileName );
 
     if ( !xmlFile.exists() ) {
-
+        qDebug() << FCFL << fileName << "not found";
         QMessageBox::critical(
                 this,
                 tr( "XML Error" ),
                 tr( "File not found:\n\n  %1\n" ).arg( fileName )
                 );
-
     } else {
 
         if ( !xmlFile.open( QIODevice::ReadOnly ) ) {
-
+            qDebug() << fileName << "open error";
             QMessageBox::critical(
                     this,
                     tr( "XML Error" ),
@@ -423,18 +424,25 @@ bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
 
         } else {
 
-            result = tempDomDocument.setContent( &xmlFile );
+            QString errorMsg;
+            int errorLine = 0, errorColumn = 0;
+            result = tempDomDocument.setContent(&xmlFile, &errorMsg, &errorLine, &errorColumn );
 
             if ( !result )  {
 
+                qDebug() << FCFL << fileName << 'l' << errorLine << 'c' << errorColumn << ':' << errorMsg;
                 QMessageBox::critical(
                         this,
                         tr( "XML Error" ),
-                        tr( "Cannot parse xml file %1" ).arg( fileName )
+                        tr( "XML parse error in file %1 line %2 column %3:\n\n%4" )
+                            .arg(fileName)
+                            .arg(errorLine)
+                            .arg(errorColumn)
+                            .arg(errorMsg)
                         );
 
             } else {
-
+                qDebug() << FCFL << fileName << "success";
                 // return parsed xml dom as result
                 resultDocument = tempDomDocument;
 
