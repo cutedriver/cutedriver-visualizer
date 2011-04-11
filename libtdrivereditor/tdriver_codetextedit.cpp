@@ -469,11 +469,11 @@ bool TDriverCodeTextEdit::getTranslationParameter(const QString &paramKey, const
     bool ret = false;
 
     if (!paramKey.isEmpty() && sutParamMap.contains(paramKey)) {
-        paramValue = sutParamMap.value(paramKey);
+        paramValue = stripQuotes(sutParamMap.value(paramKey));
         ret = true;
     }
     else if (!paramKey.isEmpty() && tdriverParamMap.contains(paramKey)) {
-        paramValue = tdriverParamMap.value(paramKey);
+        paramValue = stripQuotes(tdriverParamMap.value(paramKey));
         ret = true;
     }
     else {
