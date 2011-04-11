@@ -122,8 +122,10 @@ void TDriverImageView::paintEvent(QPaintEvent *)
 
         updatePixmap = false;
     }
+    QPoint offset((width()-pixmap->width())/2,
+                  (height()-pixmap->height())/2);
 
-    painter.drawPixmap( pixmap->rect(), *pixmap );
+    painter.drawPixmap( offset, *pixmap );
     painter.setOpacity(0.5);
 
     // highlightEnabledMode: 0=disabled, 1=single, 2=multiple
@@ -135,7 +137,7 @@ void TDriverImageView::paintEvent(QPaintEvent *)
         for ( int n = 0; n < count; n++ ) {
             const QRect &rect = rects.at(n);
             if (!rect.isNull()) {
-                painter.drawRect( float(rect.x()) * zoomFactor, float(rect.y()) * zoomFactor, float(rect.width()) * zoomFactor, float(rect.height()) * zoomFactor );
+                painter.drawRect( offset.x() + float(rect.x()) * zoomFactor, offset.y() + float(rect.y()) * zoomFactor, float(rect.width()) * zoomFactor, float(rect.height()) * zoomFactor );
             }
         }
     }
@@ -145,7 +147,7 @@ void TDriverImageView::paintEvent(QPaintEvent *)
         if (testDragThreshold(dragStart, dragEnd)) {
             static QPen dragPen(Qt::white);
             painter.setPen(dragPen);
-            QRect draggedRect = QRect(dragStart, dragEnd).normalized();
+            QRect draggedRect = QRect(offset + dragStart,offset + dragEnd).normalized();
             painter.fillRect(draggedRect, Qt::SolidPattern);
             painter.drawRect(draggedRect);
         }
