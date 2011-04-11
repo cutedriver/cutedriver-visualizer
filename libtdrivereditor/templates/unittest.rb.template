@@ -10,12 +10,13 @@ require 'test/unit'
 class TC_ < Test::Unit::TestCase
 
   attr_accessor :setup_executed
-
+  @@setup_executed=nil
+  
   # setup and teardown methods are always executed before each and after each test case method
   def setup
     
-    if @setup_executed.nil? then
-      @setup_executed = true
+    if @@setup_executed.nil? then
+      @@setup_executed = true
       # code to be executed only once for the whole test case class comes here
     end
     
