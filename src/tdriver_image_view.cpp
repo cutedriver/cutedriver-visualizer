@@ -94,6 +94,7 @@ void TDriverImageView::clearImage()
 {
     delete image;
     image = new QImage();
+    imageOffset = QPoint();
     imageTasId.clear();
     rects.clear();
 
@@ -122,10 +123,11 @@ void TDriverImageView::paintEvent(QPaintEvent *)
 
         updatePixmap = false;
     }
-    QPoint offset((width()-pixmap->width())/2,
-                  (height()-pixmap->height())/2);
 
-    painter.drawPixmap( offset, *pixmap );
+    imageOffset = QPoint((width() - pixmap->width()) / 2,
+                         (height() - pixmap->height()) / 2 );
+
+    painter.drawPixmap( imageOffset, *pixmap );
     painter.setOpacity(0.5);
 
     // highlightEnabledMode: 0=disabled, 1=single, 2=multiple
@@ -137,7 +139,10 @@ void TDriverImageView::paintEvent(QPaintEvent *)
         for ( int n = 0; n < count; n++ ) {
             const QRect &rect = rects.at(n);
             if (!rect.isNull()) {
-                painter.drawRect( offset.x() + float(rect.x()) * zoomFactor, offset.y() + float(rect.y()) * zoomFactor, float(rect.width()) * zoomFactor, float(rect.height()) * zoomFactor );
+                painter.drawRect(imageOffset.x() + float(rect.x()) * zoomFactor,
+                                 imageOffset.y() + float(rect.y()) * zoomFactor,
+                                 float(rect.width()) * zoomFactor,
+                                 float(rect.height()) * zoomFactor );
             }
         }
     }
@@ -147,7 +152,7 @@ void TDriverImageView::paintEvent(QPaintEvent *)
         if (testDragThreshold(dragStart, dragEnd)) {
             static QPen dragPen(Qt::white);
             painter.setPen(dragPen);
-            QRect draggedRect = QRect(offset + dragStart,offset + dragEnd).normalized();
+            QRect draggedRect = QRect(imageOffset + dragStart, imageOffset + dragEnd).normalized();
             painter.fillRect(draggedRect, Qt::SolidPattern);
             painter.drawRect(draggedRect);
         }
@@ -167,14 +172,14 @@ void TDriverImageView::mousePressEvent(QMouseEvent *event)
     }
     if (event->button() == Qt::LeftButton && pixmap) {
         // prepare for possible drag
-        dragStart = mousePos;
+        dragStart = mousePos - imageOffset;
         fixPoint(dragStart, pixmap->rect());
     }
     else {
         QFrame::mousePressEvent(event);
     }
 
-    QPoint pos(getEventPosInImage());
+    QPoint pos(getMousePosInImage());
     emit statusBarMessage(tr("Mouse click at (%1, %2)").arg(pos.x()).arg(pos.y()), 2000);
 }
 
@@ -190,7 +195,7 @@ void TDriverImageView::mouseReleaseEvent(QMouseEvent *event)
 
         if (dragging && pixmap) {
             // drag in progress, finish it and test if result is valid selection
-            dragEnd = mousePos;
+            dragEnd = mousePos - imageOffset;
             fixPoint(dragEnd, pixmap->rect());
             dragging = testDragThreshold(dragStart, dragEnd);
             if (!dragging) update();
@@ -202,7 +207,7 @@ void TDriverImageView::mouseReleaseEvent(QMouseEvent *event)
             dragging = false;
             update();
         }
-        else if (pixmap && pixmap->rect().contains(event->pos())) {
+        else if (pixmap && pixmap->rect().contains(event->pos() - imageOffset)) {
             // non-dragging click
             switch (leftClickAction) {
 
@@ -238,7 +243,7 @@ void TDriverImageView::mouseMoveEvent( QMouseEvent * event )
     mousePos = event->pos();
 
     if (event->buttons() == Qt::LeftButton && pixmap) {
-        dragEnd = mousePos;
+        dragEnd = mousePos - imageOffset;
         fixPoint(dragEnd, pixmap->rect());
         if (!dragging && testDragThreshold(dragStart, dragEnd)) {
             hoverTimer->stop();
@@ -275,7 +280,7 @@ void TDriverImageView::contextMenuEvent ( QContextMenuEvent *event)
     if (objTreeOwner) {
         QList<TestObjectKey> matchingObjects;
 
-        if ( objTreeOwner->collectMatchingVisibleObjects( getEventPosInImage(), matchingObjects ) ) {
+        if ( objTreeOwner->collectMatchingVisibleObjects( getMousePosInImage(), matchingObjects ) ) {
             qSort( matchingObjects.begin(), matchingObjects.end() );
             QMap<QAction*, QString> sortKeys;
 
@@ -514,6 +519,8 @@ void TDriverImageView::refreshImage(const QString &imagePath)
     image = new QImage( imagePath );
 
     imageFileName = (image->isNull()) ? QString() : imagePath;
+    imageOffset = QPoint();
+
     if (!scaleImage)
         resize(image->size());
     //qDebug() << FCFL << image->text();

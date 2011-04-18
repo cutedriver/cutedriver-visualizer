@@ -65,9 +65,11 @@ public:
         return QPoint(float(pos.x()) / zoomFactor, float(pos.y()) / zoomFactor);
     }
 
-    QPoint getEventPosInImage() {
-        return QPoint(float(mousePos.x()) / zoomFactor, float(mousePos.y()) / zoomFactor);
+    QPoint getMousePosInImage() {
+        return QPoint(float(mousePos.x() - imageOffset.x()) / zoomFactor,
+                      float(mousePos.y() - imageOffset.y()) / zoomFactor);
     }
+
 
     //    QPoint &convertS60Pos(QPoint &pos) {
     //        // rotate when in portrait mode
@@ -129,6 +131,7 @@ private:
     bool scaleImage;
     int leftClickAction;
 
+    QPoint imageOffset; // coordinates of image upper left corner
     QPoint mousePos; // coordinates of last relevant mouse event
     QPoint stopPos; // coordinates where mouse cursor last stopped
 
