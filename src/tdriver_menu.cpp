@@ -153,6 +153,7 @@ void MainWindow::createApplicationsMenu() {
     appsMenu->setObjectName("main applications");
     //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
     appsMenu->addAction(startAppAction);
+    appsMenu->addAction(appsRefreshAction);
     appsMenu->addSeparator();
     menubar->addMenu( appsMenu );
     menubar->actions().last()->setObjectName("main applications");

@@ -1135,11 +1135,15 @@ void MainWindow::createActions()
 
     connect( fontAction, SIGNAL( triggered() ), this, SLOT(openFontDialog()));
 
-    refreshAction = new QAction(tr("&Refresh"), this);
+    appsRefreshAction = new QAction(tr("Refresh &Applications"), this);
+    appsRefreshAction->setObjectName("main apps refresh");
+
+    connect( appsRefreshAction, SIGNAL( triggered() ), this, SLOT(forceRefreshApps()));
+
+    refreshAction = new QAction(tr("&Refresh All"), this);
     refreshAction->setObjectName("main refresh");
     refreshAction->setShortcut(QKeySequence(tr("Ctrl+R")));
     // note: QKeySequence(QKeySequence::Refresh) is F5 in some platforms, Ctrl+R in others
-    //refreshAction->setDisabled( true );
 
     connect( refreshAction, SIGNAL( triggered() ), this, SLOT(forceRefreshData()));
 
@@ -1245,6 +1249,9 @@ void MainWindow::createShortcutsBar()
     shortcutsBar->setObjectName("shortcuts");
 
     shortcutsBar->addAction(refreshAction);
+
+    shortcutsBar->addSeparator();
+    shortcutsBar->addAction(appsRefreshAction);
 
     shortcutsBar->addSeparator();
     shortcutsBar->addAction(delayedRefreshAction);

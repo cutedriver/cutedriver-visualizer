@@ -663,6 +663,7 @@ void MainWindow::delayedRefreshData()
 
         delayedRefreshAction->setDisabled(true);
         refreshAction->setDisabled(true);
+        appsRefreshAction->setDisabled(true);
         QTimer::singleShot(5000, this, SLOT(forceRefreshData()));
     }
 }
@@ -676,7 +677,22 @@ void MainWindow::forceRefreshData()
     else {
         delayedRefreshAction->setDisabled(false);
         refreshAction->setDisabled(false);
+        appsRefreshAction->setDisabled(false);
         sendAppListRequest();
+    }
+}
+
+
+void MainWindow::forceRefreshApps()
+{
+    if  ( !isDeviceSelected() ) {
+        noDeviceSelectedPopup();
+    }
+    else {
+        delayedRefreshAction->setDisabled(false);
+        refreshAction->setDisabled(false);
+        appsRefreshAction->setDisabled(false);
+        sendAppListRequest(false);
     }
 }
 
