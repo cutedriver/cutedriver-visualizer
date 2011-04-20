@@ -13,12 +13,12 @@ class TC_ < Test::Unit::TestCase
   
   class << self
 	
-	  #When using TDRunner this method is executed before any test is executed
+	  #When using TDRunner this method is executed before any test is executed in this class
 	  def startup
 		
 	  end
 	  
-	  #When using TDRunner this method is after all tests have been executed in this class
+	  #When using TDRunner this method is executed after all tests have been executed in this class
 	  def shutdown
 		
 	  end
