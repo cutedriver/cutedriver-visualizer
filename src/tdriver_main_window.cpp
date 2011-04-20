@@ -181,13 +181,16 @@ bool MainWindow::setup()
     offlineMode = true;
     t.start();
     QString goOnlineError;
+    QString installedDriverVersion;
+    statusbar(tr("Starting TDriver interface process..."));
+
     if (!(goOnlineError = TDriverRubyInterface::globalInstance()->goOnline()).isNull()) {
         tdriverMsgAppend(tr("TDriver Visualizer failed to interface with TDriver framework:\n\n" )
                          + goOnlineError
                          + tr("\n\n=== Launching in offline mode ==="));
     }
     else {
-        QString installedDriverVersion = getDriverVersionNumber();
+        installedDriverVersion = getDriverVersionNumber();
 
         if ( !checkVersion( installedDriverVersion, REQUIRED_DRIVER_VERSION ) ) {
             tdriverMsgAppend(tr("TDriver Visualizer is not compatible with this version of TDriver. Please update your TDriver environment.\n\n") +
@@ -200,6 +203,15 @@ bool MainWindow::setup()
             offlineMode = false; // TDriver successfully initialized!
         }
     }
+
+    if (offlineMode) {
+        statusbar(tr("Failed to start TDriver interface process"));
+    }
+    else {
+        statusbar(tr("TDriver interface started"));
+    }
+
+
     qDebug() << FCFL << "RBI goOnline  result" << !offlineMode << "secs" << float(t.elapsed())/1000.0;
 
     if (offlineMode) {
@@ -1135,11 +1147,15 @@ void MainWindow::createActions()
 
     connect( fontAction, SIGNAL( triggered() ), this, SLOT(openFontDialog()));
 
-    refreshAction = new QAction(tr("&Refresh"), this);
+    appsRefreshAction = new QAction(tr("Refresh &Applications"), this);
+    appsRefreshAction->setObjectName("main apps refresh");
+
+    connect( appsRefreshAction, SIGNAL( triggered() ), this, SLOT(forceRefreshApps()));
+
+    refreshAction = new QAction(tr("&Refresh All"), this);
     refreshAction->setObjectName("main refresh");
     refreshAction->setShortcut(QKeySequence(tr("Ctrl+R")));
     // note: QKeySequence(QKeySequence::Refresh) is F5 in some platforms, Ctrl+R in others
-    //refreshAction->setDisabled( true );
 
     connect( refreshAction, SIGNAL( triggered() ), this, SLOT(forceRefreshData()));
 
@@ -1245,6 +1261,9 @@ void MainWindow::createShortcutsBar()
     shortcutsBar->setObjectName("shortcuts");
 
     shortcutsBar->addAction(refreshAction);
+
+    shortcutsBar->addSeparator();
+    shortcutsBar->addAction(appsRefreshAction);
 
     shortcutsBar->addSeparator();
     shortcutsBar->addAction(delayedRefreshAction);

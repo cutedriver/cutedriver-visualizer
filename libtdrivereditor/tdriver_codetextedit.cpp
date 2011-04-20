@@ -556,7 +556,7 @@ bool TDriverCodeTextEdit::setTranslationDatabase(const QMap<QString, QString> &t
 }
 
 
-void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent */*event*/)
+void TDriverCodeTextEdit::startTranslationCompletion(QKeyEvent* /*event*/)
 {
 #ifdef TDRIVER_NO_SQL
     return;

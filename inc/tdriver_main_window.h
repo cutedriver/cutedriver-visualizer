@@ -429,6 +429,7 @@ private:
     QAction *loadXmlAction;
     QAction *saveStateAction;
     QAction *fontAction;
+    QAction *appsRefreshAction;
     QAction *refreshAction;
     QAction *delayedRefreshAction;
     QAction *sutDisconnectAction;
@@ -595,6 +596,7 @@ private slots:
     // object tree
     void delayedRefreshData();
     void forceRefreshData();
+    void forceRefreshApps();
 
 
 

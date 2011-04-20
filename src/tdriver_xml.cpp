@@ -177,6 +177,8 @@ void MainWindow::updateApplicationsList()
 
     connect( fgAction, SIGNAL( triggered() ), this, SLOT( appSelected() ) );
 
+    QStringList restartedIdCandidates;
+
     bool appWasSet = false;
     for (iterator = applicationsNamesMap.constBegin();
          iterator != applicationsNamesMap.constEnd();
@@ -190,13 +192,19 @@ void MainWindow::updateApplicationsList()
         if (count < 9)
             appAction->setShortcut( QKeySequence( "ALT+" + QString::number( count + 1 ) ) );
 
-        if ( !currentApplication.isForeground() && iterator.key() == currentApplication.id ) {
-            if (appWasSet) {
-                qWarning("Multiple applications with same id in applicationsNamesMap!");
+        if ( !currentApplication.isForeground() ) {
+            if (iterator.key() == currentApplication.id ) {
+                if (appWasSet) {
+                    qWarning("Multiple applications with same id in applicationsNamesMap!");
+                }
+                appAction->setChecked( true );
+                currentApplication.set(iterator.key(), iterator.value() );
+                appWasSet = true;
             }
-            appAction->setChecked( true );
-            currentApplication.set(iterator.key(), iterator.value() );
-            appWasSet = true;
+
+            if (iterator.value() == currentApplication.name) {
+                restartedIdCandidates << iterator.key();
+            }
         }
 
         applicationsActionMap.insert(appAction, iterator.key() );
@@ -207,13 +215,44 @@ void MainWindow::updateApplicationsList()
         count++;
     }
 
-    if ( !appWasSet ) {
-        fgAction->setChecked( true );
+    if ( !appWasSet && !currentApplication.isForeground() && !currentApplication.id.isEmpty()) {
+        QString messageText(tr("Application '%1' with id %2 is no longer available.\n\n")
+                            .arg(currentApplication.name)
+                            .arg(currentApplication.id));
+
+        if (restartedIdCandidates.count() >= 1) {
+            const QString newId = restartedIdCandidates.takeLast();
+            currentApplication.set(newId, applicationsNamesMap.value(newId));
+
+            messageText += tr("Selected application id %1 with same name.\n").arg(newId);
+
+            if (restartedIdCandidates.count() >= 1) {
+                messageText += tr("Note: there were other application(s) with same name: %1.\n")
+                        .arg(restartedIdCandidates.join((", ")));
+            }
+        }
+        else {
+            fgAction->setChecked( true );
+            currentApplication.setForeground(true); // may already be true, doesn't matter
+            currentApplication.clearInfo();
+
+            messageText += tr("Switched to foreground application.\n");
+        }
+
+        QMessageBox *box = new QMessageBox(QMessageBox::Information,
+                                           tr("Current Application Changed"),
+                                           messageText,
+                                           QMessageBox::Ok,
+                                           this);
+        box->setAttribute(Qt::WA_DeleteOnClose);
+        box->show();
+    }
+    else if (TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )) || currentApplication.id.isEmpty()) {
         currentApplication.setForeground(true); // may already be true, doesn't matter
         currentApplication.clearInfo();
     }
-    else if (TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" ))) {
-        currentApplication.setForeground(true); // may already be true, doesn't matter
+    else {
+        qDebug() << FCFL << "currentApplication remains foreground application.";
     }
 
     updateWindowTitle();
@@ -394,7 +433,9 @@ void MainWindow::parseApplicationsXml( QString filename ) {
 }
 
 
-bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
+bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument )
+{
+    //    qDebug() << FCFL << fileName;
 
     // temporary xml dom document
     QDomDocument tempDomDocument;
@@ -404,17 +445,16 @@ bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
     QFile xmlFile( fileName );
 
     if ( !xmlFile.exists() ) {
-
+        qDebug() << FCFL << fileName << "not found";
         QMessageBox::critical(
                 this,
                 tr( "XML Error" ),
                 tr( "File not found:\n\n  %1\n" ).arg( fileName )
                 );
-
     } else {
 
         if ( !xmlFile.open( QIODevice::ReadOnly ) ) {
-
+            qDebug() << fileName << "open error";
             QMessageBox::critical(
                     this,
                     tr( "XML Error" ),
@@ -423,18 +463,25 @@ bool MainWindow::parseXml( QString fileName, QDomDocument & resultDocument ) {
 
         } else {
 
-            result = tempDomDocument.setContent( &xmlFile );
+            QString errorMsg;
+            int errorLine = 0, errorColumn = 0;
+            result = tempDomDocument.setContent(&xmlFile, &errorMsg, &errorLine, &errorColumn );
 
             if ( !result )  {
 
+                qDebug() << FCFL << fileName << 'l' << errorLine << 'c' << errorColumn << ':' << errorMsg;
                 QMessageBox::critical(
                         this,
                         tr( "XML Error" ),
-                        tr( "Cannot parse xml file %1" ).arg( fileName )
+                        tr( "XML parse error in file %1 line %2 column %3:\n\n%4" )
+                            .arg(fileName)
+                            .arg(errorLine)
+                            .arg(errorColumn)
+                            .arg(errorMsg)
                         );
 
             } else {
-
+                qDebug() << FCFL << fileName << "success";
                 // return parsed xml dom as result
                 resultDocument = tempDomDocument;
 

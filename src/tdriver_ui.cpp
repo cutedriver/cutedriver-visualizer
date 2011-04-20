@@ -349,6 +349,7 @@ void MainWindow::createImageViewDockWidget()
 
     imageScroller = new QScrollArea;
     imageScroller->setObjectName("imagescroller");
+    imageScroller->setAlignment(Qt::AlignCenter);
     imageScroller->setWidget(imageWidget);
     layout->addWidget( imageScroller, 1);
 

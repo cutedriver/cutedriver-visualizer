@@ -48,7 +48,7 @@ void MainWindow::connectImageWidgetSignals() {
  void MainWindow::imageInspectFindItem()
  {
     QRect area(0, 0, imageWidget->imageWidth()-1, imageWidget->imageHeight()-1);
-    QPoint pos(imageWidget->getEventPosInImage());
+    QPoint pos(imageWidget->getMousePosInImage());
 
     if (area.isValid() && area.contains(pos)) {
         highlightAtCoords( pos, true );
@@ -67,7 +67,7 @@ void MainWindow::connectImageWidgetSignals() {
 void MainWindow::imageInsertFindItem()
 {
     QRect area(0, 0, imageWidget->imageWidth()-1, imageWidget->imageHeight()-1);
-    QPoint pos(imageWidget->getEventPosInImage());
+    QPoint pos(imageWidget->getMousePosInImage());
 
     if (area.isValid() && area.contains(pos)) {
 
@@ -79,7 +79,7 @@ void MainWindow::imageInsertFindItem()
 
 void MainWindow::imageInsertCoords()
 {
-    QPoint pos = imageWidget->getEventPosInImage();
+    QPoint pos = imageWidget->getMousePosInImage();
     emit insertToCodeEditor(QString(" %1, %2 ").arg(pos.x()).arg(pos.y()), false, false);
 }
 
@@ -134,7 +134,7 @@ void MainWindow::sendTapScreen(const QStringList &target)
 // Fetch X, Y from imageWidget, and try to tap object that was clicked
 void MainWindow::clickedImage()
 {
-    QPoint pos(imageWidget->getEventPosInImage());
+    QPoint pos(imageWidget->getMousePosInImage());
 
     if ( highlightAtCoords( pos, false ) && lastHighlightedObjectKey != 0 ) {
         const TreeItemInfo &treeItemData = objectTreeData.value( lastHighlightedObjectKey );
