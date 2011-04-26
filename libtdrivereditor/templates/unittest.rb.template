@@ -10,6 +10,21 @@ require 'test/unit'
 class TC_ < Test::Unit::TestCase
 
   attr_accessor :setup_executed
+  
+  class << self
+	
+	  #When using TDRunner this method is executed before any test is executed in this class
+	  def startup
+		
+	  end
+	  
+	  #When using TDRunner this method is executed after all tests have been executed in this class
+	  def shutdown
+		
+	  end
+  
+  end
+  
   @@setup_executed=nil
   
   # setup and teardown methods are always executed before each and after each test case method
