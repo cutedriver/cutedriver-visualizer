@@ -584,9 +584,11 @@ class ListenerObject
   end
 
 
-  def check_api_fixture( sut )
-    return sut.application.fixture('tasqtapiaccessor', 'version' )
-  end
+  #DISABLE_API_TAB_PENDING_REMOVAL
+  #def check_api_fixture( sut )
+  #  #obsolete method, to be removed
+  #  return sut.application.fixture('tasqtapiaccessor', 'version' )
+  #end
 
 
   def get_behaviours_xml( sut, sut_id, object_types )
@@ -615,18 +617,18 @@ class ListenerObject
   end
 
 
-  def get_fixture_xml( sut, sut_id, object_name )
-    filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_methods_#{ sut_id }", 'xml' )
-    begin
-      data = sut.application.fixture('tasqtapiaccessor', 'list_class_methods', { :class => object_name } )
-      file_xml << data
-    ensure
-      file_xml.close
-    end
-
-    $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
-    @listener_reply['fixture_filename'] = [ filename_xml ]
-  end
+  #DISABLE_API_TAB_PENDING_REMOVAL
+  #def get_fixture_xml( sut, sut_id, object_name )
+  #  filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_methods_#{ sut_id }", 'xml' )
+  #  begin
+  #    data = sut.application.fixture('tasqtapiaccessor', 'list_class_methods', { :class => object_name } )
+  #    file_xml << data
+  #  ensure
+  #    file_xml.close
+  #  end
+  #  $lg.debug this_method + " wrote #{File.size?(filename_xml)/1024.0} KiB to '#{filename_xml}'"
+  #  @listener_reply['fixture_filename'] = [ filename_xml ]
+  #end
 
 
   def get_signal_xml( sut, sut_id, app_name, object_id, object_type )
@@ -852,11 +854,13 @@ class ListenerObject
               eval_cmd += "(:id=>'#{input_array[3]}')" if input_array.size > 3
               eval_cmd += ".#{input_array[2]}.tap"
 
-            when :check_fixture
-              eval_cmd = "check_api_fixture( sut )"
+            #DISABLE_API_TAB_PENDING_REMOVAL
+            #when :check_fixture
+            #  eval_cmd = "check_api_fixture( sut )"
 
-            when :fixture
-              eval_cmd = "get_fixture_xml( sut, '#{ sut_id }', '#{ input_array[2] }' )"
+            #DISABLE_API_TAB_PENDING_REMOVAL
+            #when :fixture
+            #  eval_cmd = "get_fixture_xml( sut, '#{ sut_id }', '#{ input_array[2] }' )"
 
             when :press_key
               eval_cmd = "sut.press_key( #{ input_array[2].to_sym } )"

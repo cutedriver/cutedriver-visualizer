@@ -740,10 +740,11 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
         }
         break;
 
+#if !DISABLE_API_TAB_PENDING_REMOVAL
     case commandCheckApiFixture:
         // note: this command works closely with updateApiTableContent() method
         if (handleNormally) {
-            statusbar(tr("Api fixture checked..."), 1000);
+            Dstatusbar(tr("Api fixture checked..."), 1000);
             apiFixtureChecked = true;
             // commandCheckApiFixture should have been sent by updateApiTableContent(),
             // call it again now that we have done the check
@@ -761,6 +762,7 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
                            "Disabling API tab from Properties table."));
         }
         break;
+#endif
 
     case commandClassMethods:
         // note: this command works closely with updateApiTableContent() method
@@ -905,11 +907,13 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QStri
 
     // do shortError
     {
+#if !DISABLE_API_TAB_PENDING_REMOVAL
         if ( commandType == commandCheckApiFixture) {
             resultEnum = SILENT;
         }
-
-        else if ( tdriverError.contains( "No plugins and no ui for server" ) ) {
+        else
+#endif
+            if ( tdriverError.contains( "No plugins and no ui for server" ) ) {
             shortError = tr( "Failed to refresh application screen capture.\n\nLaunch some application with UI and try again." );
             resultEnum = WARNING;
         }

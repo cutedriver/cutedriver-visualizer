@@ -213,7 +213,9 @@ void MainWindow::createPropertiesDockWidget() {
     tabWidget->setTabText( tabWidget->indexOf( propertiesTab ), QApplication::translate( "MainWindow", "A&ttributes", 0, QApplication::UnicodeUTF8 ) );
     tabWidget->setTabText( tabWidget->indexOf( methodsTab ), QApplication::translate( "MainWindow", "&Methods", 0, QApplication::UnicodeUTF8 ) );
     tabWidget->setTabText( tabWidget->indexOf( signalsTab ), QApplication::translate( "MainWindow", "&Signals", 0, QApplication::UnicodeUTF8 ) );
+#if !DISABLE_API_TAB_PENDING_REMOVAL
     tabWidget->setTabText( tabWidget->indexOf( apiTab ), QApplication::translate( "MainWindow", "AP&I", 0, QApplication::UnicodeUTF8 ) );
+#endif
 
     tabWidget->setCurrentIndex( 0 );
 
@@ -302,8 +304,9 @@ void MainWindow::createPropertiesDockWidgetSignalsTabWidget() {
 
 }
 
-void MainWindow::createPropertiesDockWidgetApiTabWidget() {
-
+void MainWindow::createPropertiesDockWidgetApiTabWidget()
+{
+#if !DISABLE_API_TAB_PENDING_REMOVAL
     // Object API tab
     apiTab = new QWidget();
     apiTab->setObjectName("properties api");
@@ -320,8 +323,8 @@ void MainWindow::createPropertiesDockWidgetApiTabWidget() {
     apiTable->clear();
     apiTable->setColumnCount( 3 );
     setupTableWidgetHeader( "Returns|Method|Arguments", apiTable );
-
     tabWidget->addTab(apiTab, QString());
+#endif
 }
 
 

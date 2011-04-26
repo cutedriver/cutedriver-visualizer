@@ -84,6 +84,7 @@ class TDriverComboLineEdit;
 #define DOCK_FEATURES_DEFAULT (QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetClosable)
 
 #define DEVICE_BUTTONS_ENABLED 0
+#define DISABLE_API_TAB_PENDING_REMOVAL 1
 
 class MainWindow : public QMainWindow {
 
@@ -103,7 +104,9 @@ public:
         commandRefreshImage,
         commandKeyPress,
         commandSetAttribute,
+#if !DISABLE_API_TAB_PENDING_REMOVAL
         commandCheckApiFixture,
+#endif
         commandBehavioursXml,
         commandGetVersionNumber,
         commandSignalList,
@@ -277,17 +280,20 @@ private:
     QTableWidget *propertiesTable;
     QTableWidget *methodsTable;
     QTableWidget *signalsTable;
-    QTableWidget *apiTable;
 
     QStackedLayout *propertiesLayout;
     QStackedLayout *methodsLayout;
     QStackedLayout *signalsLayout;
-    QStackedLayout *apiLayout;
 
     QWidget *propertiesTab;
     QWidget *methodsTab;
     QWidget *signalsTab;
+
+#if !DISABLE_API_TAB_PENDING_REMOVAL
+    QTableWidget *apiTable;
+    QStackedLayout *apiLayout;
     QWidget *apiTab;
+#endif
 
     void doPropertiesTableUpdate();
     void clearPropertiesTableContents();

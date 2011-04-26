@@ -397,10 +397,15 @@ void MainWindow::deviceSelected()
         viewButtons->setEnabled( deviceType.contains( "symbian", Qt::CaseInsensitive ) );
 #endif
 
+#if DISABLE_API_TAB_PENDING_REMOVAL
+        apiFixtureEnabled = false;
+        apiFixtureChecked = true;
+#else
         // enable api tab if if device type is 'kind of' qt
         tabWidget->setTabEnabled( tabWidget->indexOf( apiTab ), deviceIsQt);
         apiFixtureEnabled = deviceIsQt;
         apiFixtureChecked = false;
+#endif
 
         // enable recording menu if device type is 'kind of' qt
         recordMenu->setEnabled( deviceIsQt && !applicationsNamesMap.empty() );

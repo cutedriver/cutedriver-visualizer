@@ -32,10 +32,11 @@ void MainWindow::tabWidgetChanged( int currentTableWidget ) {
 
 void MainWindow::clearPropertiesTableContents() {
 
+#if !DISABLE_API_TAB_PENDING_REMOVAL
     // clear api table contents
     apiTable->clearContents();
     apiTable->setRowCount( 0 );
-
+#endif
     // clear methods table contents
     methodsTable->clearContents();
     methodsTable->setRowCount( 0 );
@@ -82,10 +83,10 @@ void MainWindow::sendUpdateApiTableContent()
 {
     TestObjectKey currentItemPtr = ptr2TestObjectKey( objectTree->currentItem() );
 
+#if !DISABLE_API_TAB_PENDING_REMOVAL
     // clear methods table contents
     apiTable->clearContents();
     apiTable->setRowCount( 0 );
-
     // update table only if item selected in object tree
     if ( objectTree->currentItem() != NULL && apiFixtureEnabled ) {
 
@@ -161,6 +162,10 @@ void MainWindow::sendUpdateApiTableContent()
 
 
     }
+#else
+    Q_ASSERT(!apiFixtureEnabled);
+    Q_ASSERT(apiFixtureChecked);
+#endif
 
     propertyTabLastTimeUpdated.insert( "api_methods", currentItemPtr );
 
@@ -351,8 +356,10 @@ void MainWindow::connectTabWidgetSignals()
     connect(propertiesTable, SIGNAL(itemPressed(QTableWidgetItem*)),
             SLOT(propertiesItemPressed(QTableWidgetItem*)) );
 
+#if !DISABLE_API_TAB_PENDING_REMOVAL
     connect(apiTable, SIGNAL(itemPressed(QTableWidgetItem*)),
             SLOT(apiItemPressed(QTableWidgetItem*)) );
+#endif
 }
 
 
