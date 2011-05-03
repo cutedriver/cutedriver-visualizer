@@ -26,15 +26,7 @@
 #include <tdriver_rubyinterface.h>
 #include "../common/version.h"
 
-
-#include <QApplication>
-#include <QCloseEvent>
-#include <QDialog>
-#include <QErrorMessage>
-#include <QThread>
-#include <QToolBar>
-#include <QLabel>
-#include <QTimer>
+#include <QtGui>
 
 #include <tdriver_debug_macros.h>
 
@@ -224,20 +216,6 @@ bool MainWindow::setup()
     defaultFont->fromString(  settings.value( "font/settings", QString("Sans Serif,8,-1,5,50,0,0,0,0,0") ).toString() );
     emit defaultFontSet(*defaultFont);
 
-    // default window size & position
-    QPoint windowPosition = settings.value( "window/pos", QPoint( 200, 200 ) ).toPoint();
-    QSize windowSize = settings.value( "window/size", QSize( 950, 600 ) ).toSize();
-
-    // read dock visibility settings
-    bool imageVisible = settings.value( "view/image", true ).toBool();
-    bool clipboardVisible = settings.value( "view/clipboard", true ).toBool();
-    bool propertiesVisible = true; //settings.value( "view/properties", true ).toBool();
-#if DEVICE_BUTTONS_ENABLED
-    bool buttonVisible = settings.value( "view/buttons", false ).toBool();
-#endif
-    bool shortcutsVisible = settings.value( "view/shortcuts", true ).toBool();
-    bool appsVisible = settings.value( "view/applications", false ).toBool();
-    bool editorVisible = settings.value( "view/editor", false ).toBool();
 
     // default sut
     QString defaultDevice = settings.value( "sut/activesut", QString( "sut_qt" ) ).toString();
@@ -320,6 +298,18 @@ bool MainWindow::setup()
     // update main window title - current sut will be shown
     updateWindowTitle();
 
+#if 0
+    // read dock visibility settings
+    bool imageVisible = settings.value( "view/image", true ).toBool();
+    bool clipboardVisible = settings.value( "view/clipboard", true ).toBool();
+    bool propertiesVisible = true; //settings.value( "view/properties", true ).toBool();
+#if DEVICE_BUTTONS_ENABLED
+    bool buttonVisible = settings.value( "view/buttons", false ).toBool();
+#endif
+    bool shortcutsVisible = settings.value( "view/shortcuts", true ).toBool();
+    bool appsVisible = settings.value( "view/applications", false ).toBool();
+    bool editorVisible = settings.value( "view/editor", false ).toBool();
+
     // set visibilities
     clipboardBar->setVisible( clipboardVisible );
     imageViewDock->setVisible( imageVisible );
@@ -331,19 +321,31 @@ bool MainWindow::setup()
     appsBar->setVisible( appsVisible );
     editorDock->setVisible( editorVisible );
 
+    // default window size & position
+    QPoint windowPosition = settings.value( "window/pos", QPoint( 200, 200 ) ).toPoint();
+    QSize windowSize = settings.value( "window/size", QSize( 950, 600 ) ).toSize();
+
     // resize window
     resize( windowSize );
     move( windowPosition );
+#endif
 
-    connectSignals();
+    restoreDefaultLayout();
+    settingsLoadLayouts();
+
+    // create menu of togglable docks and toolbars items
+    QMenu *showMenu = createPopupMenu();
+    showMenu->setTitle(tr("Docks and toolbars"));
+    showMenu->setObjectName("submenu docks_and_toolbars");
+    viewMenu->insertMenu(viewMenu->actions().first(), showMenu);
+
+    connectObjectTreeSignals();
+    connectTabWidgetSignals();
+    connectImageWidgetSignals();
 
     // xml/screen capture output path depending on OS
     outputPath = QDir::tempPath();
-#if (defined(Q_OS_WIN32))
-    outputPath = QString( getenv( "TEMP" ) ) + "/";
-#else
-    outputPath = "/tmp/";
-#endif
+    if (!outputPath.endsWith('/')) outputPath.append('/');
 
     if ( !offlineMode &&
             !executeTDriverCommand( commandSetOutputPath, "listener set_output_path " + outputPath) ) {
@@ -354,6 +356,35 @@ bool MainWindow::setup()
     return true;
 
 } // setup
+
+
+void MainWindow::restoreDefaultLayout()
+{
+    addToolBar(Qt::TopToolBarArea, clipboardBar);
+    clipboardBar->setVisible( false );
+
+    imageViewDock->setFloating(false);
+    addDockWidget( Qt::LeftDockWidgetArea, imageViewDock, Qt::Horizontal );
+    imageViewDock->setVisible( true );
+
+    propertiesDock->setFloating(false);
+    addDockWidget(Qt::RightDockWidgetArea, propertiesDock, Qt::Horizontal);
+    propertiesDock->setVisible( true );
+
+#if DEVICE_BUTTONS_ENABLED
+    addDockWidget(Qt::BottomDockWidgetArea, keyboardCommandsDock, Qt::Vertical);
+    keyboardCommandsDock->setVisible( false );
+#endif
+
+    addToolBar(Qt::TopToolBarArea, shortcutsBar);
+    shortcutsBar->setVisible( true );
+
+    addToolBar(Qt::LeftToolBarArea, appsBar);
+    appsBar->setVisible( false );
+
+    setEditorDocksDefaultLayout();
+    showNormal();
+}
 
 
 void MainWindow::setActiveDevice(const QString &deviceName )
@@ -435,18 +466,7 @@ bool MainWindow::getActiveDeviceParameters()
 }
 
 
-void MainWindow::connectSignals()
-{
-    connectObjectTreeSignals();
-    connectTabWidgetSignals();
-    connectImageWidgetSignals();
-
-    QMetaObject::connectSlotsByName( this );
-}
-
-
-// This is called when closing Visualizer. Call threads close method, which
-// shuts down thread (closes and then kills it)
+// This is called when closing Visualizer.
 void MainWindow::closeEvent( QCloseEvent *event )
 {
     QSettings settings;
@@ -458,9 +478,6 @@ void MainWindow::closeEvent( QCloseEvent *event )
     }
 
     TDriverRubyInterface::globalInstance()->requestClose();
-
-    // close show xml window if still visible
-    //if ( xmlView->isVisible() ) { xmlView->close();    }
 
     // save tdriver path
     settings.setValue( "files/location", tdriverPath );
@@ -482,6 +499,7 @@ void MainWindow::closeEvent( QCloseEvent *event )
     // clipboard contents
 
     // view visiblity settings
+#if 0
     settings.setValue( "view/clipboard", clipboardBar->isVisible());
     settings.setValue( "view/applications", appsBar->isVisible());
     settings.setValue( "view/image", imageViewDock->isVisible());
@@ -493,8 +511,21 @@ void MainWindow::closeEvent( QCloseEvent *event )
 #endif
     settings.setValue( "view/shortcuts", shortcutsBar->isVisible());
     settings.setValue( "view/editor", editorDock->isVisible());
+#else
+    settings.remove( "view/clipboard");
+    settings.remove( "view/applications");
+    settings.remove( "view/image");
+    settings.remove( "view/properties");
+    settings.remove( "view/buttons");
+    settings.remove( "view/shortcuts");
+    settings.remove( "view/editor");
+
+    settingsSaveLayouts();
+#endif
+
 
     settings.setValue( "font/settings", defaultFont->toString() );
+
 }
 
 // Event filter, catches F1/HELP key events and processes them
@@ -1246,6 +1277,18 @@ void MainWindow::createActions()
 
     connect( aboutVisualizer, SIGNAL( triggered() ), this, SLOT( showAboutVisualizer() ) );
 
+
+    for (int ii=0; ii < SAVEDLAYOUTCOUNT; ++ii) {
+        savedLayouts[ii].clear();
+
+        saveLayoutActions << new QAction(tr("Save to layout %1").arg(ii+1), this);
+        connect(saveLayoutActions.last(), SIGNAL(triggered()), SLOT(saveALayout()));
+
+        restoreLayoutActions << new QAction(tr("Layout %1").arg(ii+1), this);
+        connect(restoreLayoutActions.last(), SIGNAL(triggered()), SLOT(restoreALayout()));
+    }
+    restoreDefaultLayoutAction = new QAction(tr("Restore default layout"), this);
+    connect(restoreDefaultLayoutAction, SIGNAL(triggered()), SLOT(restoreDefaultLayout()));
 }
 
 
@@ -1254,8 +1297,6 @@ void MainWindow::createAppsBar()
     appsBar = new QToolBar( tr( "Applications" ));
     appsBar->setObjectName("apps");
     //appsBar->addAction(exitAction);
-
-    addToolBar(Qt::LeftToolBarArea, appsBar);
 }
 
 
@@ -1283,7 +1324,13 @@ void MainWindow::createShortcutsBar()
 
     //shortcutsBar->addAction(exitAction);
 
-    addToolBar(shortcutsBar);
+    shortcutsBar->addSeparator();
+    QToolButton *menu = new QToolButton(this);
+    menu->setText(tr("Layout"));
+    menu->setPopupMode(QToolButton::InstantPopup);
+    menu->addActions(restoreLayoutActions);
+    menu->addAction(restoreDefaultLayoutAction);
+    shortcutsBar->addWidget(menu);
 }
 
 void MainWindow::createClipboardBar()
@@ -1292,16 +1339,11 @@ void MainWindow::createClipboardBar()
     clipboardBar = new QToolBar( tr("Clipboard contents"));
     clipboardBar->setObjectName("clipboard");
 
-    //clipboardBar->setFloating( false );
-    clipboardBar->setVisible( true );
-
     objectAttributeLineEdit = new QLineEdit;
     objectAttributeLineEdit->setObjectName("clipboard");
 
     clipboardBar->addWidget( new QLabel(tr("Clipboard: ")) );
     clipboardBar->addWidget( objectAttributeLineEdit );
-
-    addToolBar(Qt::TopToolBarArea, clipboardBar);
 }
 
 void MainWindow::updateClipboardText( QString text, bool appendText ) {
@@ -1314,3 +1356,5 @@ void MainWindow::updateClipboardText( QString text, bool appendText ) {
     objectAttributeLineEdit->setText( text );
 
 }
+
+

@@ -122,11 +122,6 @@ void MainWindow::createUi()
     statusBar()->clearMessage();
 
     createFindDialogShortcuts();
-
-    // create menu of togglable docks and toolbars items
-    QMenu *showMenu = createPopupMenu();
-    showMenu->setTitle(tr("Docks and toolbars"));
-    viewMenu->insertMenu(viewMenu->actions().first(), showMenu);
 }
 
 
@@ -220,9 +215,6 @@ void MainWindow::createPropertiesDockWidget() {
     tabWidget->setCurrentIndex( 0 );
 
     propertiesDock->setWidget(tabWidget);
-
-    // add tabs to the dock
-    addDockWidget(Qt::RightDockWidgetArea, propertiesDock, Qt::Horizontal);
 
 }
 
@@ -389,7 +381,6 @@ void MainWindow::createImageViewDockWidget()
     imageViewBox->setLayout( layout );
     imageViewDock->setWidget( imageViewBox );
 
-    addDockWidget( Qt::LeftDockWidgetArea, imageViewDock, Qt::Horizontal );
 
 }
 

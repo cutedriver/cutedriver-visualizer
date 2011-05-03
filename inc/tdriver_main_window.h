@@ -24,6 +24,7 @@
 #include <QtCore/QSettings>
 
 #include <QPoint>
+#include <QFlags>
 #include <QtGui/QAction>
 #include <QtGui/QApplication>
 #include <QtGui/QButtonGroup>
@@ -143,6 +144,18 @@ private:
         {}
     };
 
+    struct SavedLayout {
+        QString name;
+        QByteArray state;
+        QByteArray geometry;
+        Qt::WindowStates windowState;
+
+        bool isValid() { return (state.size()>0 && geometry.size()>0); }
+        void clear() { state.clear(); geometry.clear(); windowState = Qt::WindowStates(); }
+        //SavedLayout(const SavedLayout &other) : state(other.state), geometries(other.geometries), isMaximized(other.isMaximized) {}
+
+    };
+
 
 public:
     MainWindow();
@@ -152,6 +165,7 @@ public:
     void checkInit();
 
     bool setup();
+    void setStartupLayout();
     bool checkVersion( QString current, QString required );
     bool collectMatchingVisibleObjects( QPoint pos, QList<TestObjectKey> &matchingObjects );
 
@@ -353,6 +367,7 @@ private:
     QDockWidget *debugDock;
     QDockWidget *irDock;
     void createEditorDocks();
+    void setEditorDocksDefaultLayout();
     TDriverTabbedEditor *tabEditor;
     TDriverRunConsole *runConsole;
     TDriverDebugConsole *debugConsole;
@@ -390,8 +405,6 @@ private:
     QStringList parseSignalsXml( QString filename );
 
     // other methods
-
-    void connectSignals();
     void connectObjectTreeSignals();
     void connectTabWidgetSignals();
     void connectImageWidgetSignals();
@@ -446,6 +459,17 @@ private:
     QAction *showXmlAction;
     // search
     QAction *findAction;
+
+    enum { SAVEDLAYOUTCOUNT = 3 };
+    SavedLayout savedLayouts[SAVEDLAYOUTCOUNT];
+    QList<QAction*> saveLayoutActions;
+    QList<QAction*> restoreLayoutActions;
+    QAction *restoreDefaultLayoutAction;
+
+    //QAction *restoreLayout2;
+
+
+
 
     // record
     QAction *recordAction;
@@ -566,6 +590,11 @@ signals:
     void disconnectionOk(bool disconnected);
 
 private slots:
+    void restoreDefaultLayout();
+    void settingsSaveLayouts();
+    void settingsLoadLayouts();
+    void saveALayout(QAction *layoutSaveAction = NULL); // understands actions from saveLayoutActions list
+    void restoreALayout(QAction *layoutSetAction = NULL); // understands actions from setLayoutActions list, and restoreDefaultLayoutAction (same as NULL)
 
     // global
     void tdriverMsgSetTitleText();

@@ -86,19 +86,24 @@ void MainWindow::createEditorDocks()
     debugDock->setWidget(debugConsole);
     irDock->setWidget(irConsole);
 
-    addDockWidget(Qt::BottomDockWidgetArea, editorDock, Qt::Horizontal);
-    addDockWidget(Qt::BottomDockWidgetArea, runDock, Qt::Vertical);
-    addDockWidget(Qt::BottomDockWidgetArea, debugDock, Qt::Vertical);
-    addDockWidget(Qt::BottomDockWidgetArea, irDock, Qt::Vertical);
+    //irDock->setFeatures(QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable);
+    tabEditor->connectConsoles(runConsole, runDock, debugConsole, debugDock, irConsole, irDock);
+}
 
+void MainWindow::setEditorDocksDefaultLayout()
+{
     editorDock->setFloating(false);
     runDock->setFloating(false);
     debugDock->setFloating(false);
     irDock->setFloating(false);
 
+    addDockWidget(Qt::BottomDockWidgetArea, editorDock, Qt::Horizontal);
+    addDockWidget(Qt::BottomDockWidgetArea, runDock, Qt::Vertical);
+    addDockWidget(Qt::BottomDockWidgetArea, debugDock, Qt::Vertical);
+    addDockWidget(Qt::BottomDockWidgetArea, irDock, Qt::Vertical);
+
+    editorDock->setVisible(false);
     debugDock->setVisible(false);
     runDock->setVisible(false);
-    irDock->setVisible(true);
-    //irDock->setFeatures(QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable);
-    tabEditor->connectConsoles(runConsole, runDock, debugConsole, debugDock, irConsole, irDock);
+    irDock->setVisible(false);
 }

@@ -52,8 +52,6 @@ void MainWindow::createKeyboardCommands() {
     horizontalBottomButtonGroupBox2->setLayout( layout );
 
     keyboardCommandsDock->setWidget(horizontalBottomButtonGroupBox2);
-    keyboardCommandsDock->setVisible( true ); //cmd_device_visible );
-    addDockWidget(Qt::BottomDockWidgetArea, keyboardCommandsDock, Qt::Vertical);
 }
 
 

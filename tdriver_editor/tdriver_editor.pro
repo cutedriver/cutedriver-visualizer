@@ -47,6 +47,7 @@ HEADERS += ../inc/tdriver_behaviour.h
 HEADERS += ../inc/tdriver_image_view.h
 HEADERS += ../inc/tdriver_main_window.h
 HEADERS += ../inc/tdriver_recorder.h
+
 SOURCES += ../src/tdriver_libeditor_ui.cpp
 SOURCES += ../src/tdriver_editor.cpp
 SOURCES += ../src/tdriver_main_window.cpp
@@ -63,6 +64,8 @@ SOURCES += ../src/tdriver_ui.cpp
 SOURCES += ../src/tdriver_xml.cpp
 SOURCES += ../src/tdriver_find_dialog.cpp
 SOURCES += ../src/tdriver_startapp_dialog.cpp
+SOURCES += ../src/tdriver_savedlayouts.cpp
+
 QT += xml
 
 # install

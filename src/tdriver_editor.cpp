@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     MainWindow* mainWindow = new MainWindow();
 
     if ( mainWindow->setup() ){
-
+        mainWindow->setStartupLayout();
         mainWindow->show();
         return app.exec();
 

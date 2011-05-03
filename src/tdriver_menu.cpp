@@ -122,6 +122,15 @@ void MainWindow::createViewMenu() {
 
     viewMenu->addAction( viewCollapseAll );
 
+    {
+        QMenu *menu = viewMenu->addMenu(tr("Layouts"));
+        menu->addActions(saveLayoutActions);
+        menu->addSeparator();
+        menu->addActions(restoreLayoutActions);
+        menu->addSeparator();
+        menu->addAction(restoreDefaultLayoutAction);
+    }
+
     viewMenu->addSeparator();
 
     // Show XML
