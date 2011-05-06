@@ -1285,6 +1285,7 @@ void MainWindow::createActions()
         connect(saveLayoutActions.last(), SIGNAL(triggered()), SLOT(saveALayout()));
 
         restoreLayoutActions << new QAction(tr("Layout %1").arg(ii+1), this);
+        restoreLayoutActions.last()->setShortcut(QKeySequence(tr("Alt+%1").arg(ii+1)));
         connect(restoreLayoutActions.last(), SIGNAL(triggered()), SLOT(restoreALayout()));
     }
     restoreDefaultLayoutAction = new QAction(tr("Restore default layout"), this);
