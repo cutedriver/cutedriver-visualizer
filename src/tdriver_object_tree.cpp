@@ -383,6 +383,32 @@ QList<QMap<QString, QString> > MainWindow::collectObjectData( QDomElement elemen
     return results;
 }
 
+// for agent_qt 1.2 or later (with new xml format)
+QList<QMap<QString, QString> > MainWindow::collectObjectData_new_format( QDomElement element )
+{
+    QList<QMap<QString, QString> > results;
+    QDomNode node = element.firstChild();
+
+    while ( !node.isNull() ) {
+
+        if ( node.isElement() && node.nodeName() == "obj" ){
+            QDomElement tmpElement( node.toElement() );
+
+            if ( tmpElement.attribute( "name" ) != "" ){
+                QMap<QString, QString> tmpValue;
+                tmpValue.insert( "name", tmpElement.attribute( "name" ) );
+                tmpValue.insert( "id", tmpElement.attribute( "id" ) );
+                results << tmpValue;
+            }
+
+            results << collectObjectData_new_format( node.toElement() );
+        }
+
+        node = node.nextSibling();
+    }
+
+    return results;
+}
 
 QMap<QString, QStringList> MainWindow::findDuplicateObjectNames( QList<QMap<QString, QString> > objects )
 {
@@ -437,6 +463,75 @@ QMap<QString, QStringList> MainWindow::findDuplicateObjectNames( QList<QMap<QStr
 }
 
 
+
+
+void MainWindow::buildObjectTree_new_format(QTreeWidgetItem *parentItem,
+                                 QDomElement parentElement,
+                                 QMap<QString, QStringList> duplicateItems )
+{
+    //qDebug() << "buildObjectTree_new_format";
+    // create attribute hash for each attribute
+
+    QTreeWidgetItem *childItem = 0;
+
+    QDomNode node = parentElement.firstChild();
+
+    TestObjectKey parentPtr = ptr2TestObjectKey( parentItem );
+
+    while ( !node.isNull() ) {
+
+      if (node.isElement())
+      {
+
+        if ( node.nodeName() == "attr" ) {
+
+            QDomElement element(node.toElement());
+            QString name = element.attribute( "name" );
+
+            AttributeInfo attributeData = {
+                  name,
+                  element.attribute( "type" ),
+                  element.attribute( "access" ),
+                  element.text() };
+
+            attributesMap[parentPtr][name.toLower()] = attributeData;
+        }
+
+        if ( node.nodeName() == "obj" ) {
+            QDomElement element(node.toElement());
+
+            TreeItemInfo data = {
+                element.attribute( "type" ),
+                element.attribute( "name" ),
+                element.attribute( "id" ),
+                element.attribute( "env" ) };
+
+            // store id of current application ui dump
+            if ( data.type.compare("application", Qt::CaseInsensitive )==0 ) {
+                qDebug() << FCFL << "got application id" << data.id << "name" << data.name;
+                currentApplication.set(data.id, data.name);
+            }
+
+            childItem = createObjectTreeItem( parentItem, data, duplicateItems);
+
+            storeItemToObjectTreeMap( childItem, data );
+
+            // iterate the node recursively if child nodes exists
+            if ( node.hasChildNodes() ) {
+                buildObjectTree_new_format( childItem, element, duplicateItems );
+            }
+
+
+        } // end if node is element and node name is "object"
+
+      }
+
+      node = node.nextSibling();
+
+    } // end while node not null
+}
+
+
 void MainWindow::buildObjectTree(QTreeWidgetItem *parentItem,
                                  QDomElement parentElement,
                                  QMap<QString, QStringList> duplicateItems )
@@ -446,32 +541,39 @@ void MainWindow::buildObjectTree(QTreeWidgetItem *parentItem,
     // create attribute hash for each attribute
 
     QTreeWidgetItem *childItem = 0;
+
     QDomNode node = parentElement.firstChild();
+
     TestObjectKey parentPtr = ptr2TestObjectKey( parentItem );
 
     while ( !node.isNull() ) {
-        if ( node.isElement() && node.nodeName() == "attributes" ) {
+
+      if ( node.isElement() )
+      {
+
+        if ( node.nodeName() == "attributes" ) {
             buildObjectTree( parentItem, node.toElement(), duplicateItems );
         }
 
-        if ( node.isElement() && node.nodeName() == "objects" ) {
+        if ( node.nodeName() == "objects" ) {
             buildObjectTree( parentItem, node.toElement(), duplicateItems );
         }
 
-        if ( node.isElement() && node.nodeName() == "attribute" ) {
+        if ( node.nodeName() == "attribute" ) {
+
             QDomElement element(node.toElement());
             QString name = element.attribute( "name" );
 
             AttributeInfo attributeData = {
-                name,
-                element.attribute( "dataType" ),
-                element.attribute( "type" ),
-                element.elementsByTagName( "value" ).item( 0 ).toElement().text() };
+                  name,
+                  element.attribute( "dataType" ),
+                  element.attribute( "type" ),
+                  element.elementsByTagName( "value" ).item( 0 ).toElement().text() };
 
             attributesMap[parentPtr][name.toLower()] = attributeData;
         }
 
-        if ( node.isElement() && node.nodeName() == "object" ) {
+        if ( node.nodeName() == "object" ) {
             QDomElement element(node.toElement());
 
             TreeItemInfo data = {
@@ -497,7 +599,10 @@ void MainWindow::buildObjectTree(QTreeWidgetItem *parentItem,
 
         } // end if node is element and node name is "object"
 
-        node = node.nextSibling();
+      }
+
+      node = node.nextSibling();
+
     } // end while node not null
 }
 
@@ -537,10 +642,26 @@ void MainWindow::updateObjectTree( QString filename )
 
     // parse ui dump xml
     if (parseXml( filename, xmlDocument )) {
+
         uiDumpFileName = filename;
+
         QDomNode node = xmlDocument.documentElement().firstChild();
 
+        QString version = xmlDocument.documentElement().toElement().attribute("version");
+
+/*
+
+        QDomElement root = appDocument.documentElement();
+
+        // retrieve version from tas message
+        QString version = root.toElement().attribute("version");
+
+        nodeInfo = root.firstChild();
+
+*/
+
         while ( !node.isNull() ) {
+
             // find tasInfo element from xmlDocument
             if ( node.isElement() && node.nodeName() == "tasInfo" ) {
                 if (sutItem) {
@@ -583,14 +704,29 @@ void MainWindow::updateObjectTree( QString filename )
                 // store object tree data
                 objectTreeData.insert( itemPtr, treeItemData );
 
-                QList<QMap<QString,QString> > objectNamesList = collectObjectData( element );
+                QList<QMap<QString,QString> > objectNamesList;
 
                 QMap<QString, QStringList> duplicateItems;
 
                 duplicateItems = findDuplicateObjectNames( objectNamesList );
 
-                // build object tree with xml
-                buildObjectTree( sutItem, element, duplicateItems );
+                // determine whether to use new xml structure or not... (new == 1.2+)
+                if ( !checkVersion( version, "1.2" ) ) {
+
+                  objectNamesList = collectObjectData( element );
+                  duplicateItems = findDuplicateObjectNames( objectNamesList );
+
+                  // build object tree with xml
+                  buildObjectTree( sutItem, element, duplicateItems );
+
+                } else {
+
+                  objectNamesList = collectObjectData_new_format( element );
+                  duplicateItems = findDuplicateObjectNames( objectNamesList );
+
+                  buildObjectTree_new_format( sutItem, element, duplicateItems );
+
+                }
 
                 break; // while node is not null
             }

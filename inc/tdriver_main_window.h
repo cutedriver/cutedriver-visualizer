@@ -343,8 +343,11 @@ private:
     void buildScreenshotObjectList(TestObjectKey parentKey=0);
 
     void buildObjectTree( QTreeWidgetItem *parentItem, QDomElement parentElement, QMap<QString, QStringList> duplicateItems );
+    void buildObjectTree_new_format( QTreeWidgetItem *parentItem, QDomElement parentElement, QMap<QString, QStringList> duplicateItems );
 
     QList<QMap<QString, QString> > collectObjectData( QDomElement element );
+    QList<QMap<QString, QString> > collectObjectData_new_format( QDomElement element );
+
     QMap<QString, QStringList> findDuplicateObjectNames( QList<QMap<QString, QString> > objects );
 
     void storeItemToObjectTreeMap( QTreeWidgetItem *item, const TreeItemInfo &data);
