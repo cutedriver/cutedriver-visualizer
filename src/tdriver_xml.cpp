@@ -385,26 +385,70 @@ void MainWindow::parseApplicationsXml( QString filename ) {
 
     resetApplicationsList();
 
+    QString version;
+
     if ( parseXml( filename, appDocument ) ) {
 
         QDomElement root = appDocument.documentElement();
+
+        // retrieve version from tas message
+        QString version = root.toElement().attribute("version");
 
         nodeInfo = root.firstChild();
 
         if ( !nodeInfo.isNull() ) {
 
-            //qDebug("xml2View: node name:%s", node.nodeName().toLatin1().data());
-            if ( nodeInfo.isElement() && nodeInfo.nodeName() == "tasInfo" ) {
+            if ( nodeInfo.isElement() )
+            {
+                
+              //qDebug("xml2View: node name:%s", node.nodeName().toLatin1().data());
+              if ( nodeInfo.nodeName() == "tasInfo" ) {
 
-                nodeApplications = nodeInfo.firstChild();
+                  nodeApplications = nodeInfo.firstChild();
 
-                if ( nodeApplications.isElement() && nodeApplications.toElement().attribute( "type" ) == "applications" )    {
+                  // determine whether to use new xml structure or not... (new == 1.2+)
+                  if ( !checkVersion( version, "1.2" ) ) {
 
-                    appObjects = nodeApplications.toElement().elementsByTagName( "objects" );
+                    if ( nodeApplications.isElement() && nodeApplications.toElement().attribute( "type" ) == "applications" )    {
 
-                    if ( appObjects.size() > 0 ) {
+                        appObjects = nodeApplications.toElement().elementsByTagName( "objects" );
 
-                        applications = appObjects.item( 0 ).toElement().elementsByTagName( "object" );
+                        if ( appObjects.size() > 0 ) {
+
+                            applications = appObjects.item( 0 ).toElement().elementsByTagName( "object" );
+
+                            for (int i = 0; i < applications.size(); i++) {
+
+                                QDomNode application = applications.item( i );
+
+                                if ( application.isElement() ) {
+                                    QDomElement appElement = application.toElement();
+                                    applicationsNamesMap.insert( appElement.attribute( QString( "id" ) ), appElement.attribute( QString( "name" ) ) );
+                                }
+                            }
+                        }
+                    }
+
+                  } else {
+
+                    /*
+                    <tasMessage version=\"1.2\" >
+                      <tasInfo id=\"1\" name=\"Qt4.7.0\" type=\"qt\" >
+                        <obj env=\"qt\" id=\"\" name=\"QApplications\" type=\"applications\" >
+                          <obj env=\"qt\" id=\"19592\" name=\"calculator\" type=\"application\" ></obj>
+                          <obj env=\"qt\" id=\"25605\" name=\"calculator\" type=\"application\" ></obj>
+                        </obj>
+                        <obj env=\"qt\" id=\"\" name=\"QHostAddress\" type=\"hostAddresses\" >
+                          <obj env=\"qt\" id=\"\" name=\"0.0.0.0\" type=\"HostAddress\" ></obj>
+                          <obj env=\"qt\" id=\"\" name=\"55535\" type=\"HostPort\" ></obj>
+                        </obj>
+                      </tasInfo>
+                    </tasMessage>
+                    */
+
+                    if ( nodeApplications.isElement() && nodeApplications.toElement().attribute( "type" ) == "applications" )    {
+
+                        applications = nodeApplications.toElement().elementsByTagName( "obj" );
 
                         for (int i = 0; i < applications.size(); i++) {
 
@@ -415,11 +459,18 @@ void MainWindow::parseApplicationsXml( QString filename ) {
                                 applicationsNamesMap.insert( appElement.attribute( QString( "id" ) ), appElement.attribute( QString( "name" ) ) );
                             }
                         }
+
                     }
-                }
-            }
-        }
-    }
+
+                  }
+
+              } // if ( nodeInfo.nodeName() == "tasInfo" ) {
+
+            } // if ( nodeInfo.isElement() )
+
+        } // if ( !nodeInfo.isNull() ) {
+
+    } //     if ( parseXml( filename, appDocument ) ) {
 
     updateApplicationsList();
 

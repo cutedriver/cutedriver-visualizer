@@ -304,6 +304,7 @@ void MainWindow::updateAttributesTableContent()
 
         int index = 0;
         while ( iterator.hasNext() ) {
+
             iterator.next();
 
             QString attributeName      = iterator.value().name;
@@ -320,9 +321,8 @@ void MainWindow::updateAttributesTableContent()
             QTableWidgetItem *attributeValueItem = new QTableWidgetItem( attributeValue );
             attributeValueItem->setFont( *defaultFont );
 
-            // Attribute type - non writable attributes must not be accessible
-
-            if ( !attributeType.contains( "writable", Qt::CaseInsensitive ) ) {
+            // Attribute type - non writable attributes must not be accessible - "w" or "writable"
+            if ( !attributeType.contains( "w", Qt::CaseInsensitive ) ) {
 
                 // make item selectabe & enabled for copying, but not editable
                 //Qt::ItemFlags newFlags = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
