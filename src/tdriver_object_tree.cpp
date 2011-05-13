@@ -25,7 +25,9 @@
 
 #include <QTimer>
 #include <QProgressDialog>
+#include <QErrorMessage>
 
+#include "ui_tdriver_richtextcontainer.h"
 
 bool MainWindow::getItemPos(QTreeWidgetItem *item, int &x, int &y)
 {
@@ -165,18 +167,44 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem(QTreeWidgetItem *parentItem,
     QString type = data.type;
     QString id = data.id;
     QString name = data.name;
+    QString badTypeTip; // empty means type is ok
+
+    static QErrorMessage *testObjectErrorDialog = NULL;
+    if (!testObjectErrorDialog) {
+        testObjectErrorDialog = new QErrorMessage(this);
+        testObjectErrorDialog->setWindowTitle(tr("Test Object Message"));
+        testObjectErrorDialog->resize(640, 360);
+    }
+
+
+    // type column
 
     if ( type.isEmpty() ) {
+        badTypeTip = richTextContainer->testObjectMissingType->toolTip();
+
+        if (!testObjectErrorDialog->isVisible()) {
+            testObjectErrorDialog->showMessage(badTypeTip);
+        }
+
         type = "<NoName>";
-    }
+        item->setBackground( 0, QColor(Qt::red) );
+        item->setForeground( 0, QColor(Qt::white) );
 
-    if ( id.isEmpty() ) {
-        id = "<None>";
+        item->setData( 0, Qt::ToolTipRole, badTypeTip + (data.env.isEmpty()
+                                                         ? QString()
+                                                         : "\n" + tr("Test object environment: ") + data.env));
     }
+    else {
+        item->setBackground( 0, QBrush() );
+        item->setForeground( 0, QColor(Qt::darkCyan).darker(180) );
+        if (!data.env.isEmpty()) {
+            item->setData( 0, Qt::ToolTipRole, tr("Test object environment: ") + data.env);
+        }
+    }
+    item->setData( 0, Qt::DisplayRole, type);
 
-    item->setBackground( 0, QBrush() );
-    item->setBackground( 1, QBrush() );
-    item->setBackground( 2, QBrush() );
+
+    // name column
 
     if ( name.isEmpty() ) {
 
@@ -186,17 +214,20 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem(QTreeWidgetItem *parentItem,
         item->setBackground( 1, QColor(Qt::red) );
         item->setForeground( 1, QColor(Qt::white) );
 
-        item->setData( 1, Qt::ToolTipRole, tr(
-                          "\n  Warning!  \n"
-                          "\n"
-                          "  Name for this object is not defined in the applications source code.\n"
-                          "  Identifying objects with other attributes such as \"x\", \"y\", \"width\",\n"
-                          "  \"height\", \"text\" or \"icon\" may lead to failure of the tests.  \n"
-                          "\n"
-                          "  Object names are more likely to remain the same throughout the software life cycle.\n"
-                          "\n"
-                          "  Please contact your manager, development team or responsible person and\n"
-                          "  request for properly named objects in order to make this application more testable.\n") );
+        item->setData( 1, Qt::ToolTipRole,
+                      badTypeTip.isEmpty() ?
+                          tr(
+                              "\n  Warning!  \n"
+                              "\n"
+                              "  Name for this object is not defined in the applications source code.\n"
+                              "  Identifying objects with other attributes such as \"x\", \"y\", \"width\",\n"
+                              "  \"height\", \"text\" or \"icon\" may lead to failure of the tests.  \n"
+                              "\n"
+                              "  Object names are more likely to remain the same throughout the software life cycle.\n"
+                              "\n"
+                              "  Please contact your manager, development team or responsible person and\n"
+                              "  request for properly named objects in order to make this application more testable.\n")
+                        : badTypeTip );
     }
     else {
 
@@ -242,24 +273,25 @@ QTreeWidgetItem * MainWindow::createObjectTreeItem(QTreeWidgetItem *parentItem,
 
             item->setBackground( 1, QColor(Qt::red) );
             item->setForeground( 1, QColor(Qt::white) );
-            item->setData( 1, Qt::ToolTipRole, toolTipMessage );
+            item->setData( 1, Qt::ToolTipRole, badTypeTip.isEmpty() ? toolTipMessage : badTypeTip );
         }
         else {
+            item->setBackground( 1, QBrush() );
             item->setForeground( 1, QColor(Qt::darkGreen) );
         }
     }
-
-    item->setData( 0, Qt::DisplayRole, type);
-
-    if (!data.env.isEmpty()) {
-        item->setData( 0, Qt::ToolTipRole, data.env);
-    }
-
     item->setData( 1, Qt::DisplayRole, name);
+
+    // id column
+
+    if ( id.isEmpty() ) {
+        id = "<None>";
+    }
+    item->setBackground( 2, QBrush() );
+    item->setForeground( 2, QColor(Qt::darkYellow) );
     item->setData( 2, Qt::DisplayRole, id);
 
-    item->setForeground( 0, QColor(Qt::darkCyan).darker(180) );
-    item->setForeground( 2, QColor(Qt::darkYellow) );
+    // fonts for all
 
     item->setFont( 0, *defaultFont );
     item->setFont( 1, *defaultFont );

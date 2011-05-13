@@ -80,6 +80,10 @@ class TDriverDebugConsole;
 class TDriverRubyInteract;
 class TDriverComboLineEdit;
 
+namespace Ui {
+    class RichTextContainer;
+}
+
 #include "tdriver_main_types.h"
 
 #define DOCK_FEATURES_DEFAULT (QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetClosable)
@@ -159,6 +163,7 @@ private:
 
 public:
     MainWindow();
+    ~MainWindow();
 
     QString tdriverPath;
 
@@ -736,6 +741,8 @@ private:
     QMap<quint32, SentTDriverMsg> sentTDriverMsgs; // maps seqnum of sent message to message type
     QTimer *messageTimeoutTimer;
     bool doRefreshAfterAppList;
+    QWidget *richTextContainerWidget;
+    Ui::RichTextContainer *richTextContainer;
 
 private:
     void keyPressEvent ( QKeyEvent *event );

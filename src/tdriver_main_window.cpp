@@ -25,6 +25,7 @@
 #include <tdriver_tabbededitor.h>
 #include <tdriver_rubyinterface.h>
 #include "../common/version.h"
+#include <ui_tdriver_richtextcontainer.h>
 
 #include <QtGui>
 
@@ -39,11 +40,15 @@ MainWindow::MainWindow() :
     keyLastUiStateDir("files/last_uistate_dir"),
     keyLastTDriverDir("files/last_tdriver_dir"),
     messageTimeoutTimer(new QTimer(this)),
-    doRefreshAfterAppList(false)
+    doRefreshAfterAppList(false),
+    richTextContainerWidget(new QWidget),
+    richTextContainer(new Ui::RichTextContainer)
 {
     resetMessageSequenceFlags();
     messageTimeoutTimer->setSingleShot(true);
     connect(messageTimeoutTimer, SIGNAL(timeout()), SLOT(messageTimeoutSlot()));
+
+    richTextContainer->setupUi(richTextContainerWidget);
 
     // ugly hack to disable the "don't show again" checkbox,
     // may not work in future Qt versions, and may not work on all platforms
@@ -70,6 +75,11 @@ MainWindow::MainWindow() :
     connect(tdriverMsgBox, SIGNAL(finished(int)), this, SLOT(tdriverMsgFinished()));
 }
 
+MainWindow::~MainWindow()
+{
+    delete richTextContainer;
+    delete richTextContainerWidget;
+}
 
 void MainWindow::tdriverMsgSetTitleText()
 {

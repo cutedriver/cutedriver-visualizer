@@ -66,6 +66,8 @@ SOURCES += ../src/tdriver_find_dialog.cpp
 SOURCES += ../src/tdriver_startapp_dialog.cpp
 SOURCES += ../src/tdriver_savedlayouts.cpp
 
+FORMS += ../src/tdriver_richtextcontainer.ui
+
 QT += xml
 
 # install
