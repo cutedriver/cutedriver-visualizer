@@ -23,8 +23,7 @@
 //#include <tdriver_debug_macros.h>
 
 #include <QGridLayout>
-#include <QShortcut>
-#include <QDebug>
+//#include <QDebug>
 
 
 

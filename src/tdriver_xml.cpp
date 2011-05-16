@@ -169,7 +169,7 @@ void MainWindow::updateApplicationsList()
     fgAction->setText( "Foreground application" );
     fgAction->setCheckable( true );
 
-    fgAction->setShortcut( QKeySequence( "ALT+" + QString::number( 0 ) ) );
+    fgAction->setShortcut( QKeySequence( "Ctrl+Alt+" + QString::number( 0 ) ) );
 
     applicationsActionMap.insert( fgAction, "0" );
     appsMenu->addAction( fgAction );
@@ -189,8 +189,9 @@ void MainWindow::updateApplicationsList()
         appAction->setText( iterator.value() + "  (" + iterator.key() + ")" );
         appAction->setCheckable( true );
 
-        if (count < 9)
-            appAction->setShortcut( QKeySequence( "ALT+" + QString::number( count + 1 ) ) );
+        if (count < 9) {
+            appAction->setShortcut( QKeySequence( "Ctrl+Alt+" + QString::number( count + 1 ) ) );
+        }
 
         if ( !currentApplication.isForeground() ) {
             if (iterator.key() == currentApplication.id ) {
@@ -400,7 +401,7 @@ void MainWindow::parseApplicationsXml( QString filename ) {
 
             if ( nodeInfo.isElement() )
             {
-                
+
               //qDebug("xml2View: node name:%s", node.nodeName().toLatin1().data());
               if ( nodeInfo.nodeName() == "tasInfo" ) {
 
