@@ -100,11 +100,12 @@ TDriverTabbedEditor::TDriverTabbedEditor(QWidget *shortcutParent, QWidget *paren
 
     setAcceptDrops(true);
     createActions();
-    connect(this, SIGNAL(currentChanged(int)), this, SLOT(currentChangeAction(int)));
-    connect(this, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
+    connect(this, SIGNAL(currentChanged(int)), SLOT(currentChangeAction(int)));
+    connect(this, SIGNAL(tabCloseRequested(int)), SLOT(closeTab(int)));
     setTabsClosable(true);
 
-    connect(editBarP, SIGNAL(requestUnfocus()), this, SLOT(focusCurrent()));
+    connect(editBarP, SIGNAL(requestUnfocus()), SLOT(focusCurrent()));
+    connect(editBarP, SIGNAL(routedAutoRefreshInteractive()), SIGNAL(requestQuickRefresh()));
 
     // create some non-global shortcuts
     {
@@ -848,6 +849,8 @@ void TDriverTabbedEditor::connectConsoles(TDriverRunConsole *rConsole, QWidget *
     connect(toggleRunDockAct, SIGNAL(toggled(bool)), runConsoleContainer, SLOT(setVisible(bool)));
     connect(toggleDebugDockAct, SIGNAL(toggled(bool)), debugConsoleContainer, SLOT(setVisible(bool)));
     connect(toggleIrDockAct, SIGNAL(toggled(bool)), irConsoleContainer, SLOT(setVisible(bool)));
+    connect(irConsole, SIGNAL(evaluationResult(QObject*,QByteArray,QStringList)),
+            editBarP, SLOT(routeAutoRefreshInteractive())); // the slot will emit a signal only if is autorefresh enabled
 
     runConsoleContainer->setVisible(runConsoleVisible);
     debugConsoleContainer->setVisible(debugConsoleVisible);
@@ -1331,15 +1334,18 @@ void TDriverTabbedEditor::setSutParamMap(const QMap<QString, QString> &map)
 
 QString TDriverTabbedEditor::sutVariable() const
 {
+#if EDITBAR_HAS_SUT_FIELD
     if (editBarP) return editBarP->sutVariable();
-    else return QString();
+#endif
+    return QString();
 }
-
 
 QString TDriverTabbedEditor::appVariable() const
 {
+#if EDITBAR_HAS_APP_FIELD
     if (editBarP) return editBarP->appVariable();
-    else return QString();
+#endif
+    return QString();
 }
 
 

@@ -59,8 +59,10 @@ void MainWindow::createEditorDocks()
 
     // make tabEditor emit requestRunPreparations and then wait for proceedRun
     connect(this, SIGNAL(disconnectionOk(bool)), tabEditor, SLOT(proceedRun(bool)));
-    connect(tabEditor, SIGNAL(requestRunPreparations(QString)), this, SLOT(disconnectExclusiveSUT()));
+    connect(tabEditor, SIGNAL(requestRunPreparations(QString)), SLOT(disconnectExclusiveSUT()));
     tabEditor->setNeedRunPreparations(true);
+
+    connect(tabEditor, SIGNAL(requestQuickRefresh()), SLOT(forceRefreshData()));
 
     Q_ASSERT(imageWidget);
     connect(imageWidget, SIGNAL(insertToCodeEditor(QString,bool,bool)), tabEditor, SLOT(smartInsert(QString,bool,bool)));

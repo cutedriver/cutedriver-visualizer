@@ -29,17 +29,29 @@
 class TDriverComboLineEdit;
 class QAction;
 
+#define EDITBAR_HAS_APP_FIELD 1
+#define EDITBAR_HAS_SUT_FIELD 0
+
 class LIBTDRIVEREDITORSHARED_EXPORT TDriverEditBar : public QToolBar
 {
     Q_OBJECT
+#if EDITBAR_HAS_SUT_FIELD
     Q_PROPERTY(QString sutVariable READ sutVariable)
+#endif
+#if EDITBAR_HAS_APP_FIELD
     Q_PROPERTY(QString appVariable READ appVariable)
+#endif
+
 
 public:
     explicit TDriverEditBar(QWidget *parent = 0);
 
+#if EDITBAR_HAS_SUT_FIELD
     QString sutVariable() const;
+#endif
+#if EDITBAR_HAS_APP_FIELD
     QString appVariable() const;
+#endif
 
     TDriverComboLineEdit *findTextField() { return findField; }
     TDriverComboLineEdit *replaceTextField() { return replaceField; }
@@ -50,6 +62,7 @@ signals:
     void requestReplaceFind(QString findText, QString replaceText, QTextDocument::FindFlags options);
     void requestReplaceAll(QString findText, QString replaceText, QTextDocument::FindFlags options);
     void requestUnfocus();
+    void routedAutoRefreshInteractive();
 
 public slots:
     void findNext();
@@ -57,6 +70,8 @@ public slots:
     void findPrev();
     void replaceFindNext();
     void replaceAll();
+    void routeAutoRefreshInteractive();
+
 
 private:
     TDriverComboLineEdit *findField;
@@ -68,8 +83,15 @@ private:
     QAction *replaceFindNextAct;
     QAction *replaceAllAct;
 
+    QAction *autoRefreshInteractiveAct;
+    //QAction *autoRefreshDebugger;
+
+#if EDITBAR_HAS_SUT_FIELD
     TDriverComboLineEdit *sutField;
+#endif
+#if EDITBAR_HAS_APP_FIELD
     TDriverComboLineEdit *appField;
+#endif
 };
 
 #endif // TDRIVER_SEARCHWIDGET_H

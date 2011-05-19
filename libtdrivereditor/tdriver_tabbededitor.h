@@ -91,6 +91,8 @@ signals:
     void requestRun(QString filename, TDriverRunConsole::RunRequestType);
     void requestRunPreparations(QString filename);
 
+    void requestQuickRefresh();
+
     // breakpoint signals below are just forwarders for TDriverCodeTextEdit signals
     void addedBreakpoint(struct MEC::Breakpoint);
     void removedBreakpoint(int rdebugInd);
