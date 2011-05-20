@@ -415,7 +415,7 @@ QList<QMap<QString, QString> > MainWindow::collectObjectData( QDomElement elemen
     return results;
 }
 
-// for agent_qt 1.2 or later (with new xml format)
+// for agent_qt 1.3 or later (with new xml format)
 QList<QMap<QString, QString> > MainWindow::collectObjectData_new_format( QDomElement element )
 {
     QList<QMap<QString, QString> > results;
@@ -742,8 +742,8 @@ void MainWindow::updateObjectTree( QString filename )
 
                 duplicateItems = findDuplicateObjectNames( objectNamesList );
 
-                // determine whether to use new xml structure or not... (new == 1.2+)
-                if ( !checkVersion( version, "1.2" ) ) {
+                // determine whether to use new xml structure or not... (new == 1.3+)
+                if ( !checkVersion( version, "1.3" ) ) {
 
                   objectNamesList = collectObjectData( element );
                   duplicateItems = findDuplicateObjectNames( objectNamesList );
