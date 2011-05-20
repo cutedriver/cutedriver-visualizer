@@ -407,8 +407,8 @@ void MainWindow::parseApplicationsXml( QString filename ) {
 
                   nodeApplications = nodeInfo.firstChild();
 
-                  // determine whether to use new xml structure or not... (new == 1.2+)
-                  if ( !checkVersion( version, "1.2" ) ) {
+                  // determine whether to use new xml structure or not... (new == 1.3+)
+                  if ( !checkVersion( version, "1.3" ) ) {
 
                     if ( nodeApplications.isElement() && nodeApplications.toElement().attribute( "type" ) == "applications" )    {
 
@@ -433,7 +433,7 @@ void MainWindow::parseApplicationsXml( QString filename ) {
                   } else {
 
                     /*
-                    <tasMessage version=\"1.2\" >
+                    <tasMessage version=\"1.3\" >
                       <tasInfo id=\"1\" name=\"Qt4.7.0\" type=\"qt\" >
                         <obj env=\"qt\" id=\"\" name=\"QApplications\" type=\"applications\" >
                           <obj env=\"qt\" id=\"19592\" name=\"calculator\" type=\"application\" ></obj>
