@@ -55,7 +55,7 @@ task :build_visualizer do
   make = "make"
   sudo = ""	
 
-  if /win/ =~ RUBY_PLATFORM
+  if /win/ =~ RUBY_PLATFORM || /mingw32/ =~ RUBY_PLATFORM
     make = "mingw32-make"
   else
     sudo = "sudo -S "
