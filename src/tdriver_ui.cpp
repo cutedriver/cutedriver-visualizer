@@ -184,7 +184,7 @@ void MainWindow::createTreeViewDockWidget()
     }
 
     QStringList labels;
-    labels << " Type " << " Name " << " Id ";
+    labels << " type " << " name " << " id ";
     objectTree->setHeaderLabels ( labels );
 
 }
