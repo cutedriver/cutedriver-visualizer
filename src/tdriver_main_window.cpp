@@ -393,6 +393,10 @@ void MainWindow::restoreDefaultLayout()
     appsBar->setVisible( false );
 
     setEditorDocksDefaultLayout();
+
+    featurEditorDock->setFloating(true);
+    featurEditorDock->show();
+
     showNormal();
 }
 

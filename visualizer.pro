@@ -29,6 +29,9 @@ SUBDIRS += libtdriverutil
 # library which implements code editor and ruby debugger widgets
 SUBDIRS += libtdrivereditor
 
+# library which implements feature test viewer/editor
+SUBDIRS += libtdriverfeatureditor
+
 # minimal wrapper around libtdrivereditor to create a standalone code editor application, mostly for testing
 #SUBDIRS += editor_proto
 

@@ -80,6 +80,9 @@ class TDriverDebugConsole;
 class TDriverRubyInteract;
 class TDriverComboLineEdit;
 
+// featureditor classes
+class TDriverFeaturEditor;
+
 namespace Ui {
     class RichTextContainer;
 }
@@ -380,6 +383,12 @@ private:
     TDriverRunConsole *runConsole;
     TDriverDebugConsole *debugConsole;
     TDriverRubyInteract *irConsole;
+
+    // libfeatureditor ui
+    QDockWidget *featurEditorDock;
+    void createFeaturEditorDocks();
+    TDriverFeaturEditor *featurEditor;
+
 
     // xml
     bool parseXml( QString fileName, QDomDocument &resultDocument );

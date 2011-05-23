@@ -105,6 +105,7 @@ void MainWindow::createUi()
     createShortcutsBar();
     createClipboardBar();
     createEditorDocks();
+    createFeaturEditorDocks();
 #if DEVICE_BUTTONS_ENABLED
     createKeyboardCommands();
 #endif

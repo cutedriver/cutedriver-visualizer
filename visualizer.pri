@@ -22,6 +22,9 @@
 EDITORLIBDIR = ../libtdrivereditor
 EDITOR_LIB = tdrivereditor
 
+FEATUREDITORLIBDIR = ../libtdriverfeatureditor
+FEATUREDITOR_LIB = tdriverfeatureditor
+
 UTILLIBDIR = ../libtdriverutil
 UTIL_LIB = tdriverutil
 
