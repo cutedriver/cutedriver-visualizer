@@ -24,7 +24,7 @@
 
 #include "libtdriverfeatureditor_global.h"
 
-class TDriverFeaturAbsractView;
+class TDriverFeaturAbstractView;
 
 class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturEditor : public QWidget
 {
@@ -34,12 +34,12 @@ public:
     TDriverFeaturEditor(QWidget *parent = 0);
 
 private:
-    TDriverFeaturAbsractView *featureList;
-    TDriverFeaturAbsractView *scenarioList;
-    TDriverFeaturAbsractView *scenarioStepList;
+    TDriverFeaturAbstractView *featureList;
+    TDriverFeaturAbstractView *scenarioList;
+    TDriverFeaturAbstractView *scenarioStepList;
 
-    TDriverFeaturAbsractView *stepDefinitionList;
-    TDriverFeaturAbsractView *stepFileList;
+    TDriverFeaturAbstractView *stepDefinitionList;
+    TDriverFeaturAbstractView *stepFileList;
 };
 
 #endif // TDRIVER_FEATUREDITOR_H

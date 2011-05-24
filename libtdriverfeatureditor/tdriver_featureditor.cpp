@@ -20,19 +20,36 @@
 #include "tdriver_featureditor.h"
 
 #include "tdriver_featurfeatureview.h"
+#include "tdriver_featurscenarioview.h"
+#include "tdriver_featurscenariostepview.h"
+
 
 #include <QtGui>
 
 TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :
     QWidget(parent)
-  , featureList(new TDriverFeaturFeatureView("C:/Users/arhyttin/tdriver/tests/test/features"))
+  , featureList(new TDriverFeaturFeatureView)
+  , scenarioList(new TDriverFeaturScenarioView)
+  , scenarioStepList(new TDriverFeaturScenarioStepView)
 
 {
     setLayout(new QVBoxLayout());
 
     QSplitter *splitter = new QSplitter(Qt::Horizontal);
+    layout()->addWidget(splitter);
 
     splitter->addWidget(featureList);
+    splitter->addWidget(scenarioList);
+    splitter->addWidget(scenarioStepList);
 
-    layout()->addWidget(splitter);
+    connect(featureList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            scenarioList, SLOT(resetPathFromIndex(QModelIndex)));
+
+
+    connect(scenarioList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            scenarioStepList, SLOT(resetPathFromIndex(QModelIndex)));
+
+    // debug kickstart
+    featureList->setPath("C:/Users/arhyttin/tdriver/tests/test/features");
+    featureList->setPendingScan();
 }

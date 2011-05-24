@@ -23,10 +23,11 @@
 
 #include <QtGui>
 
-TDriverFeaturFeatureView::TDriverFeaturFeatureView(const QString &path, QWidget *parent) :
-    TDriverFeaturAbsractView(tr("Features"), parent)
+TDriverFeaturFeatureView::TDriverFeaturFeatureView(QWidget *parent) :
+    TDriverFeaturAbstractView(tr("Features"), parent)
 {
-    setPath(path);
     setScanPattern("*.feature");
-    rescanPathWithPattern();
+    setScanType(DirScan);
 }
+
+

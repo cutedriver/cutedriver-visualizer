@@ -20,15 +20,15 @@
 #ifndef TDRIVERFEATURFEATUREVIEW_H
 #define TDRIVERFEATURFEATUREVIEW_H
 
-#include "libtdriverfeatureditor_global.h"
-
 #include "tdriver_featurabstractview.h"
 
-class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturFeatureView : public TDriverFeaturAbsractView
+class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturFeatureView : public TDriverFeaturAbstractView
 {
     Q_OBJECT
 public:
-    explicit TDriverFeaturFeatureView(const QString &path = QString(), QWidget *parent = 0);
+    explicit TDriverFeaturFeatureView(QWidget *parent = 0);
+
+protected:
 
 signals:
 

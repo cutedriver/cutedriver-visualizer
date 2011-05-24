@@ -19,77 +19,215 @@
 
 #include "tdriver_featurabstractview.h"
 
+#include "tdriver_standardfeaturmodel.h"
+
 #include <tdriver_debug_macros.h>
 
 #include <QtGui>
 
-TDriverFeaturAbsractView::TDriverFeaturAbsractView(const QString &title, QWidget *parent) :
+TDriverFeaturAbstractView::TDriverFeaturAbstractView(const QString &title, QWidget *parent) :
     QWidget(parent)
   , _toolBar(new QToolBar(title))
   , _listView(new QListView)
-  , _locationBox(new QComboBox)
+  , __locationBox(new QComboBox)
+  , __pathInfo(new QFileInfo)
+  , __pathLine(-1)
+  , __pendingScan(false)
+  , __scanType(NoScan)
   //, refreshAct(new QAction(tr("Refresh")), this)
 {
 
-    _locationBox->setEditable(true);
-    _locationBox->setDuplicatesEnabled(false);
-    _locationBox->setInsertPolicy(QComboBox::InsertAtTop);
-    connect(_locationBox, SIGNAL(activated(int)), SLOT(pullPath()));
+    __locationBox->setEditable(true);
+    __locationBox->setDuplicatesEnabled(false);
+    __locationBox->setInsertPolicy(QComboBox::InsertAtTop);
+    connect(__locationBox, SIGNAL(activated(int)), SLOT(resetPathFromBox()));
 
     setLayout(new QVBoxLayout);
     _toolBar->addWidget(new QLabel(title));
     layout()->addWidget(_toolBar);
-    layout()->addWidget(_locationBox);
+    layout()->addWidget(__locationBox);
     layout()->addWidget(_listView);
 
-    setModel(new QStandardItemModel(this));
+    setModel(new TDriverStandardFeaturModel(this));
+    connect(selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), SLOT(emitCurrentChanged(QModelIndex,QModelIndex)));
+
     //bar->addAction(refreshAct);
 }
 
-void TDriverFeaturAbsractView::setModel(QAbstractItemModel *model)
+
+TDriverFeaturAbstractView::~TDriverFeaturAbstractView()
+{
+    delete __pathInfo;
+}
+
+
+QString TDriverFeaturAbstractView::path()
+{
+    return (__locationBox->currentText());
+}
+
+
+void TDriverFeaturAbstractView::setPath(const QString &path)
+{
+    // detect if path ends with line number
+    QString tmpPath(path);
+    __pathLine = -1;
+    int lastColonPos = path.lastIndexOf(':');
+    if (lastColonPos > 0) {
+        bool ok = false;
+        int line = path.mid(lastColonPos+1).toInt(&ok);
+        if (ok) {
+            tmpPath = path.left(lastColonPos);
+            __pathLine = line;
+        }
+    }
+    __pathInfo->setFile(tmpPath);
+
+    setLocationBox(path);
+}
+
+
+void TDriverFeaturAbstractView::setModel(QAbstractItemModel *model)
 {
     _listView->setModel(model);
 }
 
-QAbstractItemModel * TDriverFeaturAbsractView::model()
+QAbstractItemModel * TDriverFeaturAbstractView::model()
 {
     return _listView->model();
 }
 
 
-void TDriverFeaturAbsractView::clearModel()
+bool TDriverFeaturAbstractView::clearModel(int rows)
 {
+    bool ret = true;
+    model()->removeRows(0, model()->rowCount());
 
-    model()->removeRows(0, model()->rowCount()-1);
+    if (rows > 0 && !model()->insertRows(0, rows)) {
+        qWarning() << "Failed to insert" << rows << "rows to model at" << FCFL;
+        ret = false;
+    }
+
+    return ret;
 }
 
 
-
-
-void TDriverFeaturAbsractView::pullPath()
+QItemSelectionModel * TDriverFeaturAbstractView::selectionModel()
 {
-    QString value = _locationBox->currentText();
-    qDebug() << FCFL << value;
-    if (!value.isEmpty()) {
-        setPath(value);
-        rescanPathWithPattern();
+    return _listView->selectionModel();
+}
+
+
+void TDriverFeaturAbstractView::resetPath(const QString &path)
+{
+    qDebug() << FCFL << path;
+    if(path != __locationBox->currentText()) {
+        setPath(path);
+        reScan();
     }
 }
 
 
-int TDriverFeaturAbsractView::rescanPathWithPattern()
+void TDriverFeaturAbstractView::resetPathFromIndex(const QModelIndex &index)
 {
-    if (!_listView->model()) return -1;
+    qDebug() << FCFL;
+    const QAbstractItemModel *model = index.model();
+    if (index.isValid() && model) {
+        QString path = model->data(index, ActualPathRole).toString();
+        qDebug() << FCFL << "got path from model:" << path;
+        setPath(path);
+        reScan();
+    }
+}
 
-    qDebug() << FCFL << __path << __scanPattern;
+void TDriverFeaturAbstractView::resetPathFromBox()
+{
+    QString path = __locationBox->currentText();
+    qDebug() << FCFL << path;
+    if (!path.isEmpty()) {
+        setPath(path);
+        reScan();
+    }
+}
 
-    if (!QDir(__path).exists()) {
+
+void TDriverFeaturAbstractView::clearView()
+{
+    clearModel();
+    setLocationBox(QString());
+}
+
+
+int TDriverFeaturAbstractView::reScan()
+{
+    __pendingScan = false;
+    int ret = 0;
+
+    bool locBoxEnabled = __locationBox->isEnabled();
+    if (locBoxEnabled) __locationBox->setEnabled(false);
+
+    switch(__scanType) {
+
+    case DirScan: ret = doDirScan(); break;
+
+    case FileScan: ret = doFileScan(); break;
+
+    case FileSectionScan: ret = doFileSectionScan(); break;
+
+    case NoScan: ret = 0; break;
+
+    default: ret = -2;
+    }
+
+    __locationBox->setEnabled(locBoxEnabled);
+
+    if (ret < 0) {
+        qDebug() << FCFL << "Invalid scan type" << __scanType;
+    }
+
+    return ret;
+}
+
+
+void TDriverFeaturAbstractView::setLocationBox(const QString &text)
+{
+    __locationBox->insertItem(0, text);
+    __locationBox->setCurrentIndex(0);
+
+    // remove duplicates
+    for(int ii = __locationBox->count()-1; ii > 0 ; --ii) {
+        if (__locationBox->itemText(ii) == text) {
+            __locationBox->removeItem(ii);
+        }
+    }
+
+}
+
+
+void TDriverFeaturAbstractView::showEvent(QShowEvent *ev)
+{
+    QWidget::showEvent(ev);
+
+    if (__pendingScan) {
+        reScan();
+    }
+}
+
+
+int TDriverFeaturAbstractView::doDirScan()
+{
+    QString path(pathInfo().canonicalFilePath());
+
+    qDebug() << FCFL << path << __scanPattern;
+    Q_ASSERT(_listView->model());
+
+    if (!pathInfo().isDir()) {
+        qDebug() << FCFL << "called when path not dir:" << path;
         return -1;
     }
 
-    clearModel();
 
-    QDirIterator dirIt(__path,
+    QDirIterator dirIt(path,
                        QStringList() << __scanPattern,
                        QDir::Files,
                        QDirIterator::Subdirectories | QDirIterator::FollowSymlinks);
@@ -100,32 +238,206 @@ int TDriverFeaturAbsractView::rescanPathWithPattern()
         fileInfos << dirIt.fileInfo();
     }
 
-    qDebug() << FCFL << model()->rowCount() << model()->columnCount();
-    if (!model()->insertRows(0, fileInfos.size())) {
-        qWarning() << "Failed to insert" << fileInfos.size() << "rows to model at" << FCFL;
+    if (!clearModel(fileInfos.size())) {
+        qWarning() << "Failed to initialize empty model at" << FCFL;
         return -2;
     }
-    qDebug() << FCFL << model()->rowCount() << model()->columnCount();
 
-    if (model()->columnCount() < 1) {
-        if (!model()->insertColumn(0)) {
-            qWarning() << "Failed to insert one column to model at" << FCFL;
-        }
-    }
 
     for (int row = 0; row < fileInfos.size(); ++row) {
         QModelIndex index = model()->index(row, 0);
 
         //qDebug() << FCFL << fileInfos.at(row).filePath();
 
-        if (!model()->setData(index, fileInfos.at(row).baseName(), Qt::EditRole)) {
-            qWarning() << "Failed to set DisplayRole for model row" << row;
+        if (!model()->setData(index,
+                              fileInfos.at(row).baseName())) {
+            qWarning() << "Failed to set default role for model row" << row;
         }
 
-        if (!model()->setData(index, fileInfos.at(row).absoluteFilePath(), Qt::ToolTipRole)) {
+        if (!model()->setData(index,
+                              fileInfos.at(row).canonicalFilePath(),
+                              ActualPathRole)) {
+            qWarning() << "Failed to set ActualPathRole for model row" << row;
+        }
+
+        if (!model()->setData(index,
+                              fileInfos.at(row).canonicalFilePath(),
+                              Qt::ToolTipRole)) {
             qWarning() << "Failed to set ToolTipRole for model row" << row;
         }
     }
+    return model()->rowCount();
+}
+
+
+int TDriverFeaturAbstractView::doFileScan()
+{
+    QString path(pathInfo().canonicalFilePath());
+
+    qDebug() << FCFL << path << __scanPattern;
+    Q_ASSERT(_listView->model());
+
+    if (!pathInfo().isFile() && !pathInfo().isReadable()) {
+        qDebug() << FCFL << "called when path not readable file:" << path;
+        return -1;
+    }
+
+    QFile file(path);
+    if (!file.open(QFile::ReadOnly)) {
+        qWarning() << "Failed to open" << path << "with error" << file.errorString() << "at" << FCFL;
+        return -2;
+    }
+
+    if (!clearModel()) {
+        qWarning() << "Failed to initialize empty model at" << FCFL;
+        return -2;
+    }
+
+    QRegExp rx(__scanPattern);
+
+    QByteArray line;
+    int modelRow = model()->rowCount();
+    int lineNum = 0;
+
+    qDebug() << FCFL << rx.isValid() << rx.pattern();
+
+    qDebug() << FCFL << "________START FILE READ LOOP________";
+
+    while ((line = file.readLine()).size() > 0) {
+        file.unsetError();
+        ++lineNum;
+        QString lineStr(QString::fromUtf8(line.trimmed()));
+        int pos = rx.indexIn(lineStr);
+        qDebug() << lineNum << '(' << pos << rx.captureCount() << ')' << ':' << line.trimmed();
+        if (pos >= 0 && rx.captureCount() >= 1) {
+
+            if (!model()->insertRow(modelRow)) {
+                qWarning() << "Failed to insert to row number" << modelRow << "to model at" << FCFL;
+                return -2;
+            }
+
+            QModelIndex index = model()->index(modelRow, 0);
+
+            if (!model()->setData(index,
+                                  rx.cap(1))) {
+                qWarning() << "Failed to set default role for model row" << modelRow;
+            }
+
+            if (!model()->setData(index,
+                                  QString("%1:%2").arg(pathInfo().canonicalFilePath(), QString::number(lineNum)),
+                                  ActualPathRole)) {
+                qWarning() << "Failed to set ActualPathRole for model row" << modelRow;
+            }
+
+            if (!model()->setData(index,
+                                  QString("%1: %2").arg(QString::number(lineNum), lineStr),
+                                  Qt::ToolTipRole)) {
+                qWarning() << "Failed to set ToolTipRole for model row" << modelRow;
+            }
+
+            ++modelRow;
+        }
+    }
+
+    qDebug() << FCFL << "________ END FILE READ LOOP ________";
+
+    if (file.error() != QFile::NoError) {
+        qDebug() << FCFL << "reading ended with readLine error" << file.errorString();
+    }
+
+    return model()->rowCount();
+}
+
+
+
+int TDriverFeaturAbstractView::doFileSectionScan()
+{
+    QString path(pathInfo().canonicalFilePath());
+
+    qDebug() << FCFL << path << scanPattern();
+    Q_ASSERT(_listView->model());
+
+    if (!pathInfo().isFile() && !pathInfo().isReadable()) {
+        qDebug() << FCFL << "called when path not readable file:" << path;
+        return -1;
+    }
+
+    QFile file(path);
+    if (!file.open(QFile::ReadOnly)) {
+        qWarning() << "Failed to open" << path << "with error" << file.errorString() << "at" << FCFL;
+        return -2;
+    }
+
+    if (!clearModel()) {
+        qWarning() << "Failed to initialize empty model at" << FCFL;
+        return -2;
+    }
+
+    QRegExp rx(scanPattern());
+
+    QByteArray line;
+    int modelRow = model()->rowCount();
+    int lineNum = 0;
+    bool sectionOver = false;
+    int pathLineNum = pathLineNumber();
+    if (pathLineNum <= 0) pathLineNum = 1;
+
+    qDebug() << FCFL << rx.isValid() << rx.pattern();
+
+    qDebug() << FCFL << "________START FILE READ LOOP________";
+
+    while (!sectionOver && (line = file.readLine()).size() > 0) {
+        file.unsetError();
+        ++lineNum;
+
+        qDebug() << lineNum << line.trimmed();
+
+        // skip lines until first line to capture
+        if (lineNum < pathLineNum) continue;
+
+        QString lineStr(QString::fromUtf8(line.trimmed()));
+
+        if (lineNum > pathLineNum) {
+            // exclude first line from regexp check
+
+            int pos = rx.indexIn(lineStr);
+            qDebug() << "...regexp result:" << pos << rx.captureCount();
+            if (pos >= 0) {
+                sectionOver = true; // last line in section
+
+                if (rx.captureCount() <= 1) continue; // last line contains nothing to add to model
+
+                lineStr = rx.cap(1); // just add captured part of last line
+            }
+        }
+
+        if (!model()->insertRow(modelRow)) {
+            qWarning() << "Failed to insert to row number" << modelRow << "to model at" << FCFL;
+            return -2;
+        }
+
+        qDebug() << "...adding line";
+        QModelIndex index = model()->index(modelRow, 0);
+
+        if (!model()->setData(index,
+                              lineStr)) {
+            qWarning() << "Failed to set default role for model row" << modelRow;
+        }
+
+        if (!model()->setData(index,
+                              QString("%1:%2").arg(pathInfo().canonicalFilePath(), QString::number(lineNum)),
+                              ActualPathRole)) {
+            qWarning() << "Failed to set ActualPathRole for model row" << modelRow;
+        }
+        ++modelRow;
+    }
+
+    qDebug() << FCFL << "________ END FILE READ LOOP ________";
+
+    if (file.error() != QFile::NoError) {
+        qDebug() << FCFL << "reading ended with readLine error" << file.errorString();
+    }
+
     return model()->rowCount();
 }
 

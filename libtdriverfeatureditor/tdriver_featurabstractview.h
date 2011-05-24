@@ -29,49 +29,98 @@ class QListView;
 class QComboBox;
 class QAbstractItemModel;
 class QToolBar;
+class QFileInfo;
+class QItemSelectionModel;
+class QModelIndex;
 
 //class QAction;
 
-class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturAbsractView : public QWidget
+class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturAbstractView : public QWidget
 {
     Q_OBJECT
 
     Q_PROPERTY(QString scanPattern READ scanPattern WRITE setScanPattern)
+    Q_PROPERTY(QString scanPattern2 READ scanPattern2 WRITE setScanPattern2)
     Q_PROPERTY(QString path READ path WRITE setPath);
     Q_PROPERTY(QAbstractItemModel* model READ model WRITE setModel);
     Q_PROPERTY(QComboBox* locationBox READ locationBox);
+    Q_PROPERTY(bool pendingScan READ pendingScan WRITE setPendingScan);
+    Q_PROPERTY(int pathLineNumber READ pathLineNumber)
+    //Q_PROPERTY(ScanType scanType READ scanType WRITE setScanType);
+
 
 public:
-    explicit TDriverFeaturAbsractView(const QString &title, QWidget *parent = 0);
+    enum ScanType { NoScan, DirScan, FileScan, FileSectionScan };
+    //Q_DECLARE_METATYPE(ScanType);
+    enum DataRoles { ActualPathRole=Qt::UserRole+1 };
 
-    QString path() { return __path; }
-    void setPath(const QString &path) { __path = path; }
+    explicit TDriverFeaturAbstractView(const QString &title, QWidget *parent = 0);
+    ~TDriverFeaturAbstractView();
+
+    const QFileInfo &pathInfo() { return *__pathInfo; }
+
+    int pathLineNumber() { return __pathLine; }
+
+    QString path();
+    void setPath(const QString &path);
 
     QString scanPattern() { return __scanPattern; }
     void setScanPattern(const QString &pattern) { __scanPattern = pattern; }
 
+    QString scanPattern2() { return __scanPattern2; }
+    void setScanPattern2(const QString &pattern) { __scanPattern2 = pattern; }
+
     void setModel(QAbstractItemModel *model);
     QAbstractItemModel *model();
-    void clearModel();
+    bool clearModel(int rows = 0);
 
-    QComboBox *locationBox() { return _locationBox; }
+    QComboBox *locationBox() { return __locationBox; }
+
+    bool pendingScan() { return __pendingScan; }
+    void setPendingScan(bool value=true) { __pendingScan = value; }
+
+    ScanType scanType() {return __scanType; }
+    void setScanType(ScanType value) { __scanType = value; }
+
+    QItemSelectionModel *selectionModel();
 
 
 signals:
+    void reScanned(const QString &path);
 
 public slots:
-    virtual void pullPath();
+    void resetPath(const QString &path);
+    virtual void resetPathFromIndex(const QModelIndex &index); // null index will reset view
+    virtual void resetPathFromBox();
+    virtual void clearView();
+    virtual int reScan(); // calls doXxxScan() and returns it's return value, 0 for NoScan, -2 for bad state
+
 
 protected:
-    int rescanPathWithPattern(); // <0 for error, >=0 for count
+    void setLocationBox(const QString &text);
+
+    virtual void showEvent(QShowEvent *);
+
+    // scan method return <0 for error, >=0 for count
+    virtual int doDirScan();
+    virtual int doFileScan();
+    virtual int doFileSectionScan();
+
     QToolBar *_toolBar;
-    QListView *_listView;
-    QComboBox *_locationBox;
     //QAction *refreshAct;
+    QListView *_listView;
 
 private:
-    QString __path;
+    QComboBox *__locationBox;
+    QFileInfo *__pathInfo;
+    int __pathLine;
     QString __scanPattern;
+    QString __scanPattern2;
+
+    bool __pendingScan;
+
+    ScanType __scanType;
+
 };
 
 #endif // TDRIVERFEATURABSTRACTVIEW_H

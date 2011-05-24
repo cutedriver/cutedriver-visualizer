@@ -22,12 +22,18 @@ LIBS += -l$$UTIL_LIB
 
 SOURCES += tdriver_featureditor.cpp \
     tdriver_featurabstractview.cpp \
-    tdriver_featurfeatureview.cpp
+    tdriver_featurfeatureview.cpp \
+    tdriver_featurscenarioview.cpp \
+    tdriver_standardfeaturmodel.cpp \
+    tdriver_featurscenariostepview.cpp
 
 HEADERS += tdriver_featureditor.h\
         libtdriverfeatureditor_global.h \
     tdriver_featurfeatureview.h \
-    tdriver_featurabstractview.h
+    tdriver_featurabstractview.h \
+    tdriver_featurscenarioview.h \
+    tdriver_standardfeaturmodel.h \
+    tdriver_featurscenariostepview.h
 
 symbian {
     #Symbian specific definitions
