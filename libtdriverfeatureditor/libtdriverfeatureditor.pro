@@ -25,7 +25,8 @@ SOURCES += tdriver_featureditor.cpp \
     tdriver_featurfeatureview.cpp \
     tdriver_featurscenarioview.cpp \
     tdriver_standardfeaturmodel.cpp \
-    tdriver_featurscenariostepview.cpp
+    tdriver_featurscenariostepview.cpp \
+    tdriver_featurstepfileview.cpp
 
 HEADERS += tdriver_featureditor.h\
         libtdriverfeatureditor_global.h \
@@ -33,7 +34,8 @@ HEADERS += tdriver_featureditor.h\
     tdriver_featurabstractview.h \
     tdriver_featurscenarioview.h \
     tdriver_standardfeaturmodel.h \
-    tdriver_featurscenariostepview.h
+    tdriver_featurscenariostepview.h \
+    tdriver_featurstepfileview.h
 
 symbian {
     #Symbian specific definitions

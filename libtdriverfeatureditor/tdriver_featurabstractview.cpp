@@ -131,23 +131,25 @@ void TDriverFeaturAbstractView::resetPath(const QString &path)
 void TDriverFeaturAbstractView::resetPathFromIndex(const QModelIndex &index)
 {
     qDebug() << FCFL;
+
+    QString path;
+
     const QAbstractItemModel *model = index.model();
     if (index.isValid() && model) {
-        QString path = model->data(index, ActualPathRole).toString();
+        path = model->data(index, ActualPathRole).toString();
         qDebug() << FCFL << "got path from model:" << path;
-        setPath(path);
-        reScan();
     }
+    setPath(path);
+    reScan();
 }
 
 void TDriverFeaturAbstractView::resetPathFromBox()
 {
     QString path = __locationBox->currentText();
     qDebug() << FCFL << path;
-    if (!path.isEmpty()) {
-        setPath(path);
-        reScan();
-    }
+
+    setPath(path);
+    reScan();
 }
 
 
@@ -181,9 +183,14 @@ int TDriverFeaturAbstractView::reScan()
 
     __locationBox->setEnabled(locBoxEnabled);
 
-    if (ret < 0) {
+    if (ret >= 0) {
+        emit reScanned(__pathInfo->canonicalFilePath());
+    }
+    else {
         qDebug() << FCFL << "Invalid scan type" << __scanType;
     }
+
+
 
     return ret;
 }
@@ -277,6 +284,12 @@ int TDriverFeaturAbstractView::doFileScan()
     qDebug() << FCFL << path << __scanPattern;
     Q_ASSERT(_listView->model());
 
+
+    if (!clearModel()) {
+        qWarning() << "Failed to initialize empty model at" << FCFL;
+        return -2;
+    }
+
     if (!pathInfo().isFile() && !pathInfo().isReadable()) {
         qDebug() << FCFL << "called when path not readable file:" << path;
         return -1;
@@ -285,11 +298,6 @@ int TDriverFeaturAbstractView::doFileScan()
     QFile file(path);
     if (!file.open(QFile::ReadOnly)) {
         qWarning() << "Failed to open" << path << "with error" << file.errorString() << "at" << FCFL;
-        return -2;
-    }
-
-    if (!clearModel()) {
-        qWarning() << "Failed to initialize empty model at" << FCFL;
         return -2;
     }
 

@@ -89,7 +89,7 @@ signals:
     void reScanned(const QString &path);
 
 public slots:
-    void resetPath(const QString &path);
+    virtual void resetPath(const QString &path);
     virtual void resetPathFromIndex(const QModelIndex &index); // null index will reset view
     virtual void resetPathFromBox();
     virtual void clearView();

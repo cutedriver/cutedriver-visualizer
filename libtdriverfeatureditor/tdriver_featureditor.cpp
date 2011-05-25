@@ -22,6 +22,8 @@
 #include "tdriver_featurfeatureview.h"
 #include "tdriver_featurscenarioview.h"
 #include "tdriver_featurscenariostepview.h"
+//#include "tdriver_featurstepdefinitionview.h"
+#include "tdriver_featurstepfileview.h"
 
 
 #include <QtGui>
@@ -31,6 +33,9 @@ TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :
   , featureList(new TDriverFeaturFeatureView)
   , scenarioList(new TDriverFeaturScenarioView)
   , scenarioStepList(new TDriverFeaturScenarioStepView)
+  //, stepDefinitionList(new TDriverFeaturStepDefintionView)
+  , stepFileList(new TDriverFeaturStepFileView)
+
 
 {
     setLayout(new QVBoxLayout());
@@ -41,13 +46,18 @@ TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :
     splitter->addWidget(featureList);
     splitter->addWidget(scenarioList);
     splitter->addWidget(scenarioStepList);
+    //splitter->addWidget(stepDefinitionList);
+    splitter->addWidget(stepFileList);
 
     connect(featureList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             scenarioList, SLOT(resetPathFromIndex(QModelIndex)));
-
+    connect(featureList, SIGNAL(reScanned(QString)),
+            stepFileList, SLOT(resetPath(QString)));
 
     connect(scenarioList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             scenarioStepList, SLOT(resetPathFromIndex(QModelIndex)));
+    connect(scenarioList, SIGNAL(reScanned(QString)),
+            scenarioStepList, SLOT(clearView()));
 
     // debug kickstart
     featureList->setPath("C:/Users/arhyttin/tdriver/tests/test/features");
