@@ -33,3 +33,11 @@ void MainWindow::createFeaturEditorDocks()
     featurEditorDock->setWidget(featurEditor);
 
 }
+
+void MainWindow::setFeaturEditorDocksDefaultLayout()
+{
+
+    featurEditorDock->setFloating(false);
+    addDockWidget(Qt::BottomDockWidgetArea, featurEditorDock, Qt::Horizontal);
+    featurEditorDock->setVisible(true);
+}

@@ -29,6 +29,7 @@ TDriverFeaturAbstractView::TDriverFeaturAbstractView(const QString &title, QWidg
     QWidget(parent)
   , _toolBar(new QToolBar(title))
   , _listView(new QListView)
+  , _styleDelegate(new QStyledItemDelegate(this))
   , __locationBox(new QComboBox)
   , __pathInfo(new QFileInfo)
   , __pathLine(-1)
@@ -49,7 +50,7 @@ TDriverFeaturAbstractView::TDriverFeaturAbstractView(const QString &title, QWidg
     layout()->addWidget(_listView);
 
     setModel(new TDriverStandardFeaturModel(this));
-    connect(selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), SLOT(emitCurrentChanged(QModelIndex,QModelIndex)));
+    //connect(selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), SLOT(resetPathFromIndex(QModelIndex)));
 
     //bar->addAction(refreshAct);
 }
@@ -71,19 +72,22 @@ void TDriverFeaturAbstractView::setPath(const QString &path)
 {
     // detect if path ends with line number
     QString tmpPath(path);
+    bool hasLineNum = false;
     __pathLine = -1;
     int lastColonPos = path.lastIndexOf(':');
     if (lastColonPos > 0) {
         bool ok = false;
         int line = path.mid(lastColonPos+1).toInt(&ok);
         if (ok) {
+            hasLineNum = true;
             tmpPath = path.left(lastColonPos);
             __pathLine = line;
         }
     }
     __pathInfo->setFile(tmpPath);
+    QString suffix = (!hasLineNum && pathInfo().isDir()) ? QString("/") : QString();
 
-    setLocationBox(path);
+    setLocationBox(path+suffix);
 }
 
 
@@ -91,6 +95,7 @@ void TDriverFeaturAbstractView::setModel(QAbstractItemModel *model)
 {
     _listView->setModel(model);
 }
+
 
 QAbstractItemModel * TDriverFeaturAbstractView::model()
 {
@@ -115,6 +120,14 @@ bool TDriverFeaturAbstractView::clearModel(int rows)
 QItemSelectionModel * TDriverFeaturAbstractView::selectionModel()
 {
     return _listView->selectionModel();
+}
+
+
+void TDriverFeaturAbstractView::aFileChanged(const QString &path)
+{
+    if (QFileInfo(path).canonicalFilePath() == pathInfo().canonicalPath()) {
+        reScan();
+    }
 }
 
 
@@ -170,16 +183,16 @@ int TDriverFeaturAbstractView::reScan()
 
     switch(__scanType) {
 
+    case NoScan: ret = 0; break;
+
     case DirScan: ret = doDirScan(); break;
 
     case FileScan: ret = doFileScan(); break;
 
     case FileSectionScan: ret = doFileSectionScan(); break;
-
-    case NoScan: ret = 0; break;
-
-    default: ret = -2;
     }
+
+    qDebug() << FCFL << __scanType << ret;
 
     __locationBox->setEnabled(locBoxEnabled);
 
@@ -187,10 +200,8 @@ int TDriverFeaturAbstractView::reScan()
         emit reScanned(__pathInfo->canonicalFilePath());
     }
     else {
-        qDebug() << FCFL << "Invalid scan type" << __scanType;
+        qDebug() << FCFL << "Error code" << ret << "with scan type" << __scanType;
     }
-
-
 
     return ret;
 }
@@ -360,6 +371,7 @@ int TDriverFeaturAbstractView::doFileScan()
 
 int TDriverFeaturAbstractView::doFileSectionScan()
 {
+
     QString path(pathInfo().canonicalFilePath());
 
     qDebug() << FCFL << path << scanPattern();
@@ -446,6 +458,7 @@ int TDriverFeaturAbstractView::doFileSectionScan()
         qDebug() << FCFL << "reading ended with readLine error" << file.errorString();
     }
 
+    qDebug() << FCFL << model()->rowCount();
     return model()->rowCount();
 }
 

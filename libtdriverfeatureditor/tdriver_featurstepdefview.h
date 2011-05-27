@@ -17,32 +17,21 @@
 **
 ****************************************************************************/
 
-#ifndef TDRIVER_FEATUREDITOR_H
-#define TDRIVER_FEATUREDITOR_H
+#ifndef TDRIVERFEATURSTEPDEFVIEW_H
+#define TDRIVERFEATURSTEPDEFVIEW_H
 
-#include <QWidget>
+#include "tdriver_featurabstractview.h"
 
-#include "libtdriverfeatureditor_global.h"
-
-class TDriverFeaturAbstractView;
-
-class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturEditor : public QWidget
+class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturStepDefView : public TDriverFeaturAbstractView
 {
     Q_OBJECT
-
 public:
-    TDriverFeaturEditor(QWidget *parent = 0);
+    explicit TDriverFeaturStepDefView(QWidget *parent = 0);
 
 signals:
-    void fileChangeRelay(const QString &path);
 
-private:
-    TDriverFeaturAbstractView *featureList;
-    TDriverFeaturAbstractView *scenarioList;
-    TDriverFeaturAbstractView *scenarioStepList;
+public slots:
 
-    TDriverFeaturAbstractView *stepDefinitionList;
-    TDriverFeaturAbstractView *stepFileList;
 };
 
-#endif // TDRIVER_FEATUREDITOR_H
+#endif // TDRIVERFEATURSTEPDEFVIEW_H

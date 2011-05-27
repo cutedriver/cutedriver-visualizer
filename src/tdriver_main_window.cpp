@@ -394,8 +394,7 @@ void MainWindow::restoreDefaultLayout()
 
     setEditorDocksDefaultLayout();
 
-    featurEditorDock->setFloating(true);
-    featurEditorDock->show();
+    setFeaturEditorDocksDefaultLayout();
 
     showNormal();
 }

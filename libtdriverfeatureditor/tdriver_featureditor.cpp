@@ -22,7 +22,7 @@
 #include "tdriver_featurfeatureview.h"
 #include "tdriver_featurscenarioview.h"
 #include "tdriver_featurscenariostepview.h"
-//#include "tdriver_featurstepdefinitionview.h"
+#include "tdriver_featurstepdefview.h"
 #include "tdriver_featurstepfileview.h"
 
 
@@ -33,10 +33,8 @@ TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :
   , featureList(new TDriverFeaturFeatureView)
   , scenarioList(new TDriverFeaturScenarioView)
   , scenarioStepList(new TDriverFeaturScenarioStepView)
-  //, stepDefinitionList(new TDriverFeaturStepDefintionView)
+  , stepDefinitionList(new TDriverFeaturStepDefView)
   , stepFileList(new TDriverFeaturStepFileView)
-
-
 {
     setLayout(new QVBoxLayout());
 
@@ -46,7 +44,7 @@ TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :
     splitter->addWidget(featureList);
     splitter->addWidget(scenarioList);
     splitter->addWidget(scenarioStepList);
-    //splitter->addWidget(stepDefinitionList);
+    splitter->addWidget(stepDefinitionList);
     splitter->addWidget(stepFileList);
 
     connect(featureList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
@@ -59,7 +57,16 @@ TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :
     connect(scenarioList, SIGNAL(reScanned(QString)),
             scenarioStepList, SLOT(clearView()));
 
+    connect(stepFileList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
+            stepDefinitionList, SLOT(resetPathFromIndex(QModelIndex)));
+
     // debug kickstart
     featureList->setPath("C:/Users/arhyttin/tdriver/tests/test/features");
     featureList->setPendingScan();
+
+    //connect(this, SIGNAL(fileChangeRelay(QString)), featureList, SLOT(aFileChanged(QString)));
+    connect(this, SIGNAL(fileChangeRelay(QString)), scenarioList, SLOT(aFileChanged(QString)));
+    connect(this, SIGNAL(fileChangeRelay(QString)), scenarioStepList, SLOT(aFileChanged(QString)));
+    //connect(this, SIGNAL(fileChangeRelay(QString)), featureList, SLOT(aFileChanged(QString)));
+    connect(this, SIGNAL(fileChangeRelay(QString)), stepFileList, SLOT(aFileChanged(QString)));
 }

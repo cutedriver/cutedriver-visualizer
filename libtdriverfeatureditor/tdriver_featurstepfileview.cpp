@@ -31,6 +31,7 @@ TDriverFeaturStepFileView::TDriverFeaturStepFileView(QWidget *parent) :
     // with FileSectionScan, pattern means patter end
     setScanType(DirScan);
     setScanPattern("*.rb");
+    //_listView->setItemDelegate(_styleDelegate);
 }
 
 
@@ -51,4 +52,39 @@ void TDriverFeaturStepFileView::resetPath(const QString &path)
     }
 
     TDriverFeaturAbstractView::resetPath(info.canonicalFilePath());
+}
+
+int TDriverFeaturStepFileView::doDirScan()
+{
+    // update file list,
+    // then make sure display is updated,
+    // and schedule file content scan to be called from event loop
+
+    int ret = TDriverFeaturAbstractView::doDirScan();
+    update();
+    QMetaObject::invokeMethod(this, "readFoundFiles", Qt::QueuedConnection);
+
+    return ret;
+}
+
+void TDriverFeaturStepFileView::readFoundFiles()
+{
+    int rows = model()->rowCount();
+
+    for (int row=0; row < rows; ++row) {
+        QModelIndex index(model()->index(row, 0));
+        QString path = model()->data(index, ActualPathRole).toString();
+        QFile file(path);
+        if (file.open(QFile::ReadOnly)) {
+            qDebug() << FCFL << path << "OPEN";
+            model()->setData(index, file.readAll(), Qt::ToolTipRole/*FileContentRole*/);
+            file.close();
+            //model()->setData(index, QBrush(Qt::green), Qt::ForegroundRole);
+        }
+        else {
+            qDebug() << FCFL << path << "ERROR" << file.errorString();
+            _listView->setItemDelegateForRow(row, _styleDelegate);
+            model()->setData(index, QBrush(Qt::red), Qt::ForegroundRole);
+        }
+    }
 }

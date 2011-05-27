@@ -22,7 +22,7 @@
 
 #include "tdriver_featurabstractview.h"
 
-class TDriverFeaturStepFileView : public TDriverFeaturAbstractView
+class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturStepFileView : public TDriverFeaturAbstractView
 {
     Q_OBJECT
 public:
@@ -30,8 +30,13 @@ public:
 
 signals:
 
+
 public slots:
     void resetPath(const QString &path);
+
+protected:
+    virtual int doDirScan();
+    Q_INVOKABLE virtual void readFoundFiles();
 
 private:
     bool __overridePath;

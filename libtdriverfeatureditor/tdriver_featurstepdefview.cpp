@@ -17,32 +17,16 @@
 **
 ****************************************************************************/
 
-#ifndef TDRIVER_FEATUREDITOR_H
-#define TDRIVER_FEATUREDITOR_H
+#include "tdriver_featurstepdefview.h"
 
-#include <QWidget>
+#include <tdriver_debug_macros.h>
 
-#include "libtdriverfeatureditor_global.h"
+#include <QtGui>
 
-class TDriverFeaturAbstractView;
 
-class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturEditor : public QWidget
+TDriverFeaturStepDefView::TDriverFeaturStepDefView(QWidget *parent) :
+    TDriverFeaturAbstractView(tr("Step Definitions"), parent)
 {
-    Q_OBJECT
-
-public:
-    TDriverFeaturEditor(QWidget *parent = 0);
-
-signals:
-    void fileChangeRelay(const QString &path);
-
-private:
-    TDriverFeaturAbstractView *featureList;
-    TDriverFeaturAbstractView *scenarioList;
-    TDriverFeaturAbstractView *scenarioStepList;
-
-    TDriverFeaturAbstractView *stepDefinitionList;
-    TDriverFeaturAbstractView *stepFileList;
-};
-
-#endif // TDRIVER_FEATUREDITOR_H
+    setScanType(FileScan);
+    setScanPattern("^\\s*((When|Given|Then|And).+)");
+}

@@ -387,6 +387,7 @@ private:
     // libfeatureditor ui
     QDockWidget *featurEditorDock;
     void createFeaturEditorDocks();
+    void setFeaturEditorDocksDefaultLayout();
     TDriverFeaturEditor *featurEditor;
 
 

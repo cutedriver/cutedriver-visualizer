@@ -26,6 +26,7 @@
 
 class QString;
 class QListView;
+class QStyledItemDelegate;
 class QComboBox;
 class QAbstractItemModel;
 class QToolBar;
@@ -52,7 +53,7 @@ class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturAbstractView : public QWi
 public:
     enum ScanType { NoScan, DirScan, FileScan, FileSectionScan };
     //Q_DECLARE_METATYPE(ScanType);
-    enum DataRoles { ActualPathRole=Qt::UserRole+1 };
+    enum DataRoles { ActualPathRole=Qt::UserRole+1, FileContentRole };
 
     explicit TDriverFeaturAbstractView(const QString &title, QWidget *parent = 0);
     ~TDriverFeaturAbstractView();
@@ -89,6 +90,7 @@ signals:
     void reScanned(const QString &path);
 
 public slots:
+    virtual void aFileChanged(const QString &path);
     virtual void resetPath(const QString &path);
     virtual void resetPathFromIndex(const QModelIndex &index); // null index will reset view
     virtual void resetPathFromBox();
@@ -109,6 +111,7 @@ protected:
     QToolBar *_toolBar;
     //QAction *refreshAct;
     QListView *_listView;
+    QStyledItemDelegate *_styleDelegate;
 
 private:
     QComboBox *__locationBox;
