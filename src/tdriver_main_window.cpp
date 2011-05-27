@@ -393,6 +393,9 @@ void MainWindow::restoreDefaultLayout()
     appsBar->setVisible( false );
 
     setEditorDocksDefaultLayout();
+
+    setFeaturEditorDocksDefaultLayout();
+
     showNormal();
 }
 
@@ -1197,7 +1200,7 @@ void MainWindow::createActions()
 
     connect( appsRefreshAction, SIGNAL( triggered() ), this, SLOT(forceRefreshApps()));
 
-    refreshAction = new QAction(tr("&Refresh All"), this);
+    refreshAction = new QAction(tr("Full &Refresh"), this);
     refreshAction->setObjectName("main refresh");
     refreshAction->setShortcut(QKeySequence(tr("Ctrl+R")));
     // note: QKeySequence(QKeySequence::Refresh) is F5 in some platforms, Ctrl+R in others

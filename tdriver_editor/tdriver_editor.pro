@@ -28,7 +28,7 @@ CONFIG += link_prl
 
 # For libutil
 INCLUDEPATH += $$UTILLIBDIR
-#LIBS += -L$$UTILLIBDIR -l$$UTIL_LIB
+#LIBS += -L$$UTILLIBDIR -l$$UTIL_LIB # libs go to ../bin, no need for -L path here
 LIBS += -l$$UTIL_LIB
 
 !CONFIG(no_sql) {
@@ -41,6 +41,10 @@ INCLUDEPATH += $$EDITORLIBDIR
 LIBS += -l$$EDITOR_LIB
 QT += network
 
+# For libtdriverfetureditor
+INCLUDEPATH += $$FEATUREDITORLIBDIR
+LIBS += -l$$FEATUREDITOR_LIB
+
 # Input
 HEADERS += ../inc/tdriver_main_types.h
 HEADERS += ../inc/tdriver_behaviour.h
@@ -48,7 +52,8 @@ HEADERS += ../inc/tdriver_image_view.h
 HEADERS += ../inc/tdriver_main_window.h
 HEADERS += ../inc/tdriver_recorder.h
 
-SOURCES += ../src/tdriver_libeditor_ui.cpp
+SOURCES += ../src/tdriver_libeditor_ui.cpp \
+    ../src/tdriver_libfeatureditor_ui.cpp
 SOURCES += ../src/tdriver_editor.cpp
 SOURCES += ../src/tdriver_main_window.cpp
 SOURCES += ../src/tdriver_image_view.cpp
