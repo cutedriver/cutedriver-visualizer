@@ -25,7 +25,7 @@
 
 void MainWindow::createFeaturEditorDocks()
 {
-    featurEditorDock = new QDockWidget(tr("BDT Navigator"));
+    featurEditorDock = new QDockWidget(tr("BDT Navigator") + " (beta)");
     featurEditorDock->setObjectName("featurEditor dock");
 
     featurEditor = new TDriverFeaturEditor;
@@ -39,5 +39,5 @@ void MainWindow::setFeaturEditorDocksDefaultLayout()
 
     featurEditorDock->setFloating(false);
     addDockWidget(Qt::BottomDockWidgetArea, featurEditorDock, Qt::Horizontal);
-    featurEditorDock->setVisible(true);
+    featurEditorDock->setVisible(false);
 }
