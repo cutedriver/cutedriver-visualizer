@@ -25,7 +25,6 @@
 #include <QWidget>
 
 class QString;
-class QListView;
 class QStyledItemDelegate;
 class QComboBox;
 class QAbstractItemModel;
@@ -33,6 +32,8 @@ class QToolBar;
 class QFileInfo;
 class QItemSelectionModel;
 class QModelIndex;
+class QAbstractItemView;
+class QListView;
 
 //class QAction;
 
@@ -85,6 +86,8 @@ public:
 
     QItemSelectionModel *selectionModel();
 
+    QAbstractItemView *view();
+
 
 signals:
     void reScanned(const QString &path);
@@ -110,10 +113,10 @@ protected:
 
     QToolBar *_toolBar;
     //QAction *refreshAct;
-    QListView *_listView;
     QStyledItemDelegate *_styleDelegate;
 
 private:
+    QListView *__listView;
     QComboBox *__locationBox;
     QFileInfo *__pathInfo;
     int __pathLine;

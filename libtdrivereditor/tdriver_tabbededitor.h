@@ -87,6 +87,8 @@ protected:
     virtual void dragEnterEvent(QDragEnterEvent *);
     virtual void dropEvent(QDropEvent *);
 
+    void showFileLine(const QString file, int lineNum);
+
 signals:
     void requestRun(QString filename, TDriverRunConsole::RunRequestType);
     void requestRunPreparations(QString filename);
@@ -108,8 +110,8 @@ public slots:
 
     void addBreakpoint(struct MEC::Breakpoint);
     void addBreakpointList(QList<struct MEC::Breakpoint>);
-    void gotoLine(const QString file, int lineNum);
     void gotoLine(const QUrl &fileLineSpec);
+    void gotoLine(const QString &fileLineSpec);
     void setRunningLine(const QString file, int lineNum);
     void resetRunningLines();
     void resetBreakpoints();

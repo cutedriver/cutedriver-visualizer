@@ -26,6 +26,8 @@
 
 class TDriverFeaturAbstractView;
 
+class QModelIndex;
+
 class LIBTDRIVERFEATUREDITORSHARED_EXPORT TDriverFeaturEditor : public QWidget
 {
     Q_OBJECT
@@ -35,6 +37,11 @@ public:
 
 signals:
     void fileChangeRelay(const QString &path);
+    void fileEditRequest(const QString &fileLineSpec);
+
+private slots:
+    void editFromIndex(const QModelIndex &);
+
 
 private:
     TDriverFeaturAbstractView *featureList;

@@ -83,7 +83,7 @@ void TDriverFeaturStepFileView::readFoundFiles()
         }
         else {
             qDebug() << FCFL << path << "ERROR" << file.errorString();
-            _listView->setItemDelegateForRow(row, _styleDelegate);
+            view()->setItemDelegateForRow(row, _styleDelegate);
             model()->setData(index, QBrush(Qt::red), Qt::ForegroundRole);
         }
     }

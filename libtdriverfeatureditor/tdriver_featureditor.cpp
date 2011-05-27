@@ -25,8 +25,10 @@
 #include "tdriver_featurstepdefview.h"
 #include "tdriver_featurstepfileview.h"
 
+#include <tdriver_debug_macros.h>
 
 #include <QtGui>
+
 
 TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :
     QWidget(parent)
@@ -51,14 +53,26 @@ TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :
             scenarioList, SLOT(resetPathFromIndex(QModelIndex)));
     connect(featureList, SIGNAL(reScanned(QString)),
             stepFileList, SLOT(resetPath(QString)));
+    connect(featureList->view(), SIGNAL(doubleClicked(QModelIndex)),
+            SLOT(editFromIndex(QModelIndex)));
 
     connect(scenarioList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             scenarioStepList, SLOT(resetPathFromIndex(QModelIndex)));
     connect(scenarioList, SIGNAL(reScanned(QString)),
             scenarioStepList, SLOT(clearView()));
+    connect(scenarioList->view(), SIGNAL(doubleClicked(QModelIndex)),
+            SLOT(editFromIndex(QModelIndex)));
+
+    connect(scenarioStepList->view(), SIGNAL(doubleClicked(QModelIndex)),
+            SLOT(editFromIndex(QModelIndex)));
+
+    connect(stepDefinitionList->view(), SIGNAL(doubleClicked(QModelIndex)),
+            SLOT(editFromIndex(QModelIndex)));
 
     connect(stepFileList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)),
             stepDefinitionList, SLOT(resetPathFromIndex(QModelIndex)));
+    connect(stepFileList->view(), SIGNAL(doubleClicked(QModelIndex)),
+            SLOT(editFromIndex(QModelIndex)));
 
     // debug kickstart
     featureList->setPath("C:/Users/arhyttin/tdriver/tests/test/features");
@@ -69,4 +83,20 @@ TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :
     connect(this, SIGNAL(fileChangeRelay(QString)), scenarioStepList, SLOT(aFileChanged(QString)));
     //connect(this, SIGNAL(fileChangeRelay(QString)), featureList, SLOT(aFileChanged(QString)));
     connect(this, SIGNAL(fileChangeRelay(QString)), stepFileList, SLOT(aFileChanged(QString)));
+}
+
+
+void TDriverFeaturEditor::editFromIndex(const QModelIndex &index)
+{
+    QString path;
+    const QAbstractItemModel *model = index.model();
+
+    if (index.isValid() && model) {
+        path = model->data(index, TDriverFeaturAbstractView::ActualPathRole).toString();
+        qDebug() << FCFL << "emitting fileEditRequest with path from model:" << path;
+        emit fileEditRequest(path);
+    }
+    else {
+        qDebug() << FCFL << "could not emit fileEditRequest";
+    }
 }

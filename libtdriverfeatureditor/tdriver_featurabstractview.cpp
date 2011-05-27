@@ -28,8 +28,8 @@
 TDriverFeaturAbstractView::TDriverFeaturAbstractView(const QString &title, QWidget *parent) :
     QWidget(parent)
   , _toolBar(new QToolBar(title))
-  , _listView(new QListView)
   , _styleDelegate(new QStyledItemDelegate(this))
+  , __listView(new QListView)
   , __locationBox(new QComboBox)
   , __pathInfo(new QFileInfo)
   , __pathLine(-1)
@@ -47,7 +47,7 @@ TDriverFeaturAbstractView::TDriverFeaturAbstractView(const QString &title, QWidg
     _toolBar->addWidget(new QLabel(title));
     layout()->addWidget(_toolBar);
     layout()->addWidget(__locationBox);
-    layout()->addWidget(_listView);
+    layout()->addWidget(__listView);
 
     setModel(new TDriverStandardFeaturModel(this));
     //connect(selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), SLOT(resetPathFromIndex(QModelIndex)));
@@ -93,13 +93,13 @@ void TDriverFeaturAbstractView::setPath(const QString &path)
 
 void TDriverFeaturAbstractView::setModel(QAbstractItemModel *model)
 {
-    _listView->setModel(model);
+    __listView->setModel(model);
 }
 
 
 QAbstractItemModel * TDriverFeaturAbstractView::model()
 {
-    return _listView->model();
+    return __listView->model();
 }
 
 
@@ -119,7 +119,13 @@ bool TDriverFeaturAbstractView::clearModel(int rows)
 
 QItemSelectionModel * TDriverFeaturAbstractView::selectionModel()
 {
-    return _listView->selectionModel();
+    return __listView->selectionModel();
+}
+
+
+QAbstractItemView *TDriverFeaturAbstractView::view()
+{
+    return __listView;
 }
 
 
@@ -237,7 +243,7 @@ int TDriverFeaturAbstractView::doDirScan()
     QString path(pathInfo().canonicalFilePath());
 
     qDebug() << FCFL << path << __scanPattern;
-    Q_ASSERT(_listView->model());
+    Q_ASSERT(__listView->model());
 
     if (!pathInfo().isDir()) {
         qDebug() << FCFL << "called when path not dir:" << path;
@@ -293,7 +299,7 @@ int TDriverFeaturAbstractView::doFileScan()
     QString path(pathInfo().canonicalFilePath());
 
     qDebug() << FCFL << path << __scanPattern;
-    Q_ASSERT(_listView->model());
+    Q_ASSERT(__listView->model());
 
 
     if (!clearModel()) {
@@ -375,7 +381,7 @@ int TDriverFeaturAbstractView::doFileSectionScan()
     QString path(pathInfo().canonicalFilePath());
 
     qDebug() << FCFL << path << scanPattern();
-    Q_ASSERT(_listView->model());
+    Q_ASSERT(__listView->model());
 
     if (!pathInfo().isFile() && !pathInfo().isReadable()) {
         qDebug() << FCFL << "called when path not readable file:" << path;

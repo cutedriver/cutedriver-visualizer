@@ -1455,7 +1455,8 @@ void TDriverTabbedEditor::addBreakpointList(QList<struct MEC::Breakpoint> bpList
 }
 
 
-void TDriverTabbedEditor::gotoLine(const QString fileName, int lineNum)
+// protected, not slot
+void TDriverTabbedEditor::showFileLine(const QString fileName, int lineNum)
 {
     if (lineNum > 0 && !fileName.isEmpty()) {
 
@@ -1474,14 +1475,32 @@ void TDriverTabbedEditor::gotoLine(const QString fileName, int lineNum)
     }
 }
 
+
+// public slot
 void TDriverTabbedEditor::gotoLine(const QUrl &fileLineSpec)
 {
-    QString fileName = fileLineSpec.toString().section(':', 0, -2);
-    bool ok;
-    int lineNum = fileLineSpec.toString().section(':', -1).toInt(&ok);
-
-    if (ok) gotoLine(fileName, lineNum);
+    gotoLine(fileLineSpec.toString());
 }
+
+
+// public slot
+void TDriverTabbedEditor::gotoLine(const QString &fileLineSpec)
+{
+    int colonPos = fileLineSpec.lastIndexOf(':');
+    QString fileName = fileLineSpec;
+    int lineNum = 1;
+
+    if (colonPos > 0) {
+        bool ok;
+        lineNum = fileLineSpec.mid(colonPos + 1).toInt(&ok);
+        if (ok && lineNum > 0) {
+            fileName.chop(fileName.length() - colonPos);
+        }
+    }
+
+    showFileLine(fileName, (lineNum > 0) ? lineNum : 1);
+}
+
 
 void TDriverTabbedEditor::setRunningLine(QString fileName, int lineNum)
 {

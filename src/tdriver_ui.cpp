@@ -25,6 +25,7 @@
 #include "../common/version.h"
 
 #include "tdriver_tabbededitor.h"
+#include "tdriver_featureditor.h"
 
 #include <QUrl>
 #include <QScrollArea>
@@ -106,6 +107,10 @@ void MainWindow::createUi()
     createClipboardBar();
     createEditorDocks();
     createFeaturEditorDocks();
+
+    connect(featurEditor, SIGNAL(fileEditRequest(QString)),
+            tabEditor, SLOT(gotoLine(QString)));
+
 #if DEVICE_BUTTONS_ENABLED
     createKeyboardCommands();
 #endif
