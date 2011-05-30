@@ -34,6 +34,7 @@ class QItemSelectionModel;
 class QModelIndex;
 class QAbstractItemView;
 class QListView;
+class QPushButton;
 
 //class QAction;
 
@@ -84,6 +85,8 @@ public:
     ScanType scanType() {return __scanType; }
     void setScanType(ScanType value) { __scanType = value; }
 
+    void enableFileButton();
+
     QItemSelectionModel *selectionModel();
 
     QAbstractItemView *view();
@@ -100,6 +103,8 @@ public slots:
     virtual void clearView();
     virtual int reScan(); // calls doXxxScan() and returns it's return value, 0 for NoScan, -2 for bad state
 
+protected slots:
+    virtual void doFileDialog();
 
 protected:
     void setLocationBox(const QString &text);
@@ -111,12 +116,14 @@ protected:
     virtual int doFileScan();
     virtual int doFileSectionScan();
 
-    QToolBar *_toolBar;
-    //QAction *refreshAct;
     QStyledItemDelegate *_styleDelegate;
+    //QAction *refreshAct;
 
 private:
+    QToolBar *__toolBar1;
+    QToolBar *__toolBar2;
     QListView *__listView;
+    QPushButton *__fileButton;
     QComboBox *__locationBox;
     QFileInfo *__pathInfo;
     int __pathLine;

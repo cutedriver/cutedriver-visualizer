@@ -27,8 +27,9 @@
 
 TDriverFeaturAbstractView::TDriverFeaturAbstractView(const QString &title, QWidget *parent) :
     QWidget(parent)
-  , _toolBar(new QToolBar(title))
   , _styleDelegate(new QStyledItemDelegate(this))
+  , __toolBar1(new QToolBar)
+  , __toolBar2(new QToolBar)
   , __listView(new QListView)
   , __locationBox(new QComboBox)
   , __pathInfo(new QFileInfo)
@@ -43,11 +44,17 @@ TDriverFeaturAbstractView::TDriverFeaturAbstractView(const QString &title, QWidg
     __locationBox->setInsertPolicy(QComboBox::InsertAtTop);
     connect(__locationBox, SIGNAL(activated(int)), SLOT(resetPathFromBox()));
 
-    setLayout(new QVBoxLayout);
-    _toolBar->addWidget(new QLabel(title));
-    layout()->addWidget(_toolBar);
-    layout()->addWidget(__locationBox);
-    layout()->addWidget(__listView);
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    setLayout(mainLayout);
+
+    __toolBar1->addWidget(new QLabel(title));
+    mainLayout->addWidget(__toolBar1);
+
+    __locationBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
+    __toolBar2->addWidget(__locationBox);
+    mainLayout->addWidget(__toolBar2);
+
+    mainLayout->addWidget(__listView);
 
     setModel(new TDriverStandardFeaturModel(this));
     //connect(selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), SLOT(resetPathFromIndex(QModelIndex)));
@@ -85,9 +92,12 @@ void TDriverFeaturAbstractView::setPath(const QString &path)
         }
     }
     __pathInfo->setFile(tmpPath);
-    QString suffix = (!hasLineNum && pathInfo().isDir()) ? QString("/") : QString();
 
-    setLocationBox(path+suffix);
+    QString suffix;
+    if (!hasLineNum && pathInfo().isDir() && !path.endsWith('/')) {
+        suffix = QChar('/');
+    }
+    setLocationBox(path + suffix);
 }
 
 
@@ -210,6 +220,36 @@ int TDriverFeaturAbstractView::reScan()
     }
 
     return ret;
+}
+
+
+void TDriverFeaturAbstractView::doFileDialog()
+{
+    if (__scanType != DirScan) return;
+
+    QFileDialog *dlg = NULL;
+
+    switch(__scanType) {
+    case DirScan:
+        dlg = new QFileDialog(this, tr("Select directory to scan"), __pathInfo->canonicalFilePath());
+        dlg->setFileMode(QFileDialog::Directory);
+        dlg->setOption(QFileDialog::ShowDirsOnly, true);
+        break;
+    default:
+        return;
+    }
+
+    dlg->setOption(QFileDialog::DontConfirmOverwrite);
+
+    if (dlg->exec() == QDialog::Accepted) {
+        QStringList files = dlg->selectedFiles();
+        if (!files.isEmpty()) {
+            setPath(files.first());
+            reScan();
+        }
+    }
+
+    if (dlg) delete dlg;
 }
 
 
@@ -467,4 +507,10 @@ int TDriverFeaturAbstractView::doFileSectionScan()
     qDebug() << FCFL << model()->rowCount();
     return model()->rowCount();
 }
+
+void TDriverFeaturAbstractView::enableFileButton()
+{
+    __toolBar2->addAction(tr("Choose..."), this, SLOT(doFileDialog()));
+}
+
 

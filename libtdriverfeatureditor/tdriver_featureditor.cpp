@@ -75,7 +75,7 @@ TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :
             SLOT(editFromIndex(QModelIndex)));
 
     // debug kickstart
-    featureList->setPath("C:/Users/arhyttin/tdriver/tests/test/features");
+    featureList->setPath(QDir::homePath() + "/tdriver/tests/test/features");
     featureList->setPendingScan();
 
     //connect(this, SIGNAL(fileChangeRelay(QString)), featureList, SLOT(aFileChanged(QString)));

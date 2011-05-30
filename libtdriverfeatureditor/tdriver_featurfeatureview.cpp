@@ -28,6 +28,7 @@ TDriverFeaturFeatureView::TDriverFeaturFeatureView(QWidget *parent) :
 {
     setScanPattern("*.feature");
     setScanType(DirScan);
+    enableFileButton();
 }
 
 
