@@ -97,6 +97,7 @@ void TDriverImageView::clearImage()
     imageOffset = QPoint();
     imageTasId.clear();
     rects.clear();
+    highlightEnabledMode = 0;
 
     if (!scaleImage)
         resize(image->size());
@@ -132,7 +133,10 @@ void TDriverImageView::paintEvent(QPaintEvent *)
 
     // highlightEnabledMode: 0=disabled, 1=single, 2=multiple
     if (highlightEnabledMode) {
-        int count = (highlightEnabledMode == 1) ? 1 : rects.size();
+
+        int count = rects.size();
+        if (highlightEnabledMode == 1 && count > 1) count = 1;
+
         static const QPen highlightPen(QBrush(Qt::red), 2);
         painter.setPen( highlightPen );
 

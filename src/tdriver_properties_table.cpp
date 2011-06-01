@@ -471,8 +471,7 @@ void MainWindow::propertiesItemPressed ( QTableWidgetItem * item )
             QTreeWidgetItem * treeItem = objectTree->currentItem();
             QString objectType = treeItem->data( 0, Qt::DisplayRole ).toString();
 
-            QList<QTableWidgetItem *> selectedItems;
-            selectedItems = item->tableWidget()->selectedItems();
+            QList<QTableWidgetItem *> selectedItems = item->tableWidget()->selectedItems();
 
             // combine object type and selected attribute rows into a TDriver ruby test object selection script
             QString objRubyId = objectType + "(";

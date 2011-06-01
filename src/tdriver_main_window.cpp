@@ -409,11 +409,16 @@ void MainWindow::setActiveDevice(const QString &deviceName )
         // enable recording menu if device type is 'kind of' qt
         recordMenu->setEnabled( !applicationsNamesMap.empty()
                                && TDriverUtil::isQtSut(activeDeviceParams.value( "type" )));
+        qDebug() << FCFL << deviceName << "was set";
     }
     else {
         activeDevice.clear();
         activeDeviceParams.clear();
+        qDebug() << FCFL << deviceName << "not valid device, clearing activeDevice";
     }
+
+    collapsedObjectTreeItemPtr = 0;
+    expandedObjectTreeItemPtr = 0;
     lastHighlightedObjectKey = 0;
     currentApplication.setForeground(TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )));
     tabEditor->setSutParamMap(activeDeviceParams);
@@ -640,6 +645,7 @@ QString MainWindow::selectFolder(QString title, QString filter, QFileDialog::Acc
 
 void MainWindow::statusbar( QString text, int timeout )
 {
+    qDebug() << FCFL << timeout << "ms for message" << text;
     statusBar()->showMessage( text, timeout );
     statusBar()->repaint();
     qApp->processEvents();
@@ -898,7 +904,6 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
     case commandInvalid:
         qDebug() << FCFL << "got message type commandInvalid!";
     }
-
 }
 
 
@@ -1039,6 +1044,7 @@ bool MainWindow::sendTDriverCommand( ExecuteCommandType commandType,
         }
         sentTDriverMsgs[0] = SentTDriverMsg(commandType, msg, errorName, typeStr, -1);
         receiveTDriverMessage(0, TDriverUtil::visualizationId);
+        //        qDebug() << FCFL << "called receiveTDriverMessage explicitly";
         return false;
     }
 }
@@ -1064,6 +1070,7 @@ bool MainWindow::resendTDriverCommand(SentTDriverMsg &msg)
         }
         sentTDriverMsgs[0] = msg;
         receiveTDriverMessage(0, TDriverUtil::visualizationId);
+        //        qDebug() << FCFL << "called receiveTDriverMessage explicitly";
         return false;
     }
 }

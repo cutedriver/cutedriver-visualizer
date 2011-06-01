@@ -92,16 +92,19 @@ int main(int argc, char *argv[])
 
     MainWindow* mainWindow = new MainWindow();
 
+    int returnCode;
     if ( mainWindow->setup() ){
         mainWindow->setStartupLayout();
         mainWindow->show();
-        return app.exec();
+        returnCode = app.exec();
+        qDebug("QApplication::exec()) returned %i", returnCode);
 
     } else {
 
         // errors during setup
-        return 1;
+        returnCode = 1;
 
     }
+    return returnCode;
 
 }

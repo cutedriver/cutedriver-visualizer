@@ -25,7 +25,6 @@
 
 #include <QMap>
 #include <QByteArray>
-#include <QList>
 #include <QFile>
 #include <QDebug>
 #include <QTcpSocket>

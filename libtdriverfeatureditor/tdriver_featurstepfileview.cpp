@@ -76,7 +76,7 @@ void TDriverFeaturStepFileView::readFoundFiles()
         QString path = model()->data(index, ActualPathRole).toString();
         QFile file(path);
         if (file.open(QFile::ReadOnly)) {
-            qDebug() << FCFL << path << "OPEN";
+            //qDebug() << FCFL << path << "OPEN";
             model()->setData(index, file.readAll(), Qt::ToolTipRole/*FileContentRole*/);
             file.close();
             //model()->setData(index, QBrush(Qt::green), Qt::ForegroundRole);

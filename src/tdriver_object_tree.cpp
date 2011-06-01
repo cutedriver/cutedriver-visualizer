@@ -661,7 +661,7 @@ void MainWindow::clearObjectTreeMappings()
 
 void MainWindow::updateObjectTree( QString filename )
 {
-    //qDebug() << "updateObjectTree";
+    qDebug() << FCFL << "from file" << filename;
     QTreeWidgetItem *sutItem  = NULL;
 
     // store id value of focused node in object tree
@@ -736,25 +736,19 @@ void MainWindow::updateObjectTree( QString filename )
                 // store object tree data
                 objectTreeData.insert( itemPtr, treeItemData );
 
-                QList<QMap<QString,QString> > objectNamesList;
-
-                QMap<QString, QStringList> duplicateItems;
-
-                duplicateItems = findDuplicateObjectNames( objectNamesList );
-
                 // determine whether to use new xml structure or not... (new == 1.3+)
                 if ( !checkVersion( version, "1.3" ) ) {
 
-                  objectNamesList = collectObjectData( element );
-                  duplicateItems = findDuplicateObjectNames( objectNamesList );
+                  QList<QMap<QString,QString> > objectNamesList = collectObjectData( element );
+                  QMap<QString, QStringList> duplicateItems = findDuplicateObjectNames( objectNamesList );
 
                   // build object tree with xml
                   buildObjectTree( sutItem, element, duplicateItems );
 
                 } else {
 
-                  objectNamesList = collectObjectData_new_format( element );
-                  duplicateItems = findDuplicateObjectNames( objectNamesList );
+                  QList<QMap<QString,QString> > objectNamesList = collectObjectData_new_format( element );
+                  QMap<QString, QStringList> duplicateItems = findDuplicateObjectNames( objectNamesList );
 
                   buildObjectTree_new_format( sutItem, element, duplicateItems );
 

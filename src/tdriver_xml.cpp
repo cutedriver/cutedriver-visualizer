@@ -274,8 +274,6 @@ void MainWindow::resetApplicationsList()
         delAct->deleteLater();
     }
     Q_ASSERT(applicationsActionMap.isEmpty());
-
-    applicationsNamesMap.clear();
 }
 
 void MainWindow::parseApiMethodsXml( QString filename ) {
@@ -374,8 +372,8 @@ QStringList MainWindow::parseSignalsXml( QString filename ) {
     return signalList;
 }
 
-void MainWindow::parseApplicationsXml( QString filename ) {
-
+void MainWindow::parseApplicationsXml( QString filename )
+{
     QDomNode nodeInfo;
     QDomNode nodeApplications;
 
