@@ -39,6 +39,8 @@ HEADERS += tdriver_featureditor.h\
     tdriver_featurstepfileview.h \
     tdriver_featurstepdefview.h
 
+
+
 symbian {
     #Symbian specific definitions
     MMP_RULES += EXPORTUNFROZEN
@@ -60,3 +62,13 @@ unix:!symbian {
 }
 
 FORMS +=
+
+
+# install
+unix:!symbian {
+    target.path = /usr/lib
+}
+win32 {
+    target.path = C:/tdriver/visualizer
+}
+INSTALLS += target
