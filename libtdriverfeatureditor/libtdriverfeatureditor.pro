@@ -6,7 +6,7 @@
 
 include (../visualizer.pri)
 
-TARGET = libtdriverfeatureditor
+TARGET = tdriverfeatureditor
 
 TEMPLATE = lib
 CONFIG += shared
