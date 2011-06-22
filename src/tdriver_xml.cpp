@@ -274,6 +274,7 @@ void MainWindow::resetApplicationsList()
         delAct->deleteLater();
     }
     Q_ASSERT(applicationsActionMap.isEmpty());
+    applicationsNamesMap.clear();
 }
 
 void MainWindow::parseApiMethodsXml( QString filename ) {
