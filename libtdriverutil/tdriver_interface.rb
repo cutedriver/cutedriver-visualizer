@@ -870,7 +870,7 @@ class ListenerObject
 
             when :set_attribute
               attributeName = input_array[4]
-              # note: with latest version of C++ code, join below is unnecessary, as input_array[5] ís the entire value
+              # note: with latest version of C++ code, join below is unnecessary, as input_array[5] is the entire value
               attributeValue = input_array[ 5..input_array.size ].join(' ')
               attributeType = input_array[3]
               eval_cmd = "sut.application.#{ input_array[2] }.set_attribute( '#{attributeName}', '#{attributeValue}', '#{attributeType}' )"
