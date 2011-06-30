@@ -308,38 +308,6 @@ bool MainWindow::setup()
     // update main window title - current sut will be shown
     updateWindowTitle();
 
-#if 0
-    // read dock visibility settings
-    bool imageVisible = settings.value( "view/image", true ).toBool();
-    bool clipboardVisible = settings.value( "view/clipboard", true ).toBool();
-    bool propertiesVisible = true; //settings.value( "view/properties", true ).toBool();
-#if DEVICE_BUTTONS_ENABLED
-    bool buttonVisible = settings.value( "view/buttons", false ).toBool();
-#endif
-    bool shortcutsVisible = settings.value( "view/shortcuts", true ).toBool();
-    bool appsVisible = settings.value( "view/applications", false ).toBool();
-    bool editorVisible = settings.value( "view/editor", false ).toBool();
-
-    // set visibilities
-    clipboardBar->setVisible( clipboardVisible );
-    imageViewDock->setVisible( imageVisible );
-    propertiesDock->setVisible( propertiesVisible );
-#if DEVICE_BUTTONS_ENABLED
-    keyboardCommandsDock->setVisible( buttonVisible );
-#endif
-    shortcutsBar->setVisible( shortcutsVisible );
-    appsBar->setVisible( appsVisible );
-    editorDock->setVisible( editorVisible );
-
-    // default window size & position
-    QPoint windowPosition = settings.value( "window/pos", QPoint( 200, 200 ) ).toPoint();
-    QSize windowSize = settings.value( "window/size", QSize( 950, 600 ) ).toSize();
-
-    // resize window
-    resize( windowSize );
-    move( windowPosition );
-#endif
-
     restoreDefaultLayout();
     settingsLoadLayouts();
 

@@ -239,10 +239,6 @@ private:
     QAction *toggleRubyModeAct;
     QAction *toggleWrapModeAct;
 
-    QAction *toggleRunDockAct;
-    QAction *toggleDebugDockAct;
-    QAction *toggleIrDockAct;
-
     // run actions
     QAction *runAct;
 #if TDRIVER_RUNCONSOLE_DEBUG1_ENABLED

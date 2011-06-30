@@ -67,12 +67,43 @@ void MainWindow::createEditorDocks()
     Q_ASSERT(imageWidget);
     connect(imageWidget, SIGNAL(insertToCodeEditor(QString,bool,bool)), tabEditor, SLOT(smartInsert(QString,bool,bool)));
 
-    //createMenu();
+    {
+        QAction *tmpFirst;
+        QMenu *tmpMenu;
+
+        tmpFirst = fileMenu->isEmpty() ? NULL : fileMenu->actions().first();
+        fileMenu->insertActions(tmpFirst, tabEditor->fileActions());
+        fileMenu->insertSeparator(tmpFirst);
+
+        tmpMenu = new QMenu(tr("Recent &Files"), fileMenu);
+        tmpMenu->addActions(tabEditor->recentFileActions());
+        tabEditor->updateRecentFileActions();
+
+        fileMenu->insertMenu(tmpFirst, tmpMenu);
+
+        tmpMenu = new QMenu(tr("Run Ruby"), fileMenu);
+        tmpMenu->addActions(tabEditor->runActions());
+        fileMenu->insertMenu(tmpFirst, tmpMenu);
+
+        tmpFirst = editMenu->isEmpty() ? NULL : editMenu->actions().first();
+        editMenu->insertActions(tmpFirst, tabEditor->editActions());
+        editMenu->insertSeparator(tmpFirst);
+        editMenu->insertActions(tmpFirst, tabEditor->codeActions());
+        editMenu->insertSeparator(tmpFirst);
+
+        tmpFirst = viewMenu->isEmpty() ? NULL : viewMenu->actions().first();
+        tmpMenu = new QMenu(tr("&Editor"), viewMenu);
+        tmpMenu->insertActions(tmpFirst, tabEditor->optionActions());
+        viewMenu->insertMenu(tmpFirst, tmpMenu);
+        //viewMenu->insertSeparator(tmpFirst);
+    }
+
 
     QVBoxLayout *editLayout = new QVBoxLayout();
     editLayout->setObjectName("editor");
     QHBoxLayout *editBarLayout = new QHBoxLayout();
-    editBarLayout->addWidget(tabEditor->createEditorMenuBar());
+    //editBarLayout->addWidget(tabEditor->createEditorMenuBar());
+
     editBarLayout->addWidget(tabEditor->searchBar());
     editLayout->addLayout(editBarLayout);
     editLayout->addWidget(tabEditor);

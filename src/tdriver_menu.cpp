@@ -34,6 +34,11 @@ void MainWindow::createTopMenuBar() {
     menubar->setObjectName( "main menubar" );
 
     createFileMenu();
+
+    editMenu = new QMenu( tr( "&Edit" ), this );
+    fileMenu->setObjectName("main edit");
+    menubar->addMenu(editMenu)->setObjectName("main edit");
+
     createViewMenu();
     createSearchMenu();
     createDevicesMenu();
@@ -47,7 +52,7 @@ void MainWindow::createFileMenu() {
 
     // menu
 
-    fileMenu = new QMenu( tr( " &File " ), this );
+    fileMenu = new QMenu( tr( "&File" ), this );
     fileMenu->setObjectName("main file");
 
 
@@ -85,21 +90,19 @@ void MainWindow::createFileMenu() {
 
     fileMenu->addAction(exitAction);
 
-    menubar->addMenu( fileMenu );
-    menubar->actions().last()->setObjectName("main file");
+    menubar->addMenu( fileMenu )->setObjectName("main file");
 }
 
 void MainWindow::createSearchMenu() {
 
-    searchMenu = new QMenu( " &Search ", this );
+    searchMenu = new QMenu( "&Search", this );
     searchMenu->setObjectName("main search");
 
     // dockable widget menu: clipboard
 
     searchMenu->addAction( findAction );
 
-    menubar->addMenu( searchMenu );
-    menubar->actions().last()->setObjectName("main search");
+    menubar->addMenu( searchMenu )->setObjectName("main search");
 
 }
 
@@ -107,7 +110,7 @@ void MainWindow::createViewMenu() {
 
     // menu
 
-    viewMenu = new QMenu( " &View ", this );
+    viewMenu = new QMenu( "&View", this );
     viewMenu->setObjectName("main view");
 
     // dock and toolbar submenu will be inserted as the first element of this menu
@@ -137,8 +140,7 @@ void MainWindow::createViewMenu() {
 
     viewMenu->addAction( showXmlAction );
 
-    menubar->addMenu( viewMenu );
-    menubar->actions().last()->setObjectName("main view");
+    menubar->addMenu( viewMenu )->setObjectName("main view");
 
 }
 
@@ -146,11 +148,10 @@ void MainWindow::createDevicesMenu() {
 
     // menu
 
-    deviceMenu = new QMenu( tr( " &Devices " ), this );
+    deviceMenu = new QMenu( tr( "&Devices" ), this );
     deviceMenu->setObjectName("main device");
     deviceMenu->setDisabled( true );
-    menubar->addMenu( deviceMenu );
-    menubar->actions().last()->setObjectName("main device");
+    menubar->addMenu( deviceMenu )->setObjectName("main device");
 
 }
 
@@ -158,29 +159,27 @@ void MainWindow::createApplicationsMenu() {
 
     // menu
 
-    appsMenu = new QMenu( tr( " &Applications " ), this );
+    appsMenu = new QMenu( tr( "&Applications" ), this );
     appsMenu->setObjectName("main applications");
     //appsMenu->setDisabled( true ); // Now we have extra item in the menu so always show
     appsMenu->addAction(startAppAction);
     appsMenu->addAction(appsRefreshAction);
     appsMenu->addSeparator();
-    menubar->addMenu( appsMenu );
-    menubar->actions().last()->setObjectName("main applications");
+    menubar->addMenu( appsMenu )->setObjectName("main applications");
 }
 
 void MainWindow::createRecordMenu() {
 
     // menu
 
-    recordMenu = new QMenu( tr( " &Record " ), this );
+    recordMenu = new QMenu( tr( "&Record" ), this );
     recordMenu->setObjectName("main record");
     recordMenu->setDisabled( true );
 
     // open record dialog
 
     recordMenu->addAction( recordAction );
-    menubar->addMenu( recordMenu );
-    menubar->actions().last()->setObjectName("main record");
+    menubar->addMenu( recordMenu )->setObjectName("main record");
 }
 
 
@@ -188,7 +187,7 @@ void MainWindow::createRecordMenu() {
 void MainWindow::createHelpMenu()
 {
     // menu
-    helpMenu = new QMenu( tr( " &Help " ), this );
+    helpMenu = new QMenu( tr( "&Help" ), this );
     helpMenu->setObjectName("main help");
 
     // TDriver help
@@ -201,8 +200,7 @@ void MainWindow::createHelpMenu()
     // About TDriver
     helpMenu->addAction( aboutVisualizer );
 
-    menubar->addMenu( helpMenu );
-    menubar->actions().last()->setObjectName("main help");
+    menubar->addMenu( helpMenu )->setObjectName("main help");
 }
 
 

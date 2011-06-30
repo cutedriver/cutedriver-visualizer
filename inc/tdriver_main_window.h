@@ -449,6 +449,7 @@ private:
     QMenuBar *menubar;
 
     QMenu *fileMenu;
+    QMenu *editMenu;
     QMenu *viewMenu;
     QMenu *searchMenu;
     QMenu *deviceMenu;

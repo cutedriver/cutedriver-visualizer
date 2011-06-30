@@ -239,58 +239,58 @@ void TDriverTabbedEditor::createActions()
     // so they can be fetched with actions() method,
     // so they can be easily added to menus and toolbars
 
-    newAct = new QAction(QIcon(":/images/new.png"), tr("&New"), this);
+    newAct = new QAction(QIcon(":/images/new.png"), tr("&New file"), this);
     newAct->setObjectName("editor new");
     newAct->setShortcuts(QKeySequence::New);
-    newAct->setToolTip(tr("Create a new file"));
+    newAct->setStatusTip(tr("Create a new file in editor"));
     fileActs.append(newAct);
     connect(newAct, SIGNAL(triggered()), this, SLOT(newFile()));
 
-    newFromTemplateAct = new QAction(QIcon(":/images/new.png"), tr("New from &template"), this);
+    newFromTemplateAct = new QAction(QIcon(":/images/new.png"), tr("New from &template..."), this);
     newFromTemplateAct->setObjectName("editor newfromtemplate");
-    newFromTemplateAct->setToolTip(tr("Create a newFromTemplate file"));
+    newFromTemplateAct->setStatusTip(tr("Create a new file from a template"));
     fileActs.append(newFromTemplateAct);
     connect(newFromTemplateAct, SIGNAL(triggered()), this, SLOT(newFromTemplate()));
 
     openAct = new QAction(QIcon(":/images/open.png"), tr("&Open..."), this);
     openAct->setObjectName("editor open");
     openAct->setShortcuts(QKeySequence::Open);
-    openAct->setToolTip(tr("Open an existing file"));
+    openAct->setStatusTip(tr("Open an existing file"));
     fileActs.append(openAct);
     connect(openAct, SIGNAL(triggered()), this, SLOT(open()));
 
     saveAct = new QAction(QIcon(":/images/save.png"), tr("&Save"), this);
     saveAct->setObjectName("editor save");
     saveAct->setShortcuts(QKeySequence::Save);
-    saveAct->setToolTip(tr("Save the document to disk"));
+    saveAct->setStatusTip(tr("Save the document to disk"));
     fileActs.append(saveAct);
     connect(saveAct, SIGNAL(triggered()), this, SLOT(saveCurrent()));
 
     saveAsAct = new QAction(tr("Save &As..."), this);
     saveAsAct->setObjectName("editor saveas");
     saveAsAct->setShortcuts(QKeySequence::SaveAs);
-    saveAsAct->setToolTip(tr("Save the document under a new name"));
+    saveAsAct->setStatusTip(tr("Save the document under a new name"));
     fileActs.append(saveAsAct);
     connect(saveAsAct, SIGNAL(triggered()), this, SLOT(saveCurrentAs()));
 
     saveAsTemplateAct = new QAction(tr("Save as T&emplate..."), this);
     saveAsTemplateAct->setObjectName("editor saveas");
     saveAsTemplateAct->setShortcuts(QKeySequence::SaveAs);
-    saveAsTemplateAct->setToolTip(tr("Save the document under a new name"));
+    saveAsTemplateAct->setStatusTip(tr("Save the document as template"));
     fileActs.append(saveAsTemplateAct);
     connect(saveAsTemplateAct, SIGNAL(triggered()), this, SLOT(saveCurrentAsTemplate()));
 
     saveAllAct = new QAction(tr("Save A&ll"), this);
     saveAllAct->setObjectName("editor saveall");
     saveAllAct->setShortcut(QKeySequence("Ctrl+Shift+S"));
-    saveAllAct->setToolTip(tr("Save the document under a new name"));
+    saveAllAct->setStatusTip(tr("Save the document under a new name"));
     fileActs.append(saveAllAct);
     connect(saveAllAct, SIGNAL(triggered()), this, SLOT(saveAll()));
 
     closeAct = new QAction(tr("C&lose file"), this);
     closeAct->setObjectName("editor close");
     closeAct->setShortcuts(QKeySequence::Close);
-    closeAct->setToolTip(tr("Close the current file"));
+    closeAct->setStatusTip(tr("Close the current file"));
     fileActs.append(closeAct);
     connect(closeAct, SIGNAL(triggered()), this, SLOT(closeCurrent()));
 
@@ -304,35 +304,35 @@ void TDriverTabbedEditor::createActions()
     undoAct = new QAction(QIcon(":/images/undo.png"), tr("&Undo"), this);
     undoAct->setObjectName("editor undo");
     undoAct->setShortcuts(QKeySequence::Undo);
-    undoAct->setToolTip(tr("Undo last edit"));
+    undoAct->setStatusTip(tr("Undo last edit"));
     editActs.append(undoAct);
 
     // a tdriver_codetextedit action
     redoAct = new QAction(QIcon(":/images/redo.png"), tr("&Redo"), this);
     redoAct->setObjectName("editor redo");
     redoAct->setShortcuts(QKeySequence::Redo);
-    redoAct->setToolTip(tr("Redo last undoed edit"));
+    redoAct->setStatusTip(tr("Redo last undoed edit"));
     editActs.append(redoAct);
 
     // a tdriver_codetextedit action
     cutAct = new QAction(QIcon(":/images/cut.png"), tr("Cu&t"), this);
     cutAct->setObjectName("editor cut");
     cutAct->setShortcuts(QKeySequence::Cut);
-    cutAct->setToolTip(tr("Cut the current selection's contents to the clipboard"));
+    cutAct->setStatusTip(tr("Cut the current selection's contents to the clipboard"));
     editActs.append(cutAct);
 
     // a tdriver_codetextedit action
     copyAct = new QAction(QIcon(":/images/copy.png"), tr("&Copy"), this);
     copyAct->setObjectName("editor copy");
     copyAct->setShortcuts(QKeySequence::Copy);
-    copyAct->setToolTip(tr("Copy the current selection's contents to the clipboard"));
+    copyAct->setStatusTip(tr("Copy the current selection's contents to the clipboard"));
     editActs.append(copyAct);
 
     // a tdriver_codetextedit action
     pasteAct = new QAction(QIcon(":/images/paste.png"), tr("&Paste"), this);
     pasteAct->setObjectName("editor paste");
     pasteAct->setShortcuts(QKeySequence::Paste);
-    pasteAct->setToolTip(tr("Paste the clipboard's contents into the current selection"));
+    pasteAct->setStatusTip(tr("Paste the clipboard's contents into the current selection"));
     pasteAct->setEnabled(false);
     editActs.append(pasteAct);
 
@@ -340,21 +340,21 @@ void TDriverTabbedEditor::createActions()
     selectAllAct = new QAction(QIcon(":/images/selectall.png"), tr("&Select All"), this);
     selectAllAct->setObjectName("editor selectall");
     selectAllAct->setShortcuts(QKeySequence::SelectAll);
-    selectAllAct->setToolTip(tr("Select all text of current file"));
+    selectAllAct->setStatusTip(tr("Select all text of current file"));
     editActs.append(selectAllAct);
 
     // a tdriver_codetextedit action
     commentCodeAct = new QAction(tr("&Comment/Uncomment region/line"), this);
     commentCodeAct->setObjectName("editor commentcode");
     commentCodeAct->setShortcut(QKeySequence(tr("Ctrl+/")));
-    commentCodeAct->setToolTip(tr("Comments or uncomments selected code or current line"));
+    commentCodeAct->setStatusTip(tr("Comments or uncomments selected code or current line"));
     codeActs.append(commentCodeAct);
 
 
     // a tdriver_codetextedit action
     toggleUsingTabulatorsModeAct = new QAction(tr("&Use TAB characters"), this);
     toggleUsingTabulatorsModeAct->setObjectName("editor toggle usetabs");
-    toggleUsingTabulatorsModeAct->setToolTip(tr("Toggle converting tabs to spaces and using spaces as indentation"));
+    toggleUsingTabulatorsModeAct->setStatusTip(tr("Toggle converting tabs to spaces and using spaces as indentation"));
     toggleUsingTabulatorsModeAct->setCheckable(true);
     toggleUsingTabulatorsModeAct->setEnabled(true);
     optActs.append(toggleUsingTabulatorsModeAct);
@@ -362,7 +362,7 @@ void TDriverTabbedEditor::createActions()
     // a tdriver_codetextedit action
     toggleRubyModeAct = new QAction(tr("&Ruby mode"), this);
     toggleRubyModeAct->setObjectName("editor toggle rubymode");
-    toggleRubyModeAct->setToolTip(tr("Enable Ruby specific features"));
+    toggleRubyModeAct->setStatusTip(tr("Enable Ruby specific features"));
     toggleRubyModeAct->setCheckable(true);
     toggleRubyModeAct->setEnabled(true);
     optActs.append(toggleRubyModeAct);
@@ -370,7 +370,7 @@ void TDriverTabbedEditor::createActions()
     // a tdriver_codetextedit action
     toggleWrapModeAct = new QAction(tr("&Wrap mode"), this);
     toggleWrapModeAct->setObjectName("editor toggle wrapmode");
-    toggleWrapModeAct->setToolTip(tr("Enable Wrap specific features"));
+    toggleWrapModeAct->setStatusTip(tr("Enable Wrap specific features"));
     toggleWrapModeAct->setCheckable(true);
     toggleWrapModeAct->setEnabled(true);
     optActs.append(toggleWrapModeAct);
@@ -381,38 +381,17 @@ void TDriverTabbedEditor::createActions()
         optActs.append(tmp);
     }
 
-    toggleRunDockAct = new QAction(tr("Run Console visible"), this);
-    toggleRunDockAct->setObjectName("editor toggle scriptdock");
-    toggleRunDockAct->setToolTip(tr("Visibility of Script Run Console Dock"));
-    toggleRunDockAct->setCheckable(true);
-    toggleRunDockAct->setEnabled(true);
-    optActs.append(toggleRunDockAct);
-
-    toggleDebugDockAct = new QAction(tr("Debug Console visible"), this);
-    toggleDebugDockAct->setObjectName("editor toggle debugdock");
-    toggleDebugDockAct->setToolTip(tr("Visibility of Debugger Console Dock"));
-    toggleDebugDockAct->setCheckable(true);
-    toggleDebugDockAct->setEnabled(true);
-    optActs.append(toggleDebugDockAct);
-
-    toggleIrDockAct = new QAction(tr("RubyInteract Console visible"), this);
-    toggleIrDockAct->setObjectName("editor toggle irdock");
-    toggleIrDockAct->setToolTip(tr("Visibility of Ruby Interaction Console Dock"));
-    toggleIrDockAct->setCheckable(true);
-    toggleIrDockAct->setEnabled(true);
-    optActs.append(toggleIrDockAct);
-
     runAct = new QAction(QIcon(":/images/run.png"), tr("&Run with ruby"), this);
     runAct->setObjectName("editor run ruby");
     runAct->setShortcut(QKeySequence(Qt::Key_F9));
-    runAct->setToolTip(tr("Save all and run current file with ruby, close debugger"));
+    runAct->setStatusTip(tr("Save all and run current file with ruby, close debugger"));
     runActs.append(runAct);
     connect(runAct, SIGNAL(triggered()), this, SLOT(run()));
 
 #if TDRIVER_RUNCONSOLE_DEBUG1_ENABLED
     debug1Act = new QAction(QIcon(":/images/debug1.png"), tr("&Run with rdebug"), this);
     debug1Act->setObjectName("editor run rdebug");
-    debug1Act->setToolTip(tr("Save all and run current file with rdebug, show debugger, no editor interaction"));
+    debug1Act->setStatusTip(tr("Save all and run current file with rdebug, show debugger, no editor interaction"));
     runActs.append(debug1Act);
     connect(debug1Act, SIGNAL(triggered()), this, SLOT(debug1()));
     //debug1Act->setEnabled(false);
@@ -422,14 +401,14 @@ void TDriverTabbedEditor::createActions()
     debug2Act = new QAction(QIcon(":/images/debug2.png"), tr("&Run with integrated debugger"), this);
     debug2Act->setObjectName("editor run integrated");
     debug2Act->setShortcut(QKeySequence(Qt::Key_F5)); // see debugConsole continueAct
-    debug2Act->setToolTip(tr("Save all and run current file with editor-integrated debugger"));
+    debug2Act->setStatusTip(tr("Save all and run current file with editor-integrated debugger"));
     runActs.append(debug2Act);
     connect(debug2Act, SIGNAL(triggered()), this, SLOT(debug2()));
     debug2Act->setEnabled(true);
 
     syntaxCheckAct = new QAction(tr("&Check syntax"), this);
     syntaxCheckAct->setObjectName("editor run syntaxcheck");
-    syntaxCheckAct->setToolTip(tr("Save all and run current file through 'ruby -cw'"));
+    syntaxCheckAct->setStatusTip(tr("Save all and run current file through 'ruby -cw'"));
     runActs.append(syntaxCheckAct);
     connect(syntaxCheckAct, SIGNAL(triggered()), this, SLOT(syntaxCheck()));
     syntaxCheckAct->setEnabled(true);
@@ -846,9 +825,6 @@ void TDriverTabbedEditor::connectConsoles(TDriverRunConsole *rConsole, QWidget *
     connect(this, SIGNAL(addedBreakpoint(MEC::Breakpoint)), dConsole, SLOT(addBreakpoint(MEC::Breakpoint)));
     connect(this, SIGNAL(removedBreakpoint(int)), dConsole, SLOT(removeBreakpoint(int)));
 
-    connect(toggleRunDockAct, SIGNAL(toggled(bool)), runConsoleContainer, SLOT(setVisible(bool)));
-    connect(toggleDebugDockAct, SIGNAL(toggled(bool)), debugConsoleContainer, SLOT(setVisible(bool)));
-    connect(toggleIrDockAct, SIGNAL(toggled(bool)), irConsoleContainer, SLOT(setVisible(bool)));
     connect(irConsole, SIGNAL(evaluationResult(QObject*,QByteArray,QStringList)),
             editBarP, SLOT(routeAutoRefreshInteractive())); // the slot will emit a signal only if is autorefresh enabled
 
