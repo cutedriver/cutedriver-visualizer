@@ -865,21 +865,21 @@ void MainWindow::sendAppListRequest(bool refreshAfter)
         if (doRefreshAfterAppList) return; // don't re-send
         else doRefreshAfterAppList = true;
     }
-
+    /*
     if (TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" ))) {
         // receive fake message to trigger any followup action
         sentTDriverMsgs[0] = SentTDriverMsg(commandListApps);
         receiveTDriverMessage(0, TDriverUtil::visualizationId);
     }
     else {
-
+    */
         if (sendTDriverCommand(commandListApps,
                                QStringList() << activeDevice << "list_apps",
                                tr("application list")) ) {
             statusbar(tr("Refreshing application list..."));
         }
         //else {            statusbar( "Error: Failed send application list request", 1000 );        }
-    }
+        //}
 }
 
 

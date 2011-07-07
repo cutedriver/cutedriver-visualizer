@@ -388,7 +388,7 @@ void MainWindow::setActiveDevice(const QString &deviceName )
     collapsedObjectTreeItemPtr = 0;
     expandedObjectTreeItemPtr = 0;
     lastHighlightedObjectKey = 0;
-    currentApplication.setForeground(TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )));
+    //currentApplication.setForeground(TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )));
     tabEditor->setSutParamMap(activeDeviceParams);
 }
 

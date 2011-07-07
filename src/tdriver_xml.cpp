@@ -248,10 +248,11 @@ void MainWindow::updateApplicationsList()
         box->setAttribute(Qt::WA_DeleteOnClose);
         box->show();
     }
-    else if (TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )) || currentApplication.id.isEmpty()) {
+    else if (/*TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" )) ||*/ currentApplication.id.isEmpty()) {
         currentApplication.setForeground(true); // may already be true, doesn't matter
         currentApplication.clearInfo();
     }
+    
     else {
         qDebug() << FCFL << "currentApplication remains foreground application.";
     }
