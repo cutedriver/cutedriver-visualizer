@@ -592,6 +592,14 @@ class ListenerObject
 
 
   def get_behaviours_xml( sut, sut_id, object_types )
+
+    # backwards compatibility
+    begin
+      _klass = TDriver::BehaviourFactory
+    rescue
+      _klass = MobyBase::BehaviourFactory.instance
+    end
+
     filename_xml, file_xml = create_output_file(@working_directory, "visualizer_behaviours_#{ sut_id }", 'xml' )
     begin
       behaviour_attributes_hash = { :input_type => ['*', sut.input.to_s ], :sut_type => [ '*', sut.ui_type.upcase ], :version => [ '*', sut.ui_version ] }
@@ -600,7 +608,7 @@ class ListenerObject
         behaviours_xml <<
           "<behaviour object_type=\"#{ object_type.to_s }\">\n" <<
             MobyUtil::XML::parse_string(
-              MobyBase::BehaviourFactory.instance.to_xml( behaviour_attributes_hash.merge( { :object_type => ( object_type == 'sut' ? [ 'sut' ] : [ '*', object_type ] ) } ) )
+              _klass.to_xml( behaviour_attributes_hash.merge( { :object_type => ( object_type == 'sut' ? [ 'sut' ] : [ '*', object_type ] ) } ) )
             ).root.xpath('/behaviours/behaviour/object_methods/object_method').to_s <<
           "\n</behaviour>\n"
       end
