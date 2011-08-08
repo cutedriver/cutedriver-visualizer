@@ -37,7 +37,7 @@ require 'logger'
 
 
 begin
-  if /win/ =~ RUBY_PLATFORM
+  if /win/ =~ RUBY_PLATFORM or /mingw/ =~ RUBY_PLATFORM
     $lg = Logger.new(ENV['TEMP']+'/tdriver_visualizer_ruby.log', 'daily')
   else
     $lg = Logger.new('/tmp/tdriver_visualizer_ruby.log', 'daily')
@@ -563,7 +563,7 @@ class ListenerObject
   def initialize
 
     # set directory where to save xml & png
-    if /win/ =~ Config::CONFIG[ 'target_os' ] && /darwin/io !~ Config::CONFIG[ 'target_os' ]
+    if (/win/ =~ Config::CONFIG[ 'target_os' ] or /mingw/  =~ Config::CONFIG[ 'target_os' ]) and /darwin/io !~ Config::CONFIG[ 'target_os' ]
       # windows
       set_working_directory( File.expand_path( ENV[ 'TEMP' ] ) )
     else
