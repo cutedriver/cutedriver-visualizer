@@ -51,7 +51,7 @@ void MainWindow::startApp(){
     else {
         startAppDialog->hide();
         statusbar(tr("Applicaton started, refreshing..."), 1000 );
-        sendAppListRequest();
+        sendAppListRequest(true);
     }
     startAppDialog->close();
 }

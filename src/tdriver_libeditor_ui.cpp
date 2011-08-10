@@ -81,7 +81,7 @@ void MainWindow::createEditorDocks()
 
         fileMenu->insertMenu(tmpFirst, tmpMenu);
 
-        tmpMenu = new QMenu(tr("Run Ruby"), fileMenu);
+        tmpMenu = new QMenu(tr("Ruby execution"), fileMenu);
         tmpMenu->addActions(tabEditor->runActions());
         fileMenu->insertMenu(tmpFirst, tmpMenu);
 

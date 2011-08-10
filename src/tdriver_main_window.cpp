@@ -21,6 +21,7 @@
 #include "tdriver_main_window.h"
 #include "tdriver_recorder.h"
 #include "tdriver_image_view.h"
+#include "tdriver_statehistorymenu.h"
 
 #include <tdriver_tabbededitor.h>
 #include <tdriver_rubyinterface.h>
@@ -39,8 +40,10 @@ MainWindow::MainWindow() :
     tdriverMsgShown(1),
     keyLastUiStateDir("files/last_uistate_dir"),
     keyLastTDriverDir("files/last_tdriver_dir"),
+    keyHistoryStateDirCount("files/state_history_count"),
     messageTimeoutTimer(new QTimer(this)),
     doRefreshAfterAppList(false),
+    historySavingCounter(-1),
     richTextContainerWidget(new QWidget),
     richTextContainer(new Ui::RichTextContainer)
 {
@@ -167,9 +170,17 @@ bool MainWindow::checkVersion( QString currentVersion, QString requiredVersion )
 bool MainWindow::setup()
 {
     setObjectName("main");
-    QTime t;  // for performance debugging, can be removed
 
     QSettings settings;
+
+    // xml/screen capture output path depending on OS
+    outputPath = QDir::tempPath();
+    if (!outputPath.endsWith('/')) outputPath.append('/');
+
+    // prefix fo state history directories
+    stateHistoryFilePathPrefix = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    QDir().mkpath(stateHistoryFilePathPrefix);
+    stateHistoryFilePathPrefix += "/tdriver_visualizer_state_";
 
     TDriverRubyInterface::startGlobalInstance();
 
@@ -181,7 +192,6 @@ bool MainWindow::setup()
 
     // determine if connection to TDriver established -- if not, allow user to run TDriver Visualizer in viewer/offline mode
     offlineMode = true;
-    t.start();
     QString goOnlineError;
     QString installedDriverVersion;
     statusbar(tr("Starting TDriver interface process..."));
@@ -212,9 +222,6 @@ bool MainWindow::setup()
     else {
         statusbar(tr("TDriver interface started"));
     }
-
-
-    qDebug() << FCFL << "RBI goOnline  result" << !offlineMode << "secs" << float(t.elapsed())/1000.0;
 
     if (offlineMode) {
         qWarning("Failed to initialize TDriver, closing Ruby process");
@@ -320,15 +327,6 @@ bool MainWindow::setup()
     connectObjectTreeSignals();
     connectTabWidgetSignals();
     connectImageWidgetSignals();
-
-    // xml/screen capture output path depending on OS
-    outputPath = QDir::tempPath();
-    if (!outputPath.endsWith('/')) outputPath.append('/');
-
-    if ( !offlineMode &&
-            !executeTDriverCommand( commandSetOutputPath, "listener set_output_path " + outputPath) ) {
-        outputPath = QApplication::applicationDirPath();
-    }
 
     deviceSelected();
     return true;
@@ -714,8 +712,13 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
 
     case commandRefreshUI:
         if (handleNormally) {
+            if (historySavingCounter > 0) {
+                historySavingCounter &= ~1;
+            }
+
             statusbar(tr("UI XML refresh done, updating object tree..."));
             updateObjectTree( reply.value("ui_filename").value(0) );
+            titleFileText.clear();
             updateWindowTitle();
 
             statusbar(tr("UI XML refresh done, updating properties"));
@@ -736,6 +739,10 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
 
     case commandRefreshImage:
         if (handleNormally) {
+            if (historySavingCounter > 0) {
+                historySavingCounter &= ~2;
+            }
+
             statusbar(tr("Image refresh done, updating..."), 1000);
             imageWidget->disableDrawHighlight();
             imageWidget->refreshImage( reply.value("image_filename").value(0));
@@ -872,6 +879,12 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
     case commandInvalid:
         qDebug() << FCFL << "got message type commandInvalid!";
     }
+
+    if (historySavingCounter == 0) {
+        historySavingCounter = -1;
+        qDebug() << FCFL << "Saving state to state history";
+        historySaveCurrentState();
+    }
 }
 
 
@@ -885,6 +898,7 @@ void MainWindow::messageTimeoutSlot()
 void MainWindow::resetMessageSequenceFlags()
 {
     doRefreshAfterAppList = false;
+    historySavingCounter = -1;
     if (messageTimeoutTimer) messageTimeoutTimer->stop();
 }
 
@@ -1152,7 +1166,7 @@ void MainWindow::createActions()
                                 QKeySequence(tr("Ctrl+M, L")) <<
                                 QKeySequence(tr("Ctrl+M, Ctrl+L")));
 
-    connect( loadXmlAction, SIGNAL( triggered() ), this, SLOT(loadFileData()));
+    connect( loadXmlAction, SIGNAL( triggered() ), this, SLOT(loadStateByDialog()));
 
 
     saveStateAction = new QAction( this );
@@ -1163,6 +1177,15 @@ void MainWindow::createActions()
                                   QKeySequence(tr("Ctrl+M, Ctrl+S")));
 
     connect( saveStateAction, SIGNAL( triggered() ), this, SLOT(saveStateAsArchive()));
+
+    stateHistoryAction = new QAction( this );
+    stateHistoryAction->setObjectName("main statehistory");
+    stateHistoryAction->setText( "&State history" );
+    //stateHistoryAction->setShortcuts(QList<QKeySequence>() << QKeySequence(tr("Ctrl+M, S")) << QKeySequence(tr("Ctrl+M, Ctrl+S")));
+    stateHistoryAction->setMenu(
+                new TDriverStateHistoryMenu(stateHistoryFilePathPrefix, this));
+    connect(stateHistoryAction->menu(), SIGNAL(activated(QString)),
+            SLOT(loadStateFromHistoryDir(QString)));
 
     fontAction = new QAction(tr( "Select default f&ont..." ), this);
     fontAction->setObjectName("main font");

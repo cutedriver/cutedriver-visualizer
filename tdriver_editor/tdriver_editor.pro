@@ -46,14 +46,16 @@ INCLUDEPATH += $$FEATUREDITORLIBDIR
 LIBS += -l$$FEATUREDITOR_LIB
 
 # Input
-HEADERS += ../inc/tdriver_main_types.h
+HEADERS += ../inc/tdriver_main_types.h \
+    tdriver_statehistorymenu.h
 HEADERS += ../inc/tdriver_behaviour.h
 HEADERS += ../inc/tdriver_image_view.h
 HEADERS += ../inc/tdriver_main_window.h
 HEADERS += ../inc/tdriver_recorder.h
 
 SOURCES += ../src/tdriver_libeditor_ui.cpp \
-    ../src/tdriver_libfeatureditor_ui.cpp
+    ../src/tdriver_libfeatureditor_ui.cpp \
+    tdriver_statehistorymenu.cpp
 SOURCES += ../src/tdriver_editor.cpp
 SOURCES += ../src/tdriver_main_window.cpp
 SOURCES += ../src/tdriver_image_view.cpp

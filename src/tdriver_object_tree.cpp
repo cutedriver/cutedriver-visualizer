@@ -840,7 +840,7 @@ void MainWindow::forceRefreshData()
         delayedRefreshAction->setDisabled(false);
         refreshAction->setDisabled(false);
         appsRefreshAction->setDisabled(false);
-        sendAppListRequest();
+        sendAppListRequest(true);
     }
 }
 
@@ -863,7 +863,10 @@ void MainWindow::sendAppListRequest(bool refreshAfter)
 {
     if (refreshAfter) {
         if (doRefreshAfterAppList) return; // don't re-send
-        else doRefreshAfterAppList = true;
+        else {
+            doRefreshAfterAppList = true;
+            historySavingCounter = 1|2; // rotate state history after both ui dump and screenshot received
+        }
     }
     /*
     if (TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" ))) {
@@ -953,14 +956,14 @@ void MainWindow::startRefreshSequence()
 
 
 // Function to refresh visible data - creates path to xml file and loads it.
-void MainWindow::refreshDataDisplay()
+void MainWindow::refreshAppearance()
 {
-    // disable all current highlightings
-    imageWidget->disableDrawHighlight();
-    //load XMLfile and populate tree
-    updateObjectTree( uiDumpFileName);
-    sendUpdateBehaviourXml();
-    doPropertiesTableUpdate();
+    if (defaultFont) {
+        if (objectTree) objectTree->setFont(*defaultFont);
+        if (propertiesTable) propertiesTable->setFont(*defaultFont);
+        if (methodsTable) methodsTable->setFont(*defaultFont);
+        if (signalsTable) signalsTable->setFont(*defaultFont);
+    }
 }
 
 

@@ -341,6 +341,7 @@ private:
     QMap<QString, TestObjectKey> propertyTabLastTimeUpdated;
 
     ApplicationInfo currentApplication;
+    QString titleFileText;
 
     //QString applicationIdFromXml;
 
@@ -466,6 +467,7 @@ private:
     QAction *parseSUT;
     QAction *loadXmlAction;
     QAction *saveStateAction;
+    QAction *stateHistoryAction;
     QAction *fontAction;
     QAction *appsRefreshAction;
     QAction *refreshAction;
@@ -592,6 +594,7 @@ private:
 
     QString keyLastUiStateDir;
     QString keyLastTDriverDir;
+    QString keyHistoryStateDirCount;
 
     // start app dialog
 
@@ -652,16 +655,14 @@ private slots:
     void forceRefreshData();
     void forceRefreshApps();
 
-
-
-    void sendAppListRequest(bool refreshAfter=true);
+    void sendAppListRequest(bool refreshAfter);
 
     QStringList constructRefreshCmd(const QString &command);
     bool sendImageRequest();
     bool sendUiDumpRequest();
     void startRefreshSequence();
 
-    void refreshDataDisplay();
+    void refreshAppearance();
 
     void objectViewItemClicked( QTreeWidgetItem *item, int column );
     void objectViewItemAction( QTreeWidgetItem *item, int column, ContextMenuSelection action, QString method = QString() );
@@ -671,7 +672,10 @@ private slots:
 
     void getParameterXML();
 
-    void loadFileData();
+    void loadStateByDialog();
+    void loadStateFromHistoryDir(const QString &dirPath);
+    void loadStateFromDir(const QString &dirPath);
+    void historySaveCurrentState();
     void saveStateAsArchive();
     void clickedImage();
 
@@ -755,8 +759,10 @@ private:
     QMap<quint32, SentTDriverMsg> sentTDriverMsgs; // maps seqnum of sent message to message type
     QTimer *messageTimeoutTimer;
     bool doRefreshAfterAppList;
+    int historySavingCounter; // -1 for done state; bits to reset: 1 for dui dump, 2 for image
     QWidget *richTextContainerWidget;
     Ui::RichTextContainer *richTextContainer;
+    QString stateHistoryFilePathPrefix;
 
 private:
     void keyPressEvent ( QKeyEvent *event );

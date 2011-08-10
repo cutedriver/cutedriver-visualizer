@@ -27,6 +27,9 @@
 #include <QShortcut>
 #include <QMenu>
 #include <QAction>
+#include <QDir>
+
+static const QString imageSuffix(".png");
 
 void MainWindow::createTopMenuBar() {
 
@@ -66,6 +69,9 @@ void MainWindow::createFileMenu() {
 
     // save state xml
     fileMenu->addAction( saveStateAction );
+
+    // state history submenu
+    fileMenu->addAction( stateHistoryAction );
 
     // font
 
@@ -255,7 +261,7 @@ void MainWindow::openFontDialog() {
         defaultFont->fromString( font.toString() );
         emit defaultFontSet(*defaultFont);
 
-        refreshDataDisplay();
+        refreshAppearance();
 
     }
 
@@ -263,11 +269,10 @@ void MainWindow::openFontDialog() {
 
 
 // LoadFileDataEvent, which is called from button event or menu
-// This loads the xml file selected, updates tree-view and tries to load an image with the same name ( except
-// of course suffix .png )
-void MainWindow::loadFileData()
+// This opens a dialog, loads the xml file selected, updates tree-view,
+// then tries to laod corresponding image file.
+void MainWindow::loadStateByDialog()
 {
-    static const QString imageSuffix(".png");
     QSettings settings;
 
     QString dirName = settings.value(keyLastUiStateDir, QVariant("")).toString();
@@ -280,11 +285,141 @@ void MainWindow::loadFileData()
         settings.setValue(keyLastUiStateDir, info.absolutePath());
 
         // update xml-treeview
+        titleFileText = fileName;
         updateObjectTree( fileName );
 
         // create image filename and send it to imagewidget
         fileName.replace(fileName.lastIndexOf('.'), fileName.size(), imageSuffix);
         imageWidget->refreshImage( fileName );
+
+        updateWindowTitle();
+    }
+}
+
+
+void MainWindow::loadStateFromHistoryDir(const QString &dirPath)
+{
+    loadStateFromDir(dirPath);
+    titleFileText = tr("previous state %1").arg(dirPath.mid(dirPath.lastIndexOf('_'), 2));
+    updateWindowTitle();
+
+}
+
+
+void MainWindow::loadStateFromDir(const QString &dirPath)
+{
+    QDir dir(dirPath);
+
+    QString errText;
+
+    if (!dir.exists()) {
+        errText = tr("There is no directory with path %1").arg(dirPath);
+    }
+    else {
+        QStringList xmlFiles = dir.entryList(QStringList() << "*.xml", QDir::Files);
+        qDebug() << FCFL << dirPath << "contains:" << xmlFiles;
+        if (xmlFiles.isEmpty()) {
+            errText = tr("Directory %1 contains no .xml files").arg(dirPath);
+        }
+        else if (xmlFiles.size() > 1) {
+            errText = tr("Directory %1 contains multiple .xml files:\n\n  %2")
+                    .arg(dirPath).arg(xmlFiles.join("\n  "));
+        }
+        else {
+            QString filePath = dirPath + "/" + xmlFiles.first();
+            updateObjectTree(filePath);
+
+            filePath.replace(filePath.lastIndexOf('.'), filePath.size(), imageSuffix);
+            imageWidget->refreshImage(filePath);
+
+        }
+    }
+    if (!errText.isEmpty()) {
+        QMessageBox::warning(this,
+                             tr("Loading State from a directory"),
+                             errText);
+    }
+}
+
+
+static inline bool recursiveRemove(QString path) {
+    QFileInfo info(path);
+    if (!info.exists()) return false; // shortcut out
+
+    QString fn = info.fileName();
+    if (fn.isEmpty() || fn == ".." || fn == ".") return false;
+
+    if (info.isDir() && !info.isSymLink()) {
+        QDir dir(path);
+        if (!path.endsWith('/')) path.append('/');
+        foreach(const QString &entryName,
+                dir.entryList(/*QDir::NoDotAndDotDot*/)) {
+            recursiveRemove(path + entryName);
+        }
+        path.chop(1); // remove trailing /, added above, just in case
+        if (!QDir().rmdir(path)) return false;
+    }
+    else {
+        QFile file(path);
+        if (!file.remove()) {
+            QString err = file.errorString();
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+static inline QString filledDigitString(unsigned num, int fieldWidth) {
+    static const QString argTemplate("%1");
+    static const QChar fillChar('0');
+    return argTemplate.arg(num, fieldWidth, 10, fillChar);
+}
+
+
+void MainWindow::historySaveCurrentState()
+{
+    QSettings settings;
+
+    unsigned dirCount = settings.value(keyHistoryStateDirCount, QVariant(8)).toUInt();
+
+    if (dirCount == 0) return; // disabled
+    if (dirCount > 99) dirCount = 99; // sanity check
+
+    unsigned ind;
+
+    // remove excess history folders
+    ind = dirCount;
+    forever {
+        if (ind > 99) break; // sanity check
+        QString filePath = stateHistoryFilePathPrefix + filledDigitString(ind, 2);
+        if (!recursiveRemove(filePath)) break; // stop when remove fails
+        qDebug() << FCFL << "Removed directory" << filePath;
+        ++ind;
+    }
+
+    //QString namePrefix = stateHistoryFilePathPrefix.mid(stateHistoryFilePathPrefix.lastIndexOf('/') + 1);
+
+    // shift history folder names
+    for(ind = dirCount; ind > 0; --ind) {
+        QString oldName = stateHistoryFilePathPrefix + filledDigitString(ind-1, 2);
+        QString newName = stateHistoryFilePathPrefix + filledDigitString(ind, 2);
+        QFile file(oldName);
+        if (file.exists() && !file.rename(newName)) {
+            QString err = file.errorString();
+            QString fn = file.fileName();
+            qDebug() << FCFL << "Failed to rotate" << oldName << "->" << newName << ":" << err << "(ignored)";
+        }
+        // else file didn't exist, or rename succeeded
+    }
+
+    QString name =  stateHistoryFilePathPrefix + "00";
+    if (!QDir().mkdir(name)) {
+        qDebug() << FCFL << "Failed to create new directory" << name;
+    }
+    else if (!createStateArchive(name)) {
+        qDebug() << FCFL << "Failed to store state history to dir" << name;
     }
 }
 
@@ -353,7 +488,7 @@ void MainWindow::appSelected() {
         action->setChecked( true );
         currentApplication.setForeground((processId == "0")
                                          /*|| TDriverUtil::isSymbianSut(activeDeviceParams.value( "type" ))*/);
-        sendAppListRequest();
+        sendAppListRequest(true);
     }
     updateWindowTitle();
 }
@@ -433,7 +568,7 @@ bool MainWindow::createStateArchive( QString targetPath )
 
     QStringList targetFiles;
 
-    QStringList problemFiles;
+    QStringList problemList;
 
     int ii;
     int count = sourceFiles.size();
@@ -445,23 +580,25 @@ bool MainWindow::createStateArchive( QString targetPath )
         QString targetFile = targetPath + QFileInfo(sourceFiles.at(ii)).fileName();
         targetFile.replace(QRegExp("_\\d+(\\.[a-zA-Z0-9_]+)$"), "\\1");
         if ( QFileInfo(targetFile) != QFileInfo(sourceFiles.at(ii)) && QFile::exists(targetFile)) {
-            problemFiles << targetFile;
+            problemList << targetFile;
         }
         targetFiles << targetFile;
-    }
+    }    
 
-    if ( !problemFiles.isEmpty() ) {
+    if ( !problemList.isEmpty() ) {
 
         QMessageBox::StandardButton selectedButton =
                 QMessageBox::question(
                     this,
                     tr("Overwrite?"),
-                    tr("Following target files already exist, do you wish to overwrite?\n\n  ") + problemFiles.join("\n  "),
+                    tr("Following target files already exist, do you wish to overwrite?\n\n  ") + problemList.join("\n  "),
                     QMessageBox::Yes | QMessageBox::No,
                     QMessageBox::No);
         if ( selectedButton == QMessageBox::No ) {
             return true;
         }
+
+        problemList.clear();
     }
 
     for (ii=0; ii < count; ++ii) {
@@ -472,21 +609,23 @@ bool MainWindow::createStateArchive( QString targetPath )
                 qDebug() << FCFL << "QFile::remove('" << targetFiles.at(ii) <<"') ==" << result;
             }
 
-            result = QFile::copy( sourceFiles.at(ii), targetFiles.at(ii));
+            QFile source(sourceFiles.at(ii));
+            result = source.copy(targetFiles.at(ii));
             qDebug() << FCFL << "QFile::copy('" << sourceFiles.at(ii) << "', '" << targetFiles.at(ii) << "'') ==" << result;
             if ( !result) {
-                problemFiles << (sourceFiles.at(ii) + " => " + targetFiles.at(ii));
+                problemList << tr("\n%1 => %2 (%3)")
+                               .arg(sourceFiles.at(ii), targetFiles.at(ii), source.errorString());
             }
         }
         else qDebug() << FCFL << "Skipping copying file to itself:" << sourceFiles.at(ii);
     }
 
-    if ( !problemFiles.isEmpty() ) {
+    if ( !problemList.isEmpty() ) {
 
         QMessageBox::warning(
                     this,
                     tr("Failed to copy some files!"),
-                    tr("Following files failed to copy:\n\n  " )+ problemFiles.join("\n  "));
+                    tr("Following files failed to copy:\n" )+ problemList.join("\n"));
 
         return false;
     }

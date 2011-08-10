@@ -144,6 +144,10 @@ void MainWindow::updateWindowTitle() {
         tempTitle += "(" + currentApplication.id + ") - ";
     }
 
+    if (!titleFileText.isEmpty()) {
+        tempTitle += "(" + titleFileText + ") - ";
+    }
+
     tempTitle += ( offlineMode ) ?
                  tr("Offline mode") : ( activeDevice.isEmpty() ?
                                         tr("no device selected") : activeDevice);
