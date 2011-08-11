@@ -551,7 +551,7 @@ void MainWindow::deviceSelected()
 
         // enable recording menu if device type is 'kind of' qt
         recordMenu->setEnabled( deviceIsQt && !applicationsNamesMap.empty() );
-        sendAppListRequest(false);
+        //        sendAppListRequest(false);
     }
     // update window title
     updateWindowTitle();
@@ -583,7 +583,7 @@ bool MainWindow::createStateArchive( QString targetPath )
             problemList << targetFile;
         }
         targetFiles << targetFile;
-    }    
+    }
 
     if ( !problemList.isEmpty() ) {
 
