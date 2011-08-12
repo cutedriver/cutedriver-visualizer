@@ -29,7 +29,7 @@ include TDriverVerify
 Before do
   $ErrorMessage=""
   # <fixtures>            <fixture name="visualizer" plugin="visualizeraccessor" />    </fixtures>
-  MobyUtil::Parameter[:sut_qt][:fixtures][:visualizer_fixture] = { :plugin => "visualizeraccessor" }
+  TDriver::Parameter[:sut_qt][:fixtures][:visualizer_fixture] = { :plugin => "visualizeraccessor" }
         if /win/ =~ RUBY_PLATFORM or /mingw/ =~ RUBY_PLATFORM
                 @tdriver_visualizer_path = "C:/tdriver/visualizer/tdriver_visualizer.exe"
         elsif /linux/ =~ RUBY_PLATFORM
@@ -69,9 +69,9 @@ end
 
 Then("\"$application\" is running") do |$application|
   if ((@os_name == "linux") and RUBY_PLATFORM.downcase.include?("linux")) or
-    ((@os_name == "windows") and RUBY_PLATFORM.downcase.include?("mswin")) or
-    (@os_name == "")
-    if RUBY_PLATFORM.downcase.include?("mswin")
+     ((@os_name == "windows") and (RUBY_PLATFORM.downcase.include?("mswin") or RUBY_PLATFORM.downcase.include?("mingw"))) or
+     (@os_name == "")
+    if RUBY_PLATFORM.downcase.include?("mswin") or RUBY_PLATFORM.downcase.include?("mingw")
       verify_equal($application + '.exe', 30, "Application name should match."){
         @app.executable_name
       }
@@ -87,9 +87,9 @@ end
 
 Then("\"$application\" is not running") do |$application|
   if ((@os_name == "linux") and RUBY_PLATFORM.downcase.include?("linux")) or
-    ((@os_name == "windows") and RUBY_PLATFORM.downcase.include?("mswin")) or
-    (@os_name == "")
-    if RUBY_PLATFORM.downcase.include?("mswin")
+     ((@os_name == "windows") and (RUBY_PLATFORM.downcase.include?("mswin") or RUBY_PLATFORM.downcase.include?("mingw"))) or
+     (@os_name == "")
+    if RUBY_PLATFORM.downcase.include?("mswin") or RUBY_PLATFORM.downcase.include?("mingw")
       verify_false(30, 'application should not be running') {
         @sut.application.name == $application + '.exe'
       }
@@ -112,9 +112,9 @@ Given("visualizer application is ready") do
   @os_name = ""
         @app = @sut.run( :name => @tdriver_visualizer_path, :arguments => "-testability")
   if ((@os_name == "linux") and RUBY_PLATFORM.downcase.include?("linux")) or
-    ((@os_name == "windows") and RUBY_PLATFORM.downcase.include?("mswin")) or
+    ((@os_name == "windows") and (RUBY_PLATFORM.downcase.include?("mswin") or RUBY_PLATFORM.downcase.include?("mingw"))) or
     (@os_name == "")
-    if RUBY_PLATFORM.downcase.include?("mswin")
+    if RUBY_PLATFORM.downcase.include?("mswin") or RUBY_PLATFORM.downcase.include?("mingw")
       #verify_equal($application + '.exe', 30, "Application name should match."){ @app.executable_name }
     else
       #verify_equal($application.to_s, 30, "Application name should match."){ @app.executable_name }

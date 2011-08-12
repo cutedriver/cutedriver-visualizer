@@ -1,25 +1,25 @@
 ############################################################################
-## 
-## Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies). 
-## All rights reserved. 
-## Contact: Nokia Corporation (testabilitydriver@nokia.com) 
-## 
-## This file is part of Testability Driver. 
-## 
-## If you have questions regarding the use of this file, please contact 
-## Nokia at testabilitydriver@nokia.com . 
-## 
-## This library is free software; you can redistribute it and/or 
-## modify it under the terms of the GNU Lesser General Public 
-## License version 2.1 as published by the Free Software Foundation 
-## and appearing in the file LICENSE.LGPL included in the packaging 
-## of this file. 
-## 
+##
+## Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+## All rights reserved.
+## Contact: Nokia Corporation (testabilitydriver@nokia.com)
+##
+## This file is part of Testability Driver.
+##
+## If you have questions regarding the use of this file, please contact
+## Nokia at testabilitydriver@nokia.com .
+##
+## This library is free software; you can redistribute it and/or
+## modify it under the terms of the GNU Lesser General Public
+## License version 2.1 as published by the Free Software Foundation
+## and appearing in the file LICENSE.LGPL included in the packaging
+## of this file.
+##
 ############################################################################
 
 
 
-# The tdriver_visualizer application example must be compiled and in PATH for this test to work 
+# The tdriver_visualizer application example must be compiled and in PATH for this test to work
 require 'tdriver'
 
 include TDriverVerify
@@ -52,7 +52,7 @@ Then("dockwidget title \"$windowtitle\" visibility is \"$visibility\"") do |$win
 end
 
 When /^I make dockwidget "([^\"]*)" visible$/ do |arg1|
-  if not @app.test_object_exists?( "QDockWidget", {:windowTitle => arg1.to_s, :__timeout => 0 })
+  if not @app.test_object_exists?( { :type => "QDockWidget", :windowTitle => arg1.to_s, :__timeout => 0 })
     @app.QMenuBar(:name => "main menubar").QAction( :name => "main view").trigger
     @app.MainWindow.QMenu( :name => 'main view' ).QAction(:text => 'Docks and toolbars').trigger
     @app.MainWindow.QMenu( :title => 'Docks and toolbars').QAction(:text => arg1.to_s).trigger
@@ -60,7 +60,7 @@ When /^I make dockwidget "([^\"]*)" visible$/ do |arg1|
 end
 
 When /^I make dockwidget "([^\"]*)" hidden$/ do |arg1|
-  if @app.test_object_exists?( "QDockWidget", {:windowTitle => arg1.to_s, :__timeout => 0 })
+  if @app.test_object_exists?( {:type => "QDockWidget", :windowTitle => arg1.to_s, :__timeout => 0 })
     @app.QMenuBar(:name => "main menubar").QAction( :name => "main view").trigger
     @app.MainWindow.QMenu( :name => 'main view' ).QAction(:text => 'Docks and toolbars').trigger
     @app.MainWindow.QMenu(:title => 'Docks and toolbars').QAction(:text => arg1.to_s).trigger

@@ -38,8 +38,9 @@ void MainWindow::createTopMenuBar() {
 
     createFileMenu();
 
+    // this menu will be populated by editor widget
     editMenu = new QMenu( tr( "&Edit" ), this );
-    fileMenu->setObjectName("main edit");
+    editMenu->setObjectName("main edit");
     menubar->addMenu(editMenu)->setObjectName("main edit");
 
     createViewMenu();
@@ -57,7 +58,6 @@ void MainWindow::createFileMenu() {
 
     fileMenu = new QMenu( tr( "&File" ), this );
     fileMenu->setObjectName("main file");
-
 
     // parse tdriver parameters xml
     fileMenu->addAction(parseSUT);
