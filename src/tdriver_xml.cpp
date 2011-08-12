@@ -169,7 +169,7 @@ void MainWindow::updateApplicationsList()
     fgAction->setText( "Foreground application" );
     fgAction->setCheckable( true );
 
-    fgAction->setShortcut( QKeySequence( "Ctrl+Alt+" + QString::number( 0 ) ) );
+    fgAction->setShortcut( QKeySequence( "Alt+" + QString::number( 0 ) ) );
 
     applicationsActionMap.insert( fgAction, "0" );
     appsMenu->addAction( fgAction );
@@ -190,7 +190,7 @@ void MainWindow::updateApplicationsList()
         appAction->setCheckable( true );
 
         if (count < 9) {
-            appAction->setShortcut( QKeySequence( "Ctrl+Alt+" + QString::number( count + 1 ) ) );
+            appAction->setShortcut( QKeySequence( "Alt+" + QString::number( count + 1 ) ) );
         }
 
         if ( !currentApplication.isForeground() ) {
@@ -252,7 +252,7 @@ void MainWindow::updateApplicationsList()
         currentApplication.setForeground(true); // may already be true, doesn't matter
         currentApplication.clearInfo();
     }
-    
+
     else {
         qDebug() << FCFL << "currentApplication remains foreground application.";
     }
