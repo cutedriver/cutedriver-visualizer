@@ -78,7 +78,6 @@ protected:
 
     QToolBar *toolbar;
     QVBoxLayout *layout;
-    QLabel *commandLineLabel;
     TDriverConsoleTextEdit *console;
 
     enum { NO_OUTPUT, PROCESS_OUTPUT, RDEBUG_OUTPUT } outputMode;

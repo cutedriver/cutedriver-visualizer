@@ -43,8 +43,6 @@ TDriverRubyInteract::TDriverRubyInteract(QWidget *parent) :
   , stderrFormat(new QTextCharFormat)
   , prevSeqNum(0)
 {
-    commandLineLabel->setText(tr("Eval:"));
-
     stdoutFormat->setForeground(QBrush(Qt::darkGray));
     stdoutFormat->setFontFixedPitch(true);
 

@@ -63,7 +63,6 @@ TDriverRunConsole::TDriverRunConsole(bool makeProc, QWidget *parent) :
     proc(makeProc ? new QProcess(this): NULL),
     toolbar(new QToolBar),
     layout(new QVBoxLayout),
-    commandLineLabel(new QLabel(tr("stdin:"))),
     console(new TDriverConsoleTextEdit),
     outputMode(NO_OUTPUT)
 {
@@ -79,16 +78,8 @@ TDriverRunConsole::TDriverRunConsole(bool makeProc, QWidget *parent) :
     toolbar->addActions(actions());
     toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
-    console->commandLine()->setClearOnTrigger(true);
-
     layout->addWidget(toolbar);
     layout->addWidget(console);
-    {
-        QHBoxLayout *sublayout = new QHBoxLayout();
-        sublayout->addWidget(commandLineLabel);
-        sublayout->addWidget(console->commandLine());
-        layout->addLayout(sublayout);
-    }
 
     setLayout(layout);
 

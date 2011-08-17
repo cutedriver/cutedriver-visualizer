@@ -50,6 +50,7 @@ TDriverConsoleTextEdit::TDriverConsoleTextEdit(QWidget *parent) :
     // note: command line is not displayed by default, it's responsibility of derived class to display it
     configureCommandLine(new TDriverComboLineEdit(this));
     cmdLine->setObjectName("console command line");
+    cmdLine->hide();
 
     commandFormat.setFontItalic(true);
     commandFormat.setForeground(QBrush(Qt::darkGreen));
