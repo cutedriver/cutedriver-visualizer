@@ -20,7 +20,7 @@
 
 #include <QtSql>
 #include "tdriver_translationdb.h"
-
+#include <tdriver_debug_macros.h>
 
 
 
@@ -47,7 +47,11 @@ bool TDriverTranslationDb::connectDB(QString aHost, QString aName, QString aTabl
     db.setUserName(aUser);
     db.setPassword(aPassword);
     locTable = aTable;
-    return connected =  db.open();
+    connected =  db.open();
+    if (!connected) {
+        qDebug() << FFL << "connection error:" << db.lastError().text();
+    }
+    return connected;
 }
 
 void TDriverTranslationDb::disconnectDB()
