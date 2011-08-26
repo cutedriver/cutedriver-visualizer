@@ -124,6 +124,7 @@ public slots:
     void currentChangeAction(int index);
     void focusCurrent();
     bool open(void);
+    bool revert(void);
     bool saveCurrent(void);
     bool saveCurrentAs(void);
     bool saveCurrentAsTemplate(void);
@@ -162,7 +163,7 @@ public slots:
     void documentModification(bool);
 
     // these (and newFile() above) allow programmatically setting up editor files
-    bool loadFile(QString fileName, bool fromTemplate = false);
+    bool loadFile(QString fileName, bool fromTemplate = false, TDriverCodeTextEdit *replaceIn=NULL);
     bool saveFile(QString fileName, int index, bool resetEncoding);
     void recentFileUpdate(QString fileName);
     void updateRecentFileActions();
@@ -217,6 +218,7 @@ private:
     QAction *newAct;
     QAction *newFromTemplateAct;
     QAction *openAct;
+    QAction *revertAct;
     QAction *saveAct;
     QAction *saveAsAct;
     QAction *saveAsTemplateAct;

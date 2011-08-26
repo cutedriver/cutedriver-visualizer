@@ -39,6 +39,7 @@ class QAbstractItemModel;
 class QModelIndex;
 class QCompleter;
 class QFont;
+class QFileSystemWatcher;
 class QTextCodec;
 // contains line numbers, breakpoints, etc.
 class SideArea;
@@ -100,6 +101,9 @@ public slots:
     void setRubyMode(bool enabled);
     void setWrapMode(bool enabled);
     void madeCurrent();
+
+    void enableWatcher();
+    void disableWatcher();
 
     bool doFind(QString findText, QTextCursor &cur, QTextDocument::FindFlags options);
     bool doReplaceFind(QString findText, QString replaceText, QTextCursor &cur, QTextDocument::FindFlags options);
@@ -181,6 +185,7 @@ private:
     QStringList translationDBerrors;
 
     QString fname;
+    QFileSystemWatcher *watcher;
     QTextCodec *fcodec;
     bool fcodecUtfBom;
 
@@ -218,13 +223,15 @@ private:
     bool needRehighlightAfterCursorPosChange;
 
 private slots:
+    void updateSideAreaWidth();
+
     void doInteractiveEval();
 
     void popupCompleterInfo(const QString &text);
     void popupBasicCompleter(QAbstractItemModel *model);
 
     void documentBlockCountChange(int newCount);
-    void updateSideAreaWidth();
+    void fileChanged(const QString &path);
 
     // highlight slots are usually not connect, but called by handleCursorPositionChange
     void doSyntaxHighlight();

@@ -259,6 +259,12 @@ void TDriverTabbedEditor::createActions()
     fileActs.append(openAct);
     connect(openAct, SIGNAL(triggered()), this, SLOT(open()));
 
+    revertAct = new QAction(QIcon(":/images/revert.png"), tr("Revert"), this);
+    revertAct->setObjectName("editor revert");
+    revertAct->setStatusTip(tr("Revert changes from disk"));
+    fileActs.append(revertAct);
+    connect(revertAct, SIGNAL(triggered()), this, SLOT(revert()));
+
     saveAct = new QAction(QIcon(":/images/save.png"), tr("&Save"), this);
     saveAct->setObjectName("editor save");
     saveAct->setShortcuts(QKeySequence::Save);
@@ -273,7 +279,7 @@ void TDriverTabbedEditor::createActions()
     fileActs.append(saveAsAct);
     connect(saveAsAct, SIGNAL(triggered()), this, SLOT(saveCurrentAs()));
 
-    saveAsTemplateAct = new QAction(tr("Save as T&emplate..."), this);
+    saveAsTemplateAct = new QAction(tr("Save as Template..."), this);
     saveAsTemplateAct->setObjectName("editor saveas");
     saveAsTemplateAct->setShortcuts(QKeySequence::SaveAs);
     saveAsTemplateAct->setStatusTip(tr("Save the document as template"));
@@ -287,7 +293,7 @@ void TDriverTabbedEditor::createActions()
     fileActs.append(saveAllAct);
     connect(saveAllAct, SIGNAL(triggered()), this, SLOT(saveAll()));
 
-    closeAct = new QAction(tr("C&lose file"), this);
+    closeAct = new QAction(tr("Close file"), this);
     closeAct->setObjectName("editor close");
     closeAct->setShortcuts(QKeySequence::Close);
     closeAct->setStatusTip(tr("Close the current file"));
@@ -454,6 +460,33 @@ bool TDriverTabbedEditor::open(void)
 
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open..."), dirName);
     return loadFile(fileName);
+}
+
+
+bool TDriverTabbedEditor::revert(void)
+{
+    makeDockVisible(parent());
+
+    QSettings settings;
+    QString dirName;
+    TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
+    int ret = false;
+
+    if (editor && !editor->fileName().isEmpty()) {
+
+        QMessageBox::StandardButton answer =
+                QMessageBox::question(this,
+                                      tr("Revert?"),
+                                      tr("Try to revert to version on disk?\n\nNote: undo will restore current version."),
+                                      QMessageBox::Yes | QMessageBox::Cancel);
+
+        if (answer == QMessageBox::Yes) {
+            qDebug() << FCFL << "Reverting from file" << editor->fileName();
+            ret = loadFile(editor->fileName(), false, editor);
+        }
+        //else qDebug() << FCFL << "Revert cancelled";
+    }
+    return ret;
 }
 
 
@@ -894,7 +927,7 @@ void TDriverTabbedEditor::showIrConsole()
 }
 
 
-bool TDriverTabbedEditor::loadFile(QString fileName, bool fromTemplate)
+bool TDriverTabbedEditor::loadFile(QString fileName, bool fromTemplate, TDriverCodeTextEdit *replaceIn)
 {
     qDebug() << FFL << fileName;
     bool ret = false;
@@ -912,18 +945,22 @@ bool TDriverTabbedEditor::loadFile(QString fileName, bool fromTemplate)
     }
 
     else {
+        TDriverCodeTextEdit *editor = NULL;
         QApplication::setOverrideCursor(Qt::WaitCursor);
-        TDriverCodeTextEdit *editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
+        if (!replaceIn) {
 
-        if (editor && editor->document()->isEmpty() && editor->fileName().isEmpty()) {
-            // just reset modified flag of existing tab (empty, unnamed document)
-            editor->document()->setModified(false);
+            editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
+
+            if (!editor || !editor->document()->isEmpty() || !editor->fileName().isEmpty()) {
+                // create new tab for document to be loaded
+                newFile();
+                editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
+                Q_ASSERT(editor);
+            }
         }
         else {
-            // create new tab for document to be loaded
-            newFile();
-            editor = qobject_cast<TDriverCodeTextEdit*>(currentWidget());
-            Q_ASSERT(editor);
+            // replace text in current editor (eg. when doing revert)
+            editor = replaceIn;
         }
 
         QString stringData;
@@ -957,13 +994,24 @@ bool TDriverTabbedEditor::loadFile(QString fileName, bool fromTemplate)
         }
         editor->setFileCodec(codec);
         editor->setFileCodecUtfBom(haveBom);
-        editor->setPlainText(stringData);
+        if (replaceIn) {
+            QTextCursor tc = editor->textCursor();
+            tc.beginEditBlock();
+            tc.select(QTextCursor::Document);
+            tc.insertText(stringData);
+            tc.endEditBlock();
+        }
+        else {
+            editor->setPlainText(stringData);
+        }
+        editor->document()->setModified(false);
+        QString oldFileName = editor->fileName();
         editor->setFileName(fileName, fromTemplate);
         qDebug() << FCFL
                  << "editor set to file" << editor->fileName()
                  << "codec" << editor->fileCodec()->name();
 
-        if (!fromTemplate) {
+        if (!fromTemplate && (!replaceIn || oldFileName != editor->fileName())) {
             emit documentNameChanged(editor->fileName());
             recentFileUpdate(fileName);
         }
@@ -1018,6 +1066,7 @@ bool TDriverTabbedEditor::saveFile(QString fileName, int index, bool resetEncodi
         return false;
     }
 
+    editor->disableWatcher();
     QApplication::setOverrideCursor(Qt::WaitCursor);
 
     {
@@ -1027,6 +1076,7 @@ bool TDriverTabbedEditor::saveFile(QString fileName, int index, bool resetEncodi
         outStream << editor->toPlainText();
     }
     file.close();
+    editor->enableWatcher();
     editor->document()->setModified(false);
     QApplication::restoreOverrideCursor();
 

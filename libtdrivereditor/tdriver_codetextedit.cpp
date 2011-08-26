@@ -37,6 +37,8 @@
 #include <QStandardItem>
 #include <QStandardItemModel>
 #include <QModelIndex>
+#include <QFileSystemWatcher>
+#include <QPushButton>
 
 #include <tdriver_util.h>
 
@@ -81,6 +83,7 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
     phraseModel(NULL),
     stackHighlightStart(-1),
     translationDBconfigured(false),
+    watcher(new QFileSystemWatcher(this)),
     fcodec(NULL),
     fcodecUtfBom(false),
     lastFindWrapped(false),
@@ -139,6 +142,7 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
 
     setWrapMode(isWrapMode);
 
+    connect(watcher, SIGNAL(fileChanged(QString)), SLOT(fileChanged(QString)));
     connect(document(), SIGNAL(blockCountChanged(int)), this, SLOT(documentBlockCountChange(int)));
     connect(this, SIGNAL(updateRequest(QRect,int)), this, SLOT(updateSideArea(QRect,int)));
     connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(cursorPositionChange()));
@@ -1434,10 +1438,13 @@ void TDriverCodeTextEdit::setFileName(QString fn, bool onlySetModes)
         static int uniqnoname = 0;
         uniqnoname++;
         setObjectName("editor edit noname"+QString::number(uniqnoname));
+        disableWatcher();
     }
     else {
         if (!onlySetModes) {
+            disableWatcher();
             fname = MEC::fileWithPath(fn);
+            enableWatcher();
             setObjectName("editor edit " + fn);
         }
         if (!isRubyMode && (fn.endsWith(".rb") || fn.endsWith(".rb.template"))) {
@@ -1447,6 +1454,7 @@ void TDriverCodeTextEdit::setFileName(QString fn, bool onlySetModes)
             emit modesChanged();
         }
     }
+    qDebug() << FCFL << fname << "watching changes:" << watcher->files() << watcher->directories();
 }
 
 
@@ -2113,6 +2121,38 @@ void TDriverCodeTextEdit::documentBlockCountChange(int newCount)
     }
 
     updateSideAreaWidth();
+}
+
+
+void TDriverCodeTextEdit::fileChanged(const QString &path)
+{
+    QString modifiedText = ( document()->isModified() )
+        ? tr("Warning: The document in editor is marked as modified.")
+        : tr("The document in editor does not have unsaved changed,\nbut it has been marked as modified now.");
+
+    document()->setModified(true);
+
+    QString text =                          tr("This file has changed on disk:")
+            +QString("\n\n%1\n\n%2\n\n").arg(path, modifiedText)
+            +tr("You should do one of these actions to resolve the situation:\n\n")
+            +tr("- Save: overwrite the changed file on disk.\n")
+            +tr("- Save as...: save version in editor with new name.\n")
+            +tr("- Close: lose changes in the version in the editor.\n")
+            +tr("- Revert: load the version on disk to editor.\n");
+
+    QMessageBox::warning(this, tr("Open file has changed on disk"), text);
+}
+
+void TDriverCodeTextEdit::enableWatcher()
+{
+    if (watcher->files().isEmpty() && watcher->directories().isEmpty() && !fname.isEmpty()) {
+        watcher->addPath(fname);
+    }
+}
+
+void TDriverCodeTextEdit::disableWatcher()
+{
+    watcher->removePaths(watcher->directories() + watcher->files());
 }
 
 

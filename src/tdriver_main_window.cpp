@@ -1187,7 +1187,7 @@ void MainWindow::createActions()
     connect(stateHistoryAction->menu(), SIGNAL(activated(QString)),
             SLOT(loadStateFromHistoryDir(QString)));
 
-    fontAction = new QAction(tr( "Select default f&ont..." ), this);
+    fontAction = new QAction(tr( "Select default font..." ), this);
     fontAction->setObjectName("main font");
     //fontAction->setShortcut( QKeySequence( Qt::ControlModifier + Qt::Key_T ) );
 
