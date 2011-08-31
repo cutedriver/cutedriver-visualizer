@@ -742,6 +742,7 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
             if (historySavingCounter > 0) {
                 historySavingCounter &= ~2;
             }
+            qApp->alert(this, 800);
 
             statusbar(tr("Image refresh done, updating..."), 1000);
             imageWidget->disableDrawHighlight();
