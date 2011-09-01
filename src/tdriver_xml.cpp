@@ -354,6 +354,8 @@ QStringList MainWindow::parseSignalsXml( QString filename ) {
         // determine whether to use new xml structure or not... (new == 1.3+)
         if ( !checkVersion( version, "1.3" ) ) {
 
+            QDomElement infoElement = apiDocument.documentElement().elementsByTagName( "tasInfo" ).item( 0 ).toElement();
+            QDomNodeList signalNodes = infoElement.elementsByTagName( "object" );
 
             // collect signal names
             for ( int signalIndex = 0; signalIndex < signalNodes.size(); signalIndex++ ) {
