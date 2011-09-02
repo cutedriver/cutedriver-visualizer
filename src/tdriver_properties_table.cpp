@@ -269,12 +269,12 @@ bool MainWindow::sendUpdateSignalsTableContent()
 
             // list_signals
             if (env.contains("qt")){
-                if (!apiSignalsMap.contains(objectType)) {
 
+            statusbar(tr("Getting signals..."), 3000);
                     QStringList cmd(QStringList()
                                     << activeDevice << "list_signals" << currentApplication.name << objectId << objectType);
-                    return sendTDriverCommand(commandSignalList, cmd, "signal list", objectType);
-                }
+                     qDebug() << FCFL << "List signals:" << cmd;
+                    return sendTDriverCommand(commandSignalList, cmd, "signal list", objectType);                
             }
         }
     }
