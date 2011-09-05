@@ -344,14 +344,23 @@ QStringList MainWindow::parseSignalsXml( QString filename ) {
     QFile f(filename);
     if ( f.exists() && parseXml( filename, apiDocument ) ) {
 
+        // retrieve version from tas message
 
-        QDomElement infoElement = apiDocument.documentElement().elementsByTagName( "tasInfo" ).item( 0 ).toElement();
-        QDomNodeList signalNodes = infoElement.elementsByTagName( "object" );
+        QDomElement root = apiDocument.documentElement();
 
-        // collect signal names
-        for ( int signalIndex = 0; signalIndex < signalNodes.size(); signalIndex++ ) {
+        // retrieve version from tas message
+        QString version = root.toElement().attribute("version");
 
-            /*
+        // determine whether to use new xml structure or not... (new == 1.3+)
+        if ( !checkVersion( version, "1.3" ) ) {
+
+            QDomElement infoElement = apiDocument.documentElement().elementsByTagName( "tasInfo" ).item( 0 ).toElement();
+            QDomNodeList signalNodes = infoElement.elementsByTagName( "object" );
+
+            // collect signal names
+            for ( int signalIndex = 0; signalIndex < signalNodes.size(); signalIndex++ ) {
+
+                /*
                             <tasMessage dateTime="2010.05.19 18:22:07.000" version="0.7.2" >
                               <tasInfo id="1" name="QtSignals" type="QtSignals" >
                                 <object id="0" name="destroyed(QObject*)" type="QtSignal" ></object>
@@ -367,8 +376,32 @@ QStringList MainWindow::parseSignalsXml( QString filename ) {
                             </tasMessage>
                         */
 
-            signalList.append(signalNodes.item(signalIndex ).toElement().attribute( "name" ));
+                signalList.append(signalNodes.item(signalIndex ).toElement().attribute( "name" ));
 
+            }
+
+        }else{
+            QDomElement infoElement = apiDocument.documentElement().elementsByTagName( "tasInfo" ).item( 0 ).toElement();
+            QDomNodeList signalNodes = infoElement.elementsByTagName( "obj" );
+            // collect signal names
+            for ( int signalIndex = 0; signalIndex < signalNodes.size(); signalIndex++ ) {
+            /*
+                          <tasMessage version="1.3">
+                            <tasInfo id="1" name="QtSignals" type="QtSignals">
+                              <obj env="qt" id="0" name="destroyed(QObject*)" type="QtSignal" />
+                              <obj env="qt" id="1" name="destroyed()" type="QtSignal" />
+                              <obj env="qt" id="4" name="customContextMenuRequested(QPoint)" type="QtSignal" />
+                              <obj env="qt" id="28" name="pressed()" type="QtSignal" />
+                              <obj env="qt" id="29" name="released()" type="QtSignal" />
+                              <obj env="qt" id="30" name="clicked(bool)" type="QtSignal" />
+                              <obj env="qt" id="31" name="clicked()" type="QtSignal" />
+                              <obj env="qt" id="32" name="toggled(bool)" type="QtSignal" />
+                              <obj env="qt" id="39" name="triggered(QAction*)" type="QtSignal" />
+                            </tasInfo>
+                          </tasMessage>
+              */
+              signalList.append(signalNodes.item(signalIndex ).toElement().attribute( "name" ));
+           }
         }
     }
     return signalList;

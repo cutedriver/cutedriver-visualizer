@@ -262,18 +262,19 @@ bool MainWindow::sendUpdateSignalsTableContent()
         // retrieve current item object type
         QString objectType = objectTree->currentItem()->data( 0, Qt::DisplayRole ).toString();
         QString objectId   = objectTreeData.value(currentItemPtr).id;
+        QString env = objectTreeData.value(currentItemPtr).env;
 
         // Retrieve the signals from the device
         if (objectType != "sut" && objectType != "application" && objectType != "QAction") {
 
             // list_signals
-            if (activeDevice.contains("qt")){
-                if (!apiSignalsMap.contains(objectType)) {
+            if (env.contains("qt")){
 
+            statusbar(tr("Getting signals..."), 3000);
                     QStringList cmd(QStringList()
                                     << activeDevice << "list_signals" << currentApplication.name << objectId << objectType);
-                    return sendTDriverCommand(commandSignalList, cmd, "signal list", objectType);
-                }
+                     qDebug() << FCFL << "List signals:" << cmd;
+                    return sendTDriverCommand(commandSignalList, cmd, "signal list", objectType);                
             }
         }
     }

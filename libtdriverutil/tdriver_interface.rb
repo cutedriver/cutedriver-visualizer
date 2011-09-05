@@ -646,8 +646,14 @@ class ListenerObject
 
     filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_signals_#{ sut_id }", 'xml' )
     begin
-      data = obj.fixture('signal', 'list_signals')
+      data = obj.fixture('signal', 'list_signals')      
       file_xml << data
+    rescue Exception => e
+      file_xml << '<tasMessage version="1.3">
+      <tasInfo id="1" name="QtSignals" type="QtSignals">
+        <obj env="qt" id="0" name="no signals" type="QtSignal" />
+      </tasInfo>
+    </tasMessage>'
     ensure
       file_xml.close
     end
