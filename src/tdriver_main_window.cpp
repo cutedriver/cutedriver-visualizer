@@ -827,7 +827,9 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
         break;
 
     case commandSignalList:
+
         if (handleNormally) {
+
             QString fileName(reply.value("signal_filename").value(0));
             if (!fileName.isEmpty()) {
                 const QStringList signalsList = parseSignalsXml( fileName );

@@ -93,6 +93,7 @@ unix: {
     tdriver_editor_complete.files += $$QMAKE_LIBDIR_QT/libQtNetwork.so.4
     tdriver_editor_complete.files += $$DESTDIR/libtdrivereditor.so.1
     tdriver_editor_complete.files += $$DESTDIR/libtdriverutil.so.1
+    tdriver_editor_complete.files += $$DESTDIR/libtdriverfeatureditor.so.1
     tdriver_editor_complete.files += $$DESTDIR/libcommon.so.1
     tdriver_editor_complete.files += $$EDITOR_PROTO_DIR/editor_proto
     tdriver_editor_complete.path = /opt/tdriver_visualizer
