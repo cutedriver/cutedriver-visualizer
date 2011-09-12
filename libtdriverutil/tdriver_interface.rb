@@ -714,6 +714,9 @@ class ListenerObject
     begin
       output = sut.list_apps
       file_xml << output
+	rescue Exception => e
+      file_xml << '<tasMessage version="1.3">      
+    </tasMessage>'
     ensure
       file_xml.close
     end
