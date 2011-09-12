@@ -1055,27 +1055,29 @@ bool TDriverTabbedEditor::saveFile(QString fileName, int index, bool resetEncodi
 
     }
 
-    QFile file(fileName);
-    if (!file.open(QFile::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(this, tr("Recent Files"),
-                             tr("Cannot write file %1:\n%2.")
-                             .arg(fileName)
-                             .arg(file.errorString()));
-        updateTab(index);
-
-        return false;
-    }
-
-    editor->disableWatcher();
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-
     {
-        QTextStream outStream(&file);
-        if (editor->fileCodec()) outStream.setCodec(editor->fileCodec());
-        outStream.setGenerateByteOrderMark(editor->fileCodecUtfBom());
-        outStream << editor->toPlainText();
+        QFile file(fileName);
+        if (!file.open(QFile::WriteOnly | QFile::Text)) {
+            QMessageBox::warning(this, tr("Recent Files"),
+                                 tr("Cannot write file %1:\n%2.")
+                                 .arg(fileName)
+                                 .arg(file.errorString()));
+            updateTab(index);
+
+            return false;
+        }
+
+        editor->disableWatcher();
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+
+        {
+            QTextStream outStream(&file);
+            if (editor->fileCodec()) outStream.setCodec(editor->fileCodec());
+            outStream.setGenerateByteOrderMark(editor->fileCodecUtfBom());
+            outStream << editor->toPlainText();
+        }
+        file.close();
     }
-    file.close();
     editor->enableWatcher();
     editor->document()->setModified(false);
     QApplication::restoreOverrideCursor();

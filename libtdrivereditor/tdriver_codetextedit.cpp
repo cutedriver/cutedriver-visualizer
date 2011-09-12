@@ -83,7 +83,7 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
     phraseModel(NULL),
     stackHighlightStart(-1),
     translationDBconfigured(false),
-    watcher(new QFileSystemWatcher(this)),
+    watcher(NULL),
     fcodec(NULL),
     fcodecUtfBom(false),
     lastFindWrapped(false),
@@ -142,7 +142,6 @@ TDriverCodeTextEdit::TDriverCodeTextEdit(QWidget *parent) :
 
     setWrapMode(isWrapMode);
 
-    connect(watcher, SIGNAL(fileChanged(QString)), SLOT(fileChanged(QString)));
     connect(document(), SIGNAL(blockCountChanged(int)), this, SLOT(documentBlockCountChange(int)));
     connect(this, SIGNAL(updateRequest(QRect,int)), this, SLOT(updateSideArea(QRect,int)));
     connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(cursorPositionChange()));
@@ -1454,7 +1453,8 @@ void TDriverCodeTextEdit::setFileName(QString fn, bool onlySetModes)
             emit modesChanged();
         }
     }
-    qDebug() << FCFL << fname << "watching changes:" << watcher->files() << watcher->directories();
+    if (watcher) qDebug() << FCFL << fname << "watching changes:" << watcher->files() << watcher->directories();
+    else qDebug() << FCFL << "not watching for changes";
 }
 
 
@@ -2126,6 +2126,7 @@ void TDriverCodeTextEdit::documentBlockCountChange(int newCount)
 
 void TDriverCodeTextEdit::fileChanged(const QString &path)
 {
+    qDebug() << FCFL << path;
     QString modifiedText = ( document()->isModified() )
         ? tr("Warning: The document in editor is marked as modified.")
         : tr("The document in editor does not have unsaved changed,\nbut it has been marked as modified now.");
@@ -2145,14 +2146,31 @@ void TDriverCodeTextEdit::fileChanged(const QString &path)
 
 void TDriverCodeTextEdit::enableWatcher()
 {
-    if (watcher->files().isEmpty() && watcher->directories().isEmpty() && !fname.isEmpty()) {
-        watcher->addPath(fname);
+    if (watcher) {
+        delete watcher;
+        watcher = NULL;
+    }
+
+    if (!fname.isEmpty()) {
+        watcher = new QFileSystemWatcher((QStringList() << fname), this);
+        connect(watcher, SIGNAL(fileChanged(QString)), SLOT(fileChanged(QString)));
+        qDebug() << FCFL << fname;
+    }
+    else {
+        qDebug() << FCFL << "not enabled" << fname;
     }
 }
 
 void TDriverCodeTextEdit::disableWatcher()
 {
-    watcher->removePaths(watcher->directories() + watcher->files());
+    if (watcher) {
+        qDebug() << FCFL << "with" << watcher->files() << watcher->directories();
+        delete watcher;
+        watcher = NULL;
+    }
+    else {
+        qDebug() << FCFL << "already disabled";
+    }
 }
 
 
