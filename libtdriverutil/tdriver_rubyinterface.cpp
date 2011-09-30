@@ -47,25 +47,25 @@ static const char InteractDelimCstr[] = { delimChar, delimChar, 0 };
 
 
 TDriverRubyInterface::TDriverRubyInterface() :
-        QThread(NULL),
-        rbiPort(0),
-        rbiVersion(0),
-        rbiTDriverVersion(),
-        syncMutex(new QMutex()),
-        msgCond(new QWaitCondition()),
-        helloCond(new QWaitCondition()),
-        process(NULL),
-        conn(NULL),
-        handler(NULL),
-        initState(Closed),
-        stderrEvalSeqNum(0),
-        stdoutEvalSeqNum(0),
+    QThread(NULL),
+    rbiPort(0),
+    rbiVersion(0),
+    rbiTDriverVersion(),
+    syncMutex(new QMutex()),
+    msgCond(new QWaitCondition()),
+    helloCond(new QWaitCondition()),
+    process(NULL),
+    conn(NULL),
+    handler(NULL),
+    initState(Closed),
+    stderrEvalSeqNum(0),
+    stdoutEvalSeqNum(0),
 
-        delimStr(InteractDelimCstr),
-        evalStartStr(delimStr + "START "),
-        evalEndStr(delimStr + "END "),
+    delimStr(InteractDelimCstr),
+    evalStartStr(delimStr + "START "),
+    evalEndStr(delimStr + "END "),
 
-        validThread(NULL)
+    validThread(NULL)
 {
 }
 
@@ -265,6 +265,15 @@ void TDriverRubyInterface::recreateProcess()
 }
 
 
+static inline QString getStdErrText(const QByteArray &data)
+{
+    return data.isEmpty()
+            ? QObject::tr("\n\nNothing read from stderr.")
+            : QObject::tr("\n\nRead from stderr:\n\n%1")
+              .arg(QString::fromLatin1(data));
+}
+
+
 void TDriverRubyInterface::resetRubyConnection(int counter)
 {
     VALIDATE_THREAD;
@@ -294,6 +303,7 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
     if (ok) process->setTextModeEnabled(true);
 
     if (ok) process->start( "ruby", QStringList() << scriptFile );
+    QString startCmdLine("\n\nStart command: ruby " + scriptFile);
 
     if ( ok && !process->waitForStarted( 20000 ) ) {
         initErrorMsg = tr("Could not start Ruby script '%1'" ).arg(scriptFile);
@@ -302,15 +312,20 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
         ok = false;
     }
 
-    if ( ok && !process->waitForReadyRead(40000)) {
-        initErrorMsg = tr("Could not read startup parameters." );
+    if ( ok && !process->waitForReadyRead(20000)) {
+        initErrorMsg = tr("Could not read startup parameters from server." );
+        initErrorMsg += startCmdLine;
+        initErrorMsg += getStdErrText(process->readAllStandardError());
+
         qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
         emit rbiError(errorTitle, initErrorMsg, "");
         ok = false;
     }
 
     if ( ok && !process->canReadLine()) {
-        initErrorMsg = tr("Could not read full line of." );
+        initErrorMsg = tr("Could not read full line of startup parameters." );
+        initErrorMsg += startCmdLine;
+        initErrorMsg += getStdErrText(process->readAllStandardError());
         qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
         emit rbiError(errorTitle, initErrorMsg, "");
         ok = false;
@@ -325,15 +340,18 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
         // "TDriverVisualizerRubyInterface version #{tdriver_interface_rb_version} port #{server.addr[1]} tdriver #{tdriver_gem_version}"
         int scriptVersion = 0;
         if (startupList.length() < 7 ||
-            startupList.at(0) != "TDriverVisualizerRubyInterface" ||
-            startupList.at(1) != "version" ||
-            (scriptVersion = startupList.at(2).toInt()) == 0 ||
-            startupList.at(3) != "port" ||
-            startupList.at(4).toInt() == 0 ||
-            startupList.at(5) != "tdriver" ||
-            startupList.at(6).isEmpty())
+                startupList.at(0) != "TDriverVisualizerRubyInterface" ||
+                startupList.at(1) != "version" ||
+                (scriptVersion = startupList.at(2).toInt()) == 0 ||
+                startupList.at(3) != "port" ||
+                startupList.at(4).toInt() == 0 ||
+                startupList.at(5) != "tdriver" ||
+                startupList.at(6).isEmpty())
         {
             initErrorMsg = tr("Invalid first line '%1'.").arg(QString::fromLocal8Bit(startupLine));
+            initErrorMsg += startCmdLine;
+            initErrorMsg += getStdErrText(process->readAllStandardError());
+
             qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
             emit rbiError(errorTitle, initErrorMsg, process->readAllStandardOutput());
             ok = false;
@@ -344,6 +362,8 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
                               "Please find and remove obsolete tdriver_interface.rb file and reinstall.")
                     .arg(scriptVersion)
                     .arg(REQUIRED_TDRIVER_INTERFACE_RB_VERSION);
+            initErrorMsg += startCmdLine;
+            initErrorMsg += getStdErrText(process->readAllStandardError());
             qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
             emit rbiError(errorTitle, initErrorMsg, process->readAllStandardOutput());
             ok = false;
@@ -357,6 +377,8 @@ void TDriverRubyInterface::resetRubyConnection(int counter)
 
     if (ok && ((rbiPort < 1 || rbiPort > 65535) || rbiVersion != REQUIRED_TDRIVER_INTERFACE_RB_VERSION)) {
         initErrorMsg = tr("Invalid values on first line: rbiPort %1, rbiVersion %2").arg(rbiPort).arg(rbiVersion);
+        initErrorMsg += startCmdLine;
+        initErrorMsg += getStdErrText(process->readAllStandardError());
         qDebug() << FCFL << "emit error" << errorTitle << initErrorMsg;
         emit rbiError(errorTitle, initErrorMsg, process->readAllStandardOutput());
         ok = false;
@@ -447,8 +469,8 @@ void TDriverRubyInterface::close()
 void TDriverRubyInterface::readProcessHelper(int fnum, QByteArray &readBuffer, quint32 &seqNum, QByteArray &evalBuffer)
 {
     QByteArray data( (fnum == 0)
-                    ? process->readAllStandardOutput()
-                        : process->readAllStandardError());
+                     ? process->readAllStandardOutput()
+                     : process->readAllStandardError());
 
     const char *streamName = (fnum == 0) ? "STDOUT" : "STDERR";
 
