@@ -150,7 +150,7 @@ QString TDriverRubyInterface::goOnline()
         if (!handler->isHelloReceived()) {
             // now there should be a TCP connection, but no messages received yet
             qDebug() << FCFL << "Waiting for HELLO";
-            bool ok = handler->waitHello(5000);
+            bool ok = handler->waitHello(30000);
             qDebug() << FCFL << "after waitHello:" << ok << handler->isHelloReceived();
             if (!handler->isHelloReceived()) {
                 errorMessage = tr("TDriver interface did not send valid hello message!");
