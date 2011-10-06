@@ -644,6 +644,13 @@ class ListenerObject
       " : sut.application(:name => '#{app_name}').child( :type => '#{object_type}', :id => '#{object_id}', :__index => 0).fixture('signal', 'list_signals')"
     obj = sut.application(:name => app_name.to_s).child( :type => object_type.to_s, :id => object_id.to_s, :__index => 0)
 
+    if object_type=="application"
+      obj = sut.application(:name => app_name.to_s)
+    else
+      obj = sut.application(:name => app_name.to_s).child( :type => object_type.to_s, :id => object_id.to_s, :__index => 0)
+    end
+
+
     filename_xml, file_xml = create_output_file(@working_directory, "visualizer_class_signals_#{ sut_id }", 'xml' )
     begin
       data = obj.fixture('signal', 'list_signals')      

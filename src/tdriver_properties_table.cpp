@@ -265,7 +265,7 @@ bool MainWindow::sendUpdateSignalsTableContent()
         QString env = objectTreeData.value(currentItemPtr).env;
 
         // Retrieve the signals from the device
-        if (objectType != "sut" && objectType != "application" && objectType != "QAction") {
+        if (objectType != "sut" && objectType != "QAction") {
 
             // list_signals
             if (env.contains("qt")){
