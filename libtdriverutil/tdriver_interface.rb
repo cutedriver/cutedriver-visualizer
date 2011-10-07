@@ -641,8 +641,7 @@ class ListenerObject
 
   def get_signal_xml( sut, sut_id, app_name, object_id, object_type )
     $lg.debug this_method +
-      " : sut.application(:name => '#{app_name}').child( :type => '#{object_type}', :id => '#{object_id}', :__index => 0).fixture('signal', 'list_signals')"
-    obj = sut.application(:name => app_name.to_s).child( :type => object_type.to_s, :id => object_id.to_s, :__index => 0)
+      " : sut.application(:name => '#{app_name}').child( :type => '#{object_type}', :id => '#{object_id}', :__index => 0).fixture('signal', 'list_signals')"    
 
     if object_type=="application"
       obj = sut.application(:name => app_name.to_s)
