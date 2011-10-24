@@ -676,6 +676,12 @@ class ListenerObject
     begin
       data = sut.get_ui_dump( *[ ( { :id => app_id } unless app_id.nil? ) ].compact )
       file_xml << data
+	rescue Errno::ECONNRESET
+	 #Connection lost retry
+	 sut.disconnect
+	 sut.connect(:Id => sut.id)
+	 data = sut.get_ui_dump( *[ ( { :id => app_id } unless app_id.nil? ) ].compact )
+     file_xml << data
     ensure
       file_xml.close
     end
