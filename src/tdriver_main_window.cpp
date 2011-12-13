@@ -1285,6 +1285,24 @@ void MainWindow::createActions()
 
     connect( visualizerHelp, SIGNAL( triggered() ), this, SLOT( showVisualizerHelp() ) );
 
+    visualizerQtWindowsHelp = new QAction( this );
+    visualizerQtWindowsHelp->setObjectName("main help qt windows");
+    visualizerQtWindowsHelp->setText( tr( "&Qt Windows API" ) );
+
+    connect( visualizerQtWindowsHelp, SIGNAL( triggered() ), this, SLOT( showVisualizerQtWindowsHelp() ) );
+
+    visualizerQtLinuxHelp = new QAction( this );
+    visualizerQtLinuxHelp->setObjectName("main help qt linux");
+    visualizerQtLinuxHelp->setText( tr( "&Qt Linux API" ) );
+
+    connect( visualizerQtLinuxHelp, SIGNAL( triggered() ), this, SLOT( showVisualizerQtLinuxHelp() ) );
+
+    visualizerQtSymbianHelp = new QAction( this );
+    visualizerQtSymbianHelp->setObjectName("main help qt symbian");
+    visualizerQtSymbianHelp->setText( tr( "&Qt Symbian API" ) );
+
+    connect( visualizerQtSymbianHelp, SIGNAL( triggered() ), this, SLOT( showVisualizerQtSymbianHelp() ) );
+
     aboutVisualizer = new QAction(this);
     aboutVisualizer->setObjectName("main help about");
     aboutVisualizer->setText( tr( "About Visualizer" ));

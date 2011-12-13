@@ -461,6 +461,9 @@ private:
     // help
     QAction *visualizerAssistant;
     QAction *visualizerHelp;
+    QAction *visualizerQtWindowsHelp;
+    QAction *visualizerQtLinuxHelp;
+    QAction *visualizerQtSymbianHelp;
     QAction *aboutVisualizer;
 
     // file
@@ -637,6 +640,9 @@ private slots:
     void showContextVisualizerAssistant( const QString &page );
 
     void showVisualizerHelp();
+    void showVisualizerQtWindowsHelp();
+    void showVisualizerQtLinuxHelp();
+    void showVisualizerQtSymbianHelp();
     void showAboutVisualizer();
 
 

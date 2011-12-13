@@ -70,6 +70,34 @@ void MainWindow::showVisualizerHelp()
     QDesktopServices::openUrl(helpUrl);
 }
 
+
+//    Shows TDriver API Doc for qt windows
+void MainWindow::showVisualizerQtWindowsHelp()
+{
+    //showContextVisualizerAssistant("howto-visualizer.html");
+    //QUrl helpUrl("https://cwiki.nokia.com/Testability/TDriverVisualizer");
+    QUrl helpUrl(TDriverUtil::helpUrlString("/qt_windows/index.html"));
+    QDesktopServices::openUrl(helpUrl);
+}
+
+//    Shows TDriver API Doc for qt linux
+void MainWindow::showVisualizerQtLinuxHelp()
+{
+    //showContextVisualizerAssistant("howto-visualizer.html");
+    //QUrl helpUrl("https://cwiki.nokia.com/Testability/TDriverVisualizer");
+    QUrl helpUrl(TDriverUtil::helpUrlString("/qt_linux/index.html"));
+    QDesktopServices::openUrl(helpUrl);
+}
+
+//    Shows TDriver API Doc for qt symbian
+void MainWindow::showVisualizerQtSymbianHelp()
+{
+    //showContextVisualizerAssistant("howto-visualizer.html");
+    //QUrl helpUrl("https://cwiki.nokia.com/Testability/TDriverVisualizer");
+    QUrl helpUrl(TDriverUtil::helpUrlString("/qt_symbian/index.html"));
+    QDesktopServices::openUrl(helpUrl);
+}
+
 //    Shows the main TDriver Visualizer help page.
 void MainWindow::showMainVisualizerAssistant()
 {

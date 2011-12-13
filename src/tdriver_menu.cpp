@@ -199,6 +199,9 @@ void MainWindow::createHelpMenu()
     // TDriver help
     helpMenu->addAction( visualizerAssistant );
     helpMenu->addAction( visualizerHelp );
+    helpMenu->addAction( visualizerQtWindowsHelp );
+    helpMenu->addAction( visualizerQtLinuxHelp );
+    helpMenu->addAction( visualizerQtSymbianHelp );
 
     // Visualizer Help
     helpMenu->addSeparator();

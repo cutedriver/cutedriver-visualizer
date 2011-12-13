@@ -81,7 +81,7 @@ QT += xml
 unix: {
     target.path = /opt/tdriver_visualizer
     documentation.path = /opt/tdriver_visualizer/help
-    documentation.files = ../doc/help/qdoc-temp/*
+    documentation.files = ../help/*
 
     # tdriver_editor.files = debian/etc/tdriver/visualizer/tdriver_visualizer.sh
     tdriver_editor_complete.files += /usr/lib/libaudio.so.2
@@ -127,7 +127,7 @@ win32: {
     tdriver_editor_complete.files += $$MY_QTDIR/QtNetwork4.dll
 
     documentation.path = C:/tdriver/visualizer/help
-    documentation.files = ../doc/help/qdoc-temp/*
+    documentation.files = ../help/*
 }
 
 # message($${tdriver_editor_complete.files})
