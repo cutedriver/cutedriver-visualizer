@@ -131,11 +131,18 @@ QList<QStringList> TDriverTranslationDb::getTranslationsLike(QString searchText)
             //One query per language
             foreach (QString language, languageFilter)
             {
-                query.exec("select lname, `" + language + "` from " + locTable + " where `" + language + "` like '%" + searchText + "%'");
+                //Try to find exact match
+                query.exec("select lname, `" + language + "` from " + locTable + " where `" + language + "` = '" + searchText + "'");
+
+                if (query.size() <= 0){
+                  query.exec("select lname, `" + language + "` from " + locTable + " where `" + language + "` like '%" + searchText + "%'");
+                }
+
                 while (query.next())
                 {
                     results << (QStringList() << query.value(0).toString()  << query.value(1).toString() << language );
                 }
+
             }
         }
     }
