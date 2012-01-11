@@ -1641,11 +1641,15 @@ Warning: Use with caution - function parameters must match exactly to the Qt slo
 <a name="GenericSut:child"></a><div class="feature_title"><a href="#GenericSut:child" class="feature_name_link"><span class="feature_title_text">child</span></a></div>
 <br><div class="feature_section_title">Description:</div>
 <div class="feature_description">Creates a child test object from this SUT. SUT object will be associated as child test objects parent.<br>
+<br>
 <b>NOTE:</b> Subsequent calls to TestObject#child( rule ) always returns reference to same Testobject:<br>
 <pre class="block">a = sut.child( :type =&gt; 'Button', :text =&gt; '1' )
 b = sut.child( :type =&gt; 'Button', :text =&gt; '1' )
 a.eql?( b ) # =&gt; true</pre>
 <br>
+<b>NOTE:</b> If the parameter 'use_find_object' in tdriver_parameters.xml is true (default), objects with visibleOnScreen value 'false' might be
+optimized out and not appear in the results.
+<br><br>
 </div>
 <br><div class="feature_section_title">Call sequence:</div>
 <div class="feature_call_sequence">object.child( <span title="Mandatory argument" class="hover_text">attributes</span> ) <br>
@@ -1721,6 +1725,9 @@ a.eql?( b ) # =&gt; true</pre>
 b = to.child( :type =&gt; 'Button', :text =&gt; '1' )
 a.eql?( b ) # =&gt; true</pre>
 <br>
+<b>NOTE:</b> If the parameter 'use_find_object' in tdriver_parameters.xml is true (default), objects with visibleOnScreen value 'false' might be
+optimized out and not appear in the results.
+<br><br>
 </div>
 <br><div class="feature_section_title">Call sequence:</div>
 <div class="feature_call_sequence">object.child( <span title="Mandatory argument" class="hover_text">attributes</span> ) <br>
@@ -1849,7 +1856,10 @@ a.eql?( b ) # =&gt; true</pre>
 <div id="GenericTestObject.@name">
 <a name="GenericTestObject:children"></a><div class="feature_title"><a href="#GenericTestObject:children" class="feature_name_link"><span class="feature_title_text">children</span></a></div>
 <br><div class="feature_section_title">Description:</div>
-<div class="feature_description">Function similar to child, but returns an array of children test objects that meet the given criteria<br>
+<div class="feature_description">Function similar to child, but returns an array of children test objects that meet the given criteria.
+<br><br>
+<b>NOTE:</b> If the parameter 'use_find_object' in tdriver_parameters.xml is true (default), objects with visibleOnScreen value 'false' might be
+optimized out and not appear in the results.<br>
 </div>
 <br><div class="feature_section_title">Call sequence:</div>
 <div class="feature_call_sequence">object.children( <span title="Mandatory argument" class="hover_text">attributes</span>, <span class="optional_argument" title="Optional argument"><span class="hover_text">find_all_children</span></span> ) <br>
@@ -14126,7 +14136,8 @@ https://projects.forum.nokia.com/Testabilitydriver/wiki/FeatureSutSetupTeardown<
 <div id="GenericVerification.@name">
 <a name="GenericVerification:test_object_exists?"></a><div class="feature_title"><a href="#GenericVerification:test_object_exists?" class="feature_name_link"><span class="feature_title_text">test_object_exists?</span></a></div>
 <br><div class="feature_section_title">Description:</div>
-<div class="feature_description">Checks if a child test object matching the given criteria can be found, under this application object or test object.<br>
+<div class="feature_description">Checks if a child test object matching the given criteria can be found, under this application object or test object.
+NOTE: This won't work with the visibleOnScreen attribute unless you disable the sut parameter use_find_object.<br>
 </div>
 <br><div class="feature_section_title">Call sequence:</div>
 <div class="feature_call_sequence">object.test_object_exists?( <span class="optional_argument" title="Optional argument"><span class="hover_text">attributes, ..., ...</span></span> ) <br>

@@ -1628,11 +1628,15 @@ Warning: Use with caution - function parameters must match exactly to the Qt slo
 <a name="GenericSut:child"></a><div class="feature_title"><a href="#GenericSut:child" class="feature_name_link"><span class="feature_title_text">child</span></a></div>
 <br><div class="feature_section_title">Description:</div>
 <div class="feature_description">Creates a child test object from this SUT. SUT object will be associated as child test objects parent.<br>
+<br>
 <b>NOTE:</b> Subsequent calls to TestObject#child( rule ) always returns reference to same Testobject:<br>
 <pre class="block">a = sut.child( :type =&gt; 'Button', :text =&gt; '1' )
 b = sut.child( :type =&gt; 'Button', :text =&gt; '1' )
 a.eql?( b ) # =&gt; true</pre>
 <br>
+<b>NOTE:</b> If the parameter 'use_find_object' in tdriver_parameters.xml is true (default), objects with visibleOnScreen value 'false' might be
+optimized out and not appear in the results.
+<br><br>
 </div>
 <br><div class="feature_section_title">Call sequence:</div>
 <div class="feature_call_sequence">object.child( <span title="Mandatory argument" class="hover_text">attributes</span> ) <br>
@@ -1708,6 +1712,9 @@ a.eql?( b ) # =&gt; true</pre>
 b = to.child( :type =&gt; 'Button', :text =&gt; '1' )
 a.eql?( b ) # =&gt; true</pre>
 <br>
+<b>NOTE:</b> If the parameter 'use_find_object' in tdriver_parameters.xml is true (default), objects with visibleOnScreen value 'false' might be
+optimized out and not appear in the results.
+<br><br>
 </div>
 <br><div class="feature_section_title">Call sequence:</div>
 <div class="feature_call_sequence">object.child( <span title="Mandatory argument" class="hover_text">attributes</span> ) <br>
@@ -1836,7 +1843,10 @@ a.eql?( b ) # =&gt; true</pre>
 <div id="GenericTestObject.@name">
 <a name="GenericTestObject:children"></a><div class="feature_title"><a href="#GenericTestObject:children" class="feature_name_link"><span class="feature_title_text">children</span></a></div>
 <br><div class="feature_section_title">Description:</div>
-<div class="feature_description">Function similar to child, but returns an array of children test objects that meet the given criteria<br>
+<div class="feature_description">Function similar to child, but returns an array of children test objects that meet the given criteria.
+<br><br>
+<b>NOTE:</b> If the parameter 'use_find_object' in tdriver_parameters.xml is true (default), objects with visibleOnScreen value 'false' might be
+optimized out and not appear in the results.<br>
 </div>
 <br><div class="feature_section_title">Call sequence:</div>
 <div class="feature_call_sequence">object.children( <span title="Mandatory argument" class="hover_text">attributes</span>, <span class="optional_argument" title="Optional argument"><span class="hover_text">find_all_children</span></span> ) <br>
@@ -5482,7 +5492,7 @@ For custom values see the gesture_to method.<br>
 )<br></pre>
 <div class="scenario_description">The optional parameters argument can be used to set :use_tap_screen value<br>
 </div>
-<pre class="passed"> @app.Node.gesture_points(
+<pre class="failed"># [!!] scenario failed<br> @app.Node.gesture_points(
 [
 {'x' =&gt; 220, 'y' =&gt; 120, 'interval' =&gt; 100},
 {'x' =&gt; 200, 'y' =&gt; 300, 'interval' =&gt; 80}
@@ -8770,13 +8780,13 @@ The values are relative to the object and if not set then the center point of th
 <pre class="passed">@app.MainWindow.pinch_zoom( :type =&gt; :in, :speed =&gt; 2, :distance_1 =&gt; 50, :distance_2 =&gt; 50, :direction =&gt; 70, :differential =&gt; 10 )<br></pre>
 <div class="scenario_description">Execute pinch_zoom method with custom parameters (zooming out)<br>
 </div>
-<pre class="failed"># [!!] scenario failed<br>@app.MainWindow.pinch_zoom( :type =&gt; :out, :speed =&gt; 2, :distance_1 =&gt; 50, :distance_2 =&gt; 50, :direction =&gt; 70, :differential =&gt; 10 )<br></pre>
+<pre class="passed">@app.MainWindow.pinch_zoom( :type =&gt; :out, :speed =&gt; 2, :distance_1 =&gt; 50, :distance_2 =&gt; 50, :direction =&gt; 70, :differential =&gt; 10 )<br></pre>
 <div class="scenario_description">Execute pinch_zoom method with custom parameters (zooming in, one finger stationary)<br>
 </div>
 <pre class="passed">@app.MainWindow.pinch_zoom( :type =&gt; :in, :speed =&gt; 2, :distance_1 =&gt; 150, :distance_2 =&gt; 0, :direction =&gt; 0, :differential =&gt; 10 )<br></pre>
 <div class="scenario_description">Execute pinch_zoom method with custom parameters (zooming out, one finger stationary)<br>
 </div>
-<pre class="failed"># [!!] scenario failed<br>@app.MainWindow.pinch_zoom( :type =&gt; :out, :speed =&gt; 2, :distance_1 =&gt; 0, :distance_2 =&gt; 150, :direction =&gt; 0, :differential =&gt; 10 )<br></pre>
+<pre class="passed">@app.MainWindow.pinch_zoom( :type =&gt; :out, :speed =&gt; 2, :distance_1 =&gt; 0, :distance_2 =&gt; 150, :direction =&gt; 0, :differential =&gt; 10 )<br></pre>
 <br><a href="#top" class="jump_to">Jump to top of page</a><br><br>
 </div>
 <div id="QtMultitouch.@name">
@@ -10164,7 +10174,7 @@ not set the center point of the object will be used.<br>
 <br><div class="feature_section_title">Examples:</div>
 <div class="scenario_description">Execute 180 degree one point clockwise custom rotation<br>
 </div>
-<pre class="passed">@app.MainWindow.rotate( :type =&gt; :one_point, :radius =&gt; 100, :rotate_direction =&gt; :Clockwise, :distance =&gt; 180, :speed =&gt; 3, :direction =&gt; :Vertical )<br></pre>
+<pre class="failed"># [!!] scenario failed<br>@app.MainWindow.rotate( :type =&gt; :one_point, :radius =&gt; 100, :rotate_direction =&gt; :Clockwise, :distance =&gt; 180, :speed =&gt; 3, :direction =&gt; :Vertical )<br></pre>
 <div class="scenario_description">Execute 360 degree one point clockwise custom rotation<br>
 </div>
 <pre class="passed">@app.MainWindow.rotate( :type =&gt; :one_point, :radius =&gt; 100, :rotate_direction =&gt; :Clockwise, :distance =&gt; 360, :speed =&gt; 3, :direction =&gt; :Vertical )<br></pre>
@@ -10608,7 +10618,7 @@ The application will also be brought to the foregound.<br>
 <br><div class="feature_section_title">Examples:</div>
 <div class="scenario_description">Testing scroll without arguments, this brings the web element visible on screen<br>
 </div>
-<pre class="passed">@app.a(:elementText =&gt; 'not visible test link').scroll<br></pre>
+<pre class="failed"># [!!] scenario failed<br>@app.a(:elementText =&gt; 'not visible test link').scroll<br></pre>
 <div class="scenario_description">Scrolls the webframe to wanted direction (x: 110, y: 0)<br>
 </div>
 <pre class="passed">@app.QWebFrame(:__index=&gt;2).scroll(110,0)<br></pre>
@@ -13995,7 +14005,8 @@ https://projects.forum.nokia.com/Testabilitydriver/wiki/FeatureSutSetupTeardown<
 <div id="GenericVerification.@name">
 <a name="GenericVerification:test_object_exists?"></a><div class="feature_title"><a href="#GenericVerification:test_object_exists?" class="feature_name_link"><span class="feature_title_text">test_object_exists?</span></a></div>
 <br><div class="feature_section_title">Description:</div>
-<div class="feature_description">Checks if a child test object matching the given criteria can be found, under this application object or test object.<br>
+<div class="feature_description">Checks if a child test object matching the given criteria can be found, under this application object or test object.
+NOTE: This won't work with the visibleOnScreen attribute unless you disable the sut parameter use_find_object.<br>
 </div>
 <br><div class="feature_section_title">Call sequence:</div>
 <div class="feature_call_sequence">object.test_object_exists?( <span class="optional_argument" title="Optional argument"><span class="hover_text">attributes, ..., ...</span></span> ) <br>
