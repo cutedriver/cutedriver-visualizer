@@ -20,9 +20,8 @@
 
 
 #include "tdriver_main_window.h"
-
+#include <QPlastiqueStyle>
 #include <tdriver_util.h>
-
 #include <QDateTime>
 #include <QProcess>
 
@@ -74,6 +73,7 @@ int main(int argc, char *argv[])
     app.setOrganizationName("Nokia");
     app.setApplicationName("TDriver_Visualizer");
 
+    app.setStyle(new QPlastiqueStyle);
     debugOutFile = new QFile(QDir::tempPath() + "/tdriver_visualizer_main.log" );
 
     // workaround for deadlock in Qt 4.7.2+
