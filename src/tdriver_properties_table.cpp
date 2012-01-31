@@ -61,7 +61,7 @@ void MainWindow::doPropertiesTableUpdate()
         TestObjectKey currentItemPtr = ptr2TestObjectKey(objectTree->currentItem());
 
         // retrieve current table index
-        int currentTab = tabWidget->currentIndex();
+        int currentTab = tabWidget->currentIndex();        
 
         if ( currentTab == 0 && propertyTabLastTimeUpdated.value( "attributes" ) != currentItemPtr ) {
             updateAttributesTableContent();
@@ -183,6 +183,7 @@ void MainWindow::updateMethodsTableContent() {
     methodsTable->clearContents();
     methodsTable->setRowCount( 0 );
 
+
     // update table only if item selected in object tree
     if ( objectTree->currentItem() != NULL ) {
 
@@ -235,6 +236,7 @@ void MainWindow::updateMethodsTableContent() {
 
         // sort methods table
         methodsTable->sortItems( 0 );
+        methodsTable->resizeColumnsToContents();
 
     }
 
@@ -277,6 +279,7 @@ bool MainWindow::sendUpdateSignalsTableContent()
                     return sendTDriverCommand(commandSignalList, cmd, "signal list", objectType);                
             }
         }
+        signalsTable->resizeColumnsToContents();
     }
     return false;
 }
@@ -341,6 +344,7 @@ void MainWindow::updateAttributesTableContent()
         connect(propertiesTable, SIGNAL(itemChanged(QTableWidgetItem*)),
                 SLOT(changePropertiesTableValue(QTableWidgetItem*)) );
         propertiesTable->update();
+        propertiesTable->resizeColumnsToContents();
     }
     propertyTabLastTimeUpdated.insert( "attributes", currentItemPtr );
 }
