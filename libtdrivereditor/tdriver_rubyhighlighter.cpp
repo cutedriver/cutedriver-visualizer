@@ -34,7 +34,8 @@ TDriverRubyHighlighter::TDriverRubyHighlighter(QTextDocument *parent) :
         rubyMethodFormat(new QTextCharFormat),
         rubyClassFormat(new QTextCharFormat),
         rubySymbolFormat(new QTextCharFormat),
-        rubyCommentFormat(new QTextCharFormat)
+        rubyCommentFormat(new QTextCharFormat),
+        rubyClassVariableFormat(new QTextCharFormat)
 {
     QList<const HighlightingRuleBase*> rules;
 
@@ -43,9 +44,11 @@ TDriverRubyHighlighter::TDriverRubyHighlighter(QTextDocument *parent) :
     rubyClassFormat->setForeground(Qt::darkRed);
     rubyClassFormat->setFontWeight(QFont::Bold);
 
-    rubySymbolFormat->setForeground(Qt::darkYellow);
+    rubySymbolFormat->setForeground(Qt::darkCyan);
 
-    rubyCommentFormat->setForeground(Qt::red);
+    rubyCommentFormat->setForeground(Qt::gray);
+
+    rubyClassVariableFormat->setForeground(Qt::darkGreen);
 
     /*
        Note: order of highlight rule list lists is:
@@ -132,6 +135,16 @@ TDriverRubyHighlighter::TDriverRubyHighlighter(QTextDocument *parent) :
         HighlightingRule1 *rule1 = new HighlightingRule1(this);
         rule1->matchPat = new QRegExp(":\\w*");
         rule1->format = rubySymbolFormat;
+        rules.append(rule1);
+    }
+    ruleListList.append(rules);
+    rules.clear();
+
+    // ruby class variables
+    {
+        HighlightingRule1 *rule1 = new HighlightingRule1(this);
+        rule1->matchPat = new QRegExp("@\\w*");
+        rule1->format = rubyClassVariableFormat;
         rules.append(rule1);
     }
     ruleListList.append(rules);

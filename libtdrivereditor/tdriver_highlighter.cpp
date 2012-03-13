@@ -49,8 +49,8 @@ TDriverHighlighter::TDriverHighlighter(QTextDocument *parent) :
     keywordFormat->setFontWeight(QFont::Bold);
 
     // bright green HSV is 120, 255, 255
-    singleQuotationFormat->setForeground(QColor::fromHsv(150, 255, 150));
-    doubleQuotationFormat->setForeground(QColor::fromHsv(90, 255, 150));
+    singleQuotationFormat->setForeground(Qt::darkYellow);
+    doubleQuotationFormat->setForeground(Qt::darkYellow);
 
     // add a set of default rules that should be suitable for any text
     QList<const HighlightingRuleBase*> rules;

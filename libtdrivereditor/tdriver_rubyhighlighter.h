@@ -37,6 +37,7 @@ protected:
     QTextCharFormat *rubyClassFormat;
     QTextCharFormat *rubySymbolFormat;
     QTextCharFormat *rubyCommentFormat;
+    QTextCharFormat *rubyClassVariableFormat;
 };
 
 #endif // TDRIVER_RUBYHIGHLIGHTER_H
