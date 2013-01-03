@@ -536,7 +536,7 @@ bool MEC::findNestedPairForward(char startCh, QTextCursor &cursor)
 
     while(cur.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor)) {
 
-        char ch = cur.selectedText().at(0).toAscii();
+        char ch = cur.selectedText().at(0).toLatin1();
         if (ch == startCh) {
             ++depth;
         }
@@ -567,7 +567,7 @@ bool MEC::findNestedPairBack(char endCh, QTextCursor &cursor)
 
     while(cur.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor)) {
 
-        char ch = cur.selectedText().at(0).toAscii();
+        char ch = cur.selectedText().at(0).toLatin1();
         if (ch == endCh) {
             ++depth;
         }

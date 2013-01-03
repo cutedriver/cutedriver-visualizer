@@ -22,7 +22,7 @@
 #include <tdriver_debug_macros.h>
 
 #include <QtGui>
-
+#include <QAbstractItemView>
 
 TDriverFeaturStepFileView::TDriverFeaturStepFileView(QWidget *parent) :
     TDriverFeaturAbstractView(tr("Step Definition Files"), parent)
@@ -83,7 +83,7 @@ void TDriverFeaturStepFileView::readFoundFiles()
         }
         else {
             qDebug() << FCFL << path << "ERROR" << file.errorString();
-            view()->setItemDelegateForRow(row, _styleDelegate);
+            view()->setItemDelegateForRow(row, (QAbstractItemDelegate*)_styleDelegate);
             model()->setData(index, QBrush(Qt::red), Qt::ForegroundRole);
         }
     }

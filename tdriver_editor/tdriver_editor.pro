@@ -39,7 +39,7 @@ LIBS += -l$$UTIL_LIB
 INCLUDEPATH += $$EDITORLIBDIR
 #LIBS += -L$$EDITORLIBDIR -l$$EDITOR_LIB
 LIBS += -l$$EDITOR_LIB
-QT += network
+QT += network xml widgets
 
 # For libtdriverfetureditor
 INCLUDEPATH += $$FEATUREDITORLIBDIR

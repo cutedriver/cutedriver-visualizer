@@ -431,7 +431,7 @@ void TDriverImageView::dragAction()
 
             QStringList imgFormats;
             foreach(const QByteArray &format, QImageWriter::supportedImageFormats()) {
-                imgFormats << QString::fromAscii(format);
+                imgFormats << QString::fromLatin1(format);
             }
             QFileDialog *dialog = new QFileDialog(0,
                                                   tr("Save selected area as new image"),

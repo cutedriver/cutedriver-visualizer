@@ -20,21 +20,16 @@
 
 
 #include "tdriver_main_window.h"
-#include <QPlastiqueStyle>
 #include <tdriver_util.h>
 #include <QDateTime>
 #include <QProcess>
 
 static QFile *debugOutFile;
 
-static void output(QtMsgType type, const char *msg)
+static void output(QtMsgType type,const QMessageLogContext &, const QString &message)
 {
-    if (msg == NULL || *msg == 0) return;
-
-    // ?? if (message.contains("Event type")) return;
-
     QByteArray msgBuf;
-    msgBuf.reserve(strlen(msg)+20);
+    msgBuf.reserve(message.length() + 20);
 
     switch ( type ) {
 
@@ -55,7 +50,8 @@ static void output(QtMsgType type, const char *msg)
             break;
     }
 
-    msgBuf.append( msg );
+    msgBuf.append( message );
+
     if (!msgBuf.endsWith('\n'))
         msgBuf.append('\n');
 
@@ -73,7 +69,6 @@ int main(int argc, char *argv[])
     app.setOrganizationName("Nokia");
     app.setApplicationName("TDriver_Visualizer");
 
-    app.setStyle(new QPlastiqueStyle);
     debugOutFile = new QFile(QDir::tempPath() + "/tdriver_visualizer_main.log" );
 
     // workaround for deadlock in Qt 4.7.2+
@@ -84,7 +79,7 @@ int main(int argc, char *argv[])
     QFile::rename(debugOutFile->fileName(), debugOutFile->fileName()+".1");
 
     debugOutFile->open( QIODevice::WriteOnly | QIODevice::Text );
-    qInstallMsgHandler(output);
+    qInstallMessageHandler(output);
     qDebug("%s", qPrintable("Log opened: " + QDateTime::currentDateTime().toString()));
 
     qRegisterMetaType<BAList>("BAList");

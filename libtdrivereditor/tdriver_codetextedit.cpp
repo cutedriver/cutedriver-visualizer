@@ -1547,14 +1547,14 @@ void TDriverCodeTextEdit::highlightBlockDelimiters(QList<QTextEdit::ExtraSelecti
 
         if (delimStr.size() == 1) {
             static const QString delimCharStr("([{}])");
-            QChar delimCh = delimStr.at(0).toAscii();
+            QChar delimCh = delimStr.at(0).toLatin1();
 
             if (delimCharStr.contains(delimCh)) {
                 QTextEdit::ExtraSelection selection;
                 selection.cursor = cur;
                 selection.format.setForeground(pairMatchColor);
 
-                if (MEC::findNestedPair(delimCh.toAscii(), cur)) {
+                if (MEC::findNestedPair(delimCh.toLatin1(), cur)) {
                     // highlight both members of brace char pair with same color
                     QTextEdit::ExtraSelection selection2;
                     selection2.format.setForeground(pairMatchColor);

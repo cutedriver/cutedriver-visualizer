@@ -22,11 +22,11 @@
 
 #include <QtCore/QFile>
 
-#include <QtGui/QTextDocument>
-#include <QtGui/QTextBlock>
-#include <QtGui/QProgressDialog>
-#include <QtGui/QMessageBox>
-#include <QtGui/QGridLayout>
+#include <QTextDocument>
+#include <QTextBlock>
+#include <QProgressDialog>
+#include <QMessageBox>
+#include <QGridLayout>
 
 #include <QPlainTextEdit>
 
@@ -124,7 +124,7 @@ void TDriverRecorder::startRecording()
     mScriptField->setEnabled( false );
 
     BAListMap msg;
-    msg["input"] << mStrActiveDevice.toAscii() << "start_record" << mActiveApp.toAscii();
+    msg["input"] << mStrActiveDevice.toLatin1() << "start_record" << mActiveApp.toLatin1();
 
     setActionsEnabled(false, false, false);
     if (TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, 15000, "start_record")) {
@@ -142,7 +142,7 @@ void TDriverRecorder::startRecording()
 void TDriverRecorder::stopRecording()
 {
     BAListMap msg;
-    msg["input"] << mStrActiveDevice.toAscii() << "stop_record" << mActiveApp.toAscii();
+    msg["input"] << mStrActiveDevice.toLatin1() << "stop_record" << mActiveApp.toLatin1();
     setActionsEnabled(false, false, false);
 
     if (TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, 30000, "stop_record")) {
@@ -207,7 +207,7 @@ void TDriverRecorder::testRecording()
         file.close();
 
         BAListMap msg;
-        msg["input"] << mStrActiveDevice.toAscii() << "test_record" << file.fileName().toLocal8Bit();
+        msg["input"] << mStrActiveDevice.toLatin1() << "test_record" << file.fileName().toLocal8Bit();
         setActionsEnabled(false, false, false);
         if (TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, 15000, "test_record")) {
             QMessageBox::critical( this, tr( "Recording test ok" ), tr("Success"));

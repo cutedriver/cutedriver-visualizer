@@ -20,6 +20,8 @@ INCLUDEPATH += $$UTILLIBDIR
 #LIBS += -L$$UTILLIBDIR -l$$UTIL_LIB
 LIBS += -l$$UTIL_LIB
 
+QT += widgets gui xml
+
 SOURCES += tdriver_featureditor.cpp \
     tdriver_featurabstractview.cpp \
     tdriver_featurfeatureview.cpp \

@@ -80,6 +80,7 @@ TDriverRubyInterface::~TDriverRubyInterface()
 
 void TDriverRubyInterface::startGlobalInstance()
 {
+    qDebug() << "Halalo!";
     qDebug() << FFL;
     Q_ASSERT (!pGlobalInstance);
 
@@ -565,7 +566,7 @@ bool TDriverRubyInterface::executeCmd(const QByteArray &name, BAListMap &cmd_rep
     VALIDATE_THREAD_NOT;
     QString goOnlineError;
     if (!(goOnlineError = goOnline()).isNull()) {
-        cmd_reply["error"] << ("Could not connect to TDriver framework: "+goOnlineError.toAscii());
+        cmd_reply["error"] << ("Could not connect to TDriver framework: "+goOnlineError.toLatin1());
         return false;
     }
 

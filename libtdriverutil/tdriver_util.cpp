@@ -100,7 +100,7 @@ BAList TDriverUtil::toBAList(const QStringList &list)
     BAList ret;
     ret.reserve(list.size());
     for(int ii=0; ii < list.size(); ++ii) {
-        ret << list.at(ii).toAscii();
+        ret << list.at(ii).toLatin1();
     }
     return ret;
 }

@@ -22,11 +22,11 @@
 #define TDRIVERIMAGEVIEW_H
 
 #include <QPoint>
-#include <QtGui/QLabel>
-#include <QtGui/QWidget>
-#include <QtGui/QFrame>
-#include <QtGui/QPaintEvent>
-#include <QtGui/QPainter>
+#include <QLabel>
+#include <QWidget>
+#include <QFrame>
+#include <QPaintEvent>
+#include <QPainter>
 #include <QtCore/QTimer>
 #include <QtCore/QDebug>
 //#include <QWaitCondition>

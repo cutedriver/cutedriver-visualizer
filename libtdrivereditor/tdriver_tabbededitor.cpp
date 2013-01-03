@@ -57,6 +57,7 @@
 #include <QStackedWidget>
 #include <QShortcut>
 #include <QLineEdit>
+#include <QMimeData>
 
 static inline QString strippedName(const QString &fullFileName) {
     return QFileInfo(fullFileName).fileName();
@@ -1154,7 +1155,7 @@ void TDriverTabbedEditor::updateTab(int index)
 
     label.append(suffix);
     if (editor->fileCodec()) {
-        QString codecName(QString::fromAscii(editor->fileCodec()->name()));
+        QString codecName(QString::fromLatin1(editor->fileCodec()->name()));
         const char *bomSuffix = "";
 
         if (codecName.contains("utf", Qt::CaseInsensitive)) {

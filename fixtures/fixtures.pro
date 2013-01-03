@@ -29,6 +29,8 @@ INCLUDEPATH += $$EDITORLIBDIR
 #LIBS += -L$$EDITORLIBDIR -l$$EDITOR_LIB
 LIBS += -l$$EDITOR_LIB
 
+QT += widgets
+
 
 unix: {
 TAS_TARGET_BIN=/usr/bin

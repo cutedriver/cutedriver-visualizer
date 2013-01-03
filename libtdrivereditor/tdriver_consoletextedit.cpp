@@ -28,6 +28,7 @@
 #include <QByteArray>
 #include <QToolBar>
 #include <QTextCharFormat>
+#include <QMimeData>
 
 #include <tdriver_debug_macros.h>
 

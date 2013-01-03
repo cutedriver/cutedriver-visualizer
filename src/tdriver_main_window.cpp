@@ -29,6 +29,9 @@
 #include <ui_tdriver_richtextcontainer.h>
 
 #include <QtGui>
+#include <QErrorMessage>
+#include <QToolBar>
+#include <QToolButton>
 
 #include <tdriver_debug_macros.h>
 
@@ -178,7 +181,7 @@ bool MainWindow::setup()
     if (!outputPath.endsWith('/')) outputPath.append('/');
 
     // prefix fo state history directories
-    stateHistoryFilePathPrefix = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    stateHistoryFilePathPrefix = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     QDir().mkpath(stateHistoryFilePathPrefix);
     stateHistoryFilePathPrefix += "/tdriver_visualizer_state_";
 
@@ -664,7 +667,7 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
         statusbar(tr("Sending disconnect after error!"));
 
         BAListMap msg;
-        msg["input"] << activeDevice.toAscii() << "disconnect";
+        msg["input"] << activeDevice.toLatin1() << "disconnect";
         TDriverRubyInterface::globalInstance()->sendCmd(TDriverUtil::visualizationId, msg);
         fullError += "\n\nDisconnect request sent!";
         statusbar(tr("Disconnect request sent"));
@@ -1090,7 +1093,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType,
 
     do {
         BAListMap msg;
-        msg["input"] = commandString.toAscii().split(' ');
+        msg["input"] = commandString.toLatin1().split(' ');
 
         qDebug() << FCFL << "going to execute" << msg << "Using timeout: " << default_timeout;
         QTime t;
@@ -1113,7 +1116,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType,
             if ( resultEnum & DISCONNECT ) {
                 // disconnect
                 msg.clear();
-                msg["input"] << activeDevice.toAscii() << "disconnect";
+                msg["input"] << activeDevice.toLatin1() << "disconnect";
                 /*bool response2 =*/
                 TDriverRubyInterface::globalInstance()->executeCmd(TDriverUtil::visualizationId, msg, default_timeout );
                 if (msg.contains("error")) {

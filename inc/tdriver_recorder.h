@@ -22,9 +22,9 @@
 #ifndef TDRIVERRECORDER_H
 #define TDRIVERRECORDER_H
 
-#include <QtGui/QDialog>
-#include <QtGui/QPushButton>
-#include <QtGui/QStatusBar>
+#include <QDialog>
+#include <QPushButton>
+#include <QStatusBar>
 
 #include <QMap>
 

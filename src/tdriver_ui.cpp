@@ -211,7 +211,7 @@ void MainWindow::createTreeViewDockWidget()
     //    objectTree->header()->setResizeMode( QHeaderView::Stretch );
 
     objectTree->header()->setStretchLastSection( true );
-    objectTree->header()->setResizeMode( QHeaderView::Interactive );
+    objectTree->header()->setSectionResizeMode( QHeaderView::Interactive );
 
     objectTree->setColumnCount( 3 );
 
@@ -244,9 +244,9 @@ void MainWindow::createPropertiesDockWidget() {
     createPropertiesDockWidgetSignalsTabWidget();
     createPropertiesDockWidgetApiTabWidget();
 
-    tabWidget->setTabText( tabWidget->indexOf( propertiesTab ), QApplication::translate( "MainWindow", "A&ttributes", 0, QApplication::UnicodeUTF8 ) );
-    tabWidget->setTabText( tabWidget->indexOf( methodsTab ), QApplication::translate( "MainWindow", "&Methods", 0, QApplication::UnicodeUTF8 ) );
-    tabWidget->setTabText( tabWidget->indexOf( signalsTab ), QApplication::translate( "MainWindow", "&Signals", 0, QApplication::UnicodeUTF8 ) );
+    tabWidget->setTabText( tabWidget->indexOf( propertiesTab ), QApplication::translate( "MainWindow", "A&ttributes", 0) );
+    tabWidget->setTabText( tabWidget->indexOf( methodsTab ), QApplication::translate( "MainWindow", "&Methods", 0) );
+    tabWidget->setTabText( tabWidget->indexOf( signalsTab ), QApplication::translate( "MainWindow", "&Signals", 0) );
 #if !DISABLE_API_TAB_PENDING_REMOVAL
     tabWidget->setTabText( tabWidget->indexOf( apiTab ), QApplication::translate( "MainWindow", "AP&I", 0, QApplication::UnicodeUTF8 ) );
 #endif

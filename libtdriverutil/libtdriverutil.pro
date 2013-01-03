@@ -23,7 +23,7 @@ include (../visualizer.pri)
 
 TARGET = tdriverutil
 
-QT += network
+QT += network widgets gui
 
 
 TEMPLATE = lib

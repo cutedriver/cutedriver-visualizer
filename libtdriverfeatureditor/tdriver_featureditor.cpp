@@ -28,6 +28,9 @@
 #include <tdriver_debug_macros.h>
 
 #include <QtGui>
+#include <QSplitter>
+#include <QVBoxLayout>
+#include <QAbstractItemView>
 
 
 TDriverFeaturEditor::TDriverFeaturEditor(QWidget *parent) :

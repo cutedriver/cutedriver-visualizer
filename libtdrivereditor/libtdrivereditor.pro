@@ -23,7 +23,7 @@ include (../visualizer.pri)
 
 TARGET = tdrivereditor
 
-QT += network
+QT += network widgets
 
 TEMPLATE = lib
 CONFIG += shared

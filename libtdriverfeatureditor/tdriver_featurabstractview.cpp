@@ -24,6 +24,15 @@
 #include <tdriver_debug_macros.h>
 
 #include <QtGui>
+#include <QStyledItemDelegate>
+#include <QToolBar>
+#include <QListView>
+#include <QComboBox>
+#include <QVBoxLayout>
+#include <QFileDialog>
+#include <QDialog>
+#include <QLabel>
+
 
 TDriverFeaturAbstractView::TDriverFeaturAbstractView(const QString &title, QWidget *parent) :
     QWidget(parent)

@@ -43,9 +43,10 @@
 
 #include "libtdriverutil_global.h"
 
-#include <QLayout>
-#include <QRect>
 #include <QWidgetItem>
+#include <QLayout>
+#include <QStyle>
+#include <QRect>
 
 class LIBTDRIVERUTILSHARED_EXPORT FlowLayout : public QLayout
 {
