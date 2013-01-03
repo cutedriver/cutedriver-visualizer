@@ -240,33 +240,33 @@ void TDriverTabbedEditor::createActions()
     // so they can be fetched with actions() method,
     // so they can be easily added to menus and toolbars
 
-    newAct = new QAction(QIcon(":/images/new.png"), tr("&New file"), this);
+    newAct = new QAction(/*QIcon(":/images/new.png"),*/ tr("&New file"), this);
     newAct->setObjectName("editor new");
     newAct->setShortcuts(QKeySequence::New);
     newAct->setStatusTip(tr("Create a new file in editor"));
     fileActs.append(newAct);
     connect(newAct, SIGNAL(triggered()), this, SLOT(newFile()));
 
-    newFromTemplateAct = new QAction(QIcon(":/images/new.png"), tr("New from &template..."), this);
+    newFromTemplateAct = new QAction(/*QIcon(":/images/new.png"),*/ tr("New from &template..."), this);
     newFromTemplateAct->setObjectName("editor newfromtemplate");
     newFromTemplateAct->setStatusTip(tr("Create a new file from a template"));
     fileActs.append(newFromTemplateAct);
     connect(newFromTemplateAct, SIGNAL(triggered()), this, SLOT(newFromTemplate()));
 
-    openAct = new QAction(QIcon(":/images/open.png"), tr("&Open..."), this);
+    openAct = new QAction(/*QIcon(":/images/open.png"),*/ tr("&Open..."), this);
     openAct->setObjectName("editor open");
     openAct->setShortcuts(QKeySequence::Open);
     openAct->setStatusTip(tr("Open an existing file"));
     fileActs.append(openAct);
     connect(openAct, SIGNAL(triggered()), this, SLOT(open()));
 
-    revertAct = new QAction(QIcon(":/images/revert.png"), tr("Revert"), this);
+    revertAct = new QAction(/*QIcon(":/images/revert.png"),*/ tr("Revert"), this);
     revertAct->setObjectName("editor revert");
     revertAct->setStatusTip(tr("Revert changes from disk"));
     fileActs.append(revertAct);
     connect(revertAct, SIGNAL(triggered()), this, SLOT(revert()));
 
-    saveAct = new QAction(QIcon(":/images/save.png"), tr("&Save"), this);
+    saveAct = new QAction(/*QIcon(":/images/save.png"),*/ tr("&Save"), this);
     saveAct->setObjectName("editor save");
     saveAct->setShortcuts(QKeySequence::Save);
     saveAct->setStatusTip(tr("Save the document to disk"));
@@ -308,35 +308,35 @@ void TDriverTabbedEditor::createActions()
     }
 
     // a tdriver_codetextedit action
-    undoAct = new QAction(QIcon(":/images/undo.png"), tr("&Undo"), this);
+    undoAct = new QAction(/*QIcon(":/images/undo.png"),*/ tr("&Undo"), this);
     undoAct->setObjectName("editor undo");
     undoAct->setShortcuts(QKeySequence::Undo);
     undoAct->setStatusTip(tr("Undo last edit"));
     editActs.append(undoAct);
 
     // a tdriver_codetextedit action
-    redoAct = new QAction(QIcon(":/images/redo.png"), tr("&Redo"), this);
+    redoAct = new QAction(/*QIcon(":/images/redo.png"),*/ tr("&Redo"), this);
     redoAct->setObjectName("editor redo");
     redoAct->setShortcuts(QKeySequence::Redo);
     redoAct->setStatusTip(tr("Redo last undoed edit"));
     editActs.append(redoAct);
 
     // a tdriver_codetextedit action
-    cutAct = new QAction(QIcon(":/images/cut.png"), tr("Cu&t"), this);
+    cutAct = new QAction(/*QIcon(":/images/cut.png"),*/ tr("Cu&t"), this);
     cutAct->setObjectName("editor cut");
     cutAct->setShortcuts(QKeySequence::Cut);
     cutAct->setStatusTip(tr("Cut the current selection's contents to the clipboard"));
     editActs.append(cutAct);
 
     // a tdriver_codetextedit action
-    copyAct = new QAction(QIcon(":/images/copy.png"), tr("&Copy"), this);
+    copyAct = new QAction(/*QIcon(":/images/copy.png"),*/ tr("&Copy"), this);
     copyAct->setObjectName("editor copy");
     copyAct->setShortcuts(QKeySequence::Copy);
     copyAct->setStatusTip(tr("Copy the current selection's contents to the clipboard"));
     editActs.append(copyAct);
 
     // a tdriver_codetextedit action
-    pasteAct = new QAction(QIcon(":/images/paste.png"), tr("&Paste"), this);
+    pasteAct = new QAction(/*QIcon(":/images/paste.png"),*/ tr("&Paste"), this);
     pasteAct->setObjectName("editor paste");
     pasteAct->setShortcuts(QKeySequence::Paste);
     pasteAct->setStatusTip(tr("Paste the clipboard's contents into the current selection"));
@@ -344,7 +344,7 @@ void TDriverTabbedEditor::createActions()
     editActs.append(pasteAct);
 
     // a tdriver_codetextedit action
-    selectAllAct = new QAction(QIcon(":/images/selectall.png"), tr("&Select All"), this);
+    selectAllAct = new QAction(/*QIcon(":/images/selectall.png"), */tr("&Select All"), this);
     selectAllAct->setObjectName("editor selectall");
     selectAllAct->setShortcuts(QKeySequence::SelectAll);
     selectAllAct->setStatusTip(tr("Select all text of current file"));
@@ -388,7 +388,7 @@ void TDriverTabbedEditor::createActions()
         optActs.append(tmp);
     }
 
-    runAct = new QAction(QIcon(":/images/run.png"), tr("&Run with ruby"), this);
+    runAct = new QAction(/*QIcon(":/images/run.png"),*/ tr("&Run with ruby"), this);
     runAct->setObjectName("editor run ruby");
     runAct->setShortcut(QKeySequence(Qt::Key_F9));
     runAct->setStatusTip(tr("Save all and run current file with ruby, close debugger"));
@@ -405,7 +405,7 @@ void TDriverTabbedEditor::createActions()
     //debug1Act->setVisible(false);
 #endif
 
-    debug2Act = new QAction(QIcon(":/images/debug2.png"), tr("&Run with integrated debugger"), this);
+    debug2Act = new QAction(/*QIcon(":/images/debug2.png"),*/ tr("&Run with integrated debugger"), this);
     debug2Act->setObjectName("editor run integrated");
     debug2Act->setShortcut(QKeySequence(Qt::Key_F5)); // see debugConsole continueAct
     debug2Act->setStatusTip(tr("Save all and run current file with editor-integrated debugger"));

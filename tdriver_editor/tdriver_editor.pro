@@ -35,6 +35,10 @@ LIBS += -l$$UTIL_LIB
     QT += sql
 }
 
+mac {
+   CONFIG -= app_bundle
+}
+
 # For libtdrivereditor:
 INCLUDEPATH += $$EDITORLIBDIR
 #LIBS += -L$$EDITORLIBDIR -l$$EDITOR_LIB
