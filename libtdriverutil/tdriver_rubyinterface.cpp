@@ -80,7 +80,6 @@ TDriverRubyInterface::~TDriverRubyInterface()
 
 void TDriverRubyInterface::startGlobalInstance()
 {
-    qDebug() << "Halalo!";
     qDebug() << FFL;
     Q_ASSERT (!pGlobalInstance);
 
