@@ -16,8 +16,8 @@
 ** of this file. 
 ** 
 ****************************************************************************/ 
- 
- 
+
+
 
 #ifndef VISUALIZERACCESSOR_H
 #define VISUALIZERACCESSOR_H
@@ -30,10 +30,10 @@
 
 class VisualizerAccessor : public QObject, public TasFixturePluginInterface
 {
+    Q_OBJECT
+    Q_PLUGIN_METADATA(IID "com.nokia.testability.VisualizerAccessor" FILE "visualizeraccessor.json")
+    Q_INTERFACES(TasFixturePluginInterface)
 
-Q_OBJECT
-Q_INTERFACES(TasFixturePluginInterface)
- 
 public:
     VisualizerAccessor(QObject* parent=0);
 
@@ -47,4 +47,4 @@ private:
 };
 
 #endif
- 
+

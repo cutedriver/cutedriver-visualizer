@@ -36,7 +36,6 @@
 //#include <dispatcher.h>
 //#include <includes.h>
 
-Q_PLUGIN_METADATA(VisualizerAccessor)
 
 // fixture version information
 static QString FIXTURE_NAME = "VisualizerAccessor";

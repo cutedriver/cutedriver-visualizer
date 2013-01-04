@@ -60,6 +60,7 @@ INCLUDEPATH += ../libtdrivereditor
 # Input
 HEADERS += visualizeraccessor.h
 SOURCES += visualizeraccessor.cpp
+OTHER_FILES += visualizeraccessor.json
 
 DESTDIR = lib
 
