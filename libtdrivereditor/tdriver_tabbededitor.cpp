@@ -302,7 +302,7 @@ void TDriverTabbedEditor::createActions()
     connect(closeAct, SIGNAL(triggered()), this, SLOT(closeCurrent()));
 
     for (int i = recentFileActs.size(); i < MaxRecentFiles; ++i) {
-        recentFileActs.append(new QAction(this));
+        recentFileActs.append(new QAction("", this));
         recentFileActs.last()->setVisible(false);
         connect(recentFileActs.last(), SIGNAL(triggered()), this, SLOT(openRecentFile()));
     }

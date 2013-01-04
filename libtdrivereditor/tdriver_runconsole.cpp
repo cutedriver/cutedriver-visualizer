@@ -46,7 +46,7 @@ static quint16 controlPort = 47748; // note: ruby-debug 0.10.0 with ruby 1.8 def
 
 static const char TDRIVER_RUBY_INTERACTSCRIPT[] = "tdriver_rubyinteract.rb";
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 #define DEFAULT_RUBY_BIN "ruby.exe"
 #define DEFAULT_RDEBUG_BIN "ruby.exe"
 #define DEFAULT_RDEBUG_ARGS (QStringList() << "C:/Ruby/bin/rdebug")
@@ -100,7 +100,7 @@ TDriverRunConsole::TDriverRunConsole(bool makeProc, QWidget *parent) :
 TDriverRunConsole::~TDriverRunConsole()
 {
     if (proc && proc->state() != QProcess::NotRunning) {
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
         proc->kill();
 #else
         proc->terminate();
@@ -124,7 +124,7 @@ void TDriverRunConsole::createActions()
     addAction(terminateAct);
     if (proc) {
         connect(terminateAct, SIGNAL(triggered()), proc, SLOT(terminate()));
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
         // on Windows terminate means window close, and ruby scripts don't care about it
         // TODO: add option to enable terminate for scripts with GUI.
         terminateAct->setEnabled(false);
@@ -274,7 +274,7 @@ void TDriverRunConsole::rdebugReady()
     }
     else {
         qDebug() << FCFL << "Bad outputmode" << outputMode <<", script probably ended, signal ignored.";
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
         QMessageBox::warning( this,
                              tr("Running script failed unexpectedly"),
                              tr("Check this:\n  Launch Windows Task Manager, then\n  kill 'ruby.exe' if it is running"));
@@ -327,7 +327,7 @@ void TDriverRunConsole::endProcess(void)
 {
     if (!proc) return;
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
     proc->kill();
 #else
     proc->terminate();

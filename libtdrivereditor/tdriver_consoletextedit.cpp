@@ -37,7 +37,7 @@ TDriverConsoleTextEdit::TDriverConsoleTextEdit(QWidget *parent) :
         QPlainTextEdit(parent),
         cmdLine(NULL),
         io(NULL),
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
         localEcho(false),
 #else
         localEcho(true),

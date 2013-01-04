@@ -37,9 +37,9 @@ TDriverUtil::TDriverUtil(QObject *parent) :
 
 QString TDriverUtil::helpUrlString(const char *file)
 {
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
         return QString("C:/tdriver/visualizer/help/")+file;
-#else // defined(Q_WS_X11) || defined(Q_WS_MAC)
+#else // defined(Q_WS_X11) || defined(Q_OS_MAC)
         return QString ("/opt/tdriver_visualizer/help/")+file;
 #endif
 }
@@ -54,9 +54,9 @@ QString TDriverUtil::tdriverHelperFilePath(const QString &filename, const QStrin
     }
 
     if (fullpath.isEmpty()) {
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
         fullpath = "C:/tdriver/visualizer/" + filename;
-#else // defined(Q_WS_X11) || defined(Q_WS_MAC)
+#else // defined(Q_WS_X11) || defined(Q_OS_MAC)
         fullpath = "/etc/tdriver/visualizer/" + filename;
 #endif
     }
