@@ -377,7 +377,7 @@ void MainWindow::setActiveDevice(const QString &deviceName )
 
         // enable recording menu if device type is 'kind of' qt
         recordMenu->setEnabled( !applicationsNamesMap.empty()
-                               && TDriverUtil::isQtSut(activeDeviceParams.value( "type" )));
+                                && TDriverUtil::isQtSut(activeDeviceParams.value( "type" )));
         qDebug() << FCFL << deviceName << "was set";
     }
     else {
@@ -443,10 +443,13 @@ bool MainWindow::getActiveDeviceParameters()
                 activeDeviceParams.insert(keys.at(ii), values.at(ii));
             }
             //qDebug() << FCFL << activeDevice << ":" << activeDeviceParams;
+        } else {
+            qDebug() << FCFL << "BAD get_parameter keys and/or values counts:" << keys.count() << values.count();
         }
-        else qDebug() << FCFL << "BAD get_parameter keys and/or values counts:" << keys.count() << values.count();
     }
-    else qDebug() << FCFL << "FAILED get_all_parameters" << activeDevice;
+    else {
+        qDebug() << FCFL << "FAILED get_all_parameters" << activeDevice;
+    }
 
     qDebug() << FCFL << "got" << result;
     return result;
@@ -645,7 +648,7 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
     if (name != TDriverUtil::visualizationId) return; // not for us
 
     if (!sentTDriverMsgs.contains(seqNum)) {
-        qDebug() << FCFL << "received visualization message with unknown seqNum:" << seqNum;// << reply;
+        qDebug() << FCFL << "received visualization message with unknown seqNum:" << seqNum << name;
         return;
     }
 
@@ -660,7 +663,7 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
         handleError = true;
         unsigned resultEnum = OK;
         QString clearError, shortError, fullError;
-        processErrorMessage(sentMsg.type, "<N/A>", reply, "<unknownn>",
+        processErrorMessage(sentMsg.type, "<N/A>", reply, "<unknown>",
                             resultEnum, clearError, shortError, fullError);
 
         qDebug() << FCFL << "Sending disconnect after error:" << resultEnum << fullError;
@@ -951,40 +954,40 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QStri
         else
 #endif
             if ( tdriverError.contains( "No plugins and no ui for server" ) ) {
-            shortError = tr( "Failed to refresh application screen capture.\n\nLaunch some application with UI and try again." );
-            resultEnum = WARNING;
-        }
+                shortError = tr( "Failed to refresh application screen capture.\n\nLaunch some application with UI and try again." );
+                resultEnum = WARNING;
+            }
 
-        else if ( tdriverError.contains( "No connection could be made because the target machine actively refused it." ) ) {
-            shortError = tr( "Please start/restart QTTAS server." );
-            resultEnum = DISCONNECT | RETRY;
-        }
+            else if ( tdriverError.contains( "No connection could be made because the target machine actively refused it." ) ) {
+                shortError = tr( "Please start/restart QTTAS server." );
+                resultEnum = DISCONNECT | RETRY;
+            }
 
-        else if( tdriverError.contains( "An existing connection was forcibly closed by the remote host." ) ) {
-            shortError = tr( "Please disconnect the SUT from file menu and try again.\n\nIf the problem persists, restart QTTAS server/device or contact support." );
-            resultEnum = DISCONNECT | RETRY;
-        }
+            else if( tdriverError.contains( "An existing connection was forcibly closed by the remote host." ) ) {
+                shortError = tr( "Please disconnect the SUT from file menu and try again.\n\nIf the problem persists, restart QTTAS server/device or contact support." );
+                resultEnum = DISCONNECT | RETRY;
+            }
 
-        else if( tdriverError.contains( "Connection refused" ) ) {
-            shortError = tr( "Unable to connect to target. Please verify that required servers are running and target is connected properly.\n\nIf the problem persists, contact support." );
-            resultEnum = DISCONNECT | RETRY;
-        }
+            else if( tdriverError.contains( "Connection refused" ) ) {
+                shortError = tr( "Unable to connect to target. Please verify that required servers are running and target is connected properly.\n\nIf the problem persists, contact support." );
+                resultEnum = DISCONNECT | RETRY;
+            }
 
-        else if( tdriverError.contains( "No data retrieved (IOError)" ) ) {
-            shortError = tr( "Unable to read data from target. Please verify that required servers are running and target is connected properly.\n\nIf the problem persists, contact support." );
-            resultEnum = DISCONNECT | RETRY;
-        }
+            else if( tdriverError.contains( "No data retrieved (IOError)" ) ) {
+                shortError = tr( "Unable to read data from target. Please verify that required servers are running and target is connected properly.\n\nIf the problem persists, contact support." );
+                resultEnum = DISCONNECT | RETRY;
+            }
 
-        else if( tdriverError.contains( "Broken pipe (Errno::EPIPE)" ) ) {
-            shortError = tr( "Unable to connect to target due to broken pipe.\n\nPlease disconnect SUT, verify that required servers are running/target is connected properly and try again.\n\nIf the problem persists, contact support." );
-            resultEnum = DISCONNECT | RETRY;
-        }
+            else if( tdriverError.contains( "Broken pipe (Errno::EPIPE)" ) ) {
+                shortError = tr( "Unable to connect to target due to broken pipe.\n\nPlease disconnect SUT, verify that required servers are running/target is connected properly and try again.\n\nIf the problem persists, contact support." );
+                resultEnum = DISCONNECT | RETRY;
+            }
 
-        else {
-            // unknown error
-            shortError = tdriverError;
-            resultEnum = FAIL;
-        }
+            else {
+                // unknown error
+                shortError = tdriverError;
+                resultEnum = FAIL;
+            }
     }
 
     // do fullError
@@ -1006,9 +1009,9 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QStri
 
 
 bool MainWindow::sendTDriverCommand( ExecuteCommandType commandType,
-                                    const QStringList &inputList,
-                                    const QString &errorName,
-                                    const QString &typeStr)
+                                     const QStringList &inputList,
+                                     const QString &errorName,
+                                     const QString &typeStr)
 {
     BAListMap msg;
     msg["input"] = TDriverUtil::toBAList(inputList);
@@ -1065,9 +1068,9 @@ bool MainWindow::resendTDriverCommand(SentTDriverMsg &msg)
 
 
 bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType,
-                                       const QString &commandString,
-                                       const QString &additionalInformation,
-                                       BAListMap *reply )
+                                        const QString &commandString,
+                                        const QString &additionalInformation,
+                                        BAListMap *reply )
 {
     QMessageBox infoBox(QMessageBox::Information,
                         tr("Synchronous TDriver Command"),
