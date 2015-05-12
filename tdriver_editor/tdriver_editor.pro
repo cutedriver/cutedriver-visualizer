@@ -18,7 +18,7 @@
 # ###########################################################################
 include (../visualizer.pri)
 TEMPLATE = app
-TARGET = tdriver_visualizer
+TARGET = cutedriver_visualizer
 DEPENDPATH += .. \
     ../inc
 INCLUDEPATH += .. \
@@ -83,7 +83,7 @@ QT += xml
 
 # install
 unix: {
-    target.path = /opt/tdriver_visualizer
+    target.path = /opt/cutedriver_visualizer
     documentation.path = /opt/tdriver_visualizer/help
     documentation.files = ../help/*
 
@@ -100,12 +100,12 @@ unix: {
     tdriver_editor_complete.files += $$DESTDIR/libtdriverfeatureditor.so.1
     tdriver_editor_complete.files += $$DESTDIR/libcommon.so.1
     tdriver_editor_complete.files += $$EDITOR_PROTO_DIR/editor_proto
-    tdriver_editor_complete.path = /opt/tdriver_visualizer
+    tdriver_editor_complete.path = /opt/cutedriver_visualizer
     OBJECTS_DIR = ../build/tdriver_editor
     MOC_DIR = ../build/tdriver_editor
 
     # Standalone version, no dependencies embedded
-    tdriver_editor_standalone.files = ../bin/tdriver_visualizer
+    tdriver_editor_standalone.files = ../bin/cutedriver_visualizer
     tdriver_editor_standalone.path = /usr/bin
 
     tdriver_editor_standalone_share.files = $$EDITORLIBDIR/templates/* $$EDITORLIBDIR/completions/*

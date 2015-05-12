@@ -89,7 +89,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::tdriverMsgSetTitleText()
 {
-    tdriverMsgBox->setWindowTitle(tr("TDriver Notification %1/%2").
+    tdriverMsgBox->setWindowTitle(tr("cuTeDriver Notification %1/%2").
                                   arg(qMin(tdriverMsgShown, tdriverMsgTotal)).
                                   arg(tdriverMsgTotal));
     //qDebug() << FCFL << "set tdriverMsgBox title to" << tdriverMsgBox->windowTitle();
@@ -197,10 +197,10 @@ bool MainWindow::setup()
     offlineMode = true;
     QString goOnlineError;
     QString installedDriverVersion;
-    statusbar(tr("Starting TDriver interface process..."));
+    statusbar(tr("Starting cuTeDriver interface process..."));
 
     if (!(goOnlineError = TDriverRubyInterface::globalInstance()->goOnline()).isNull()) {
-        tdriverMsgAppend(tr("TDriver Visualizer failed to interface with TDriver framework:\n\n" )
+        tdriverMsgAppend(tr("cuTeDriver Visualizer failed to interface with cuTeDriver framework:\n\n" )
                          + goOnlineError
                          + tr("\n\n=== Launching in offline mode ==="));
     }
@@ -208,7 +208,7 @@ bool MainWindow::setup()
         installedDriverVersion = getDriverVersionNumber();
 
         if ( !checkVersion( installedDriverVersion, REQUIRED_DRIVER_VERSION ) ) {
-            tdriverMsgAppend(tr("TDriver Visualizer is not compatible with this version of TDriver. Please update your TDriver environment.\n\n") +
+            tdriverMsgAppend(tr("cuTeDriver Visualizer is not compatible with this version of cuTeDriver. Please update your cuTeDriver environment.\n\n") +
                              tr("Installed version: ") + installedDriverVersion +
                              tr("\nRequired version: ") + REQUIRED_DRIVER_VERSION + tr(" or later")+
                              tr("\n\n=== Launching in offline mode ===")
@@ -220,14 +220,14 @@ bool MainWindow::setup()
     }
 
     if (offlineMode) {
-        statusbar(tr("Failed to start TDriver interface process"));
+        statusbar(tr("Failed to start cuTeDriver interface process"));
     }
     else {
-        statusbar(tr("TDriver interface started"));
+        statusbar(tr("cuTeDriver interface started"));
     }
 
     if (offlineMode) {
-        qWarning("Failed to initialize TDriver, closing Ruby process");
+        qWarning("Failed to initialize cuTeDriver, closing Ruby process");
         TDriverRubyInterface::globalInstance()->requestClose();
     }
 
@@ -261,7 +261,7 @@ bool MainWindow::setup()
         QMessageBox::StandardButton result = QMessageBox::critical(
                     this,
                     tr("Missing file"),
-                    tr("Could not locate TDriver parameters file:\n\n  %1\n\n").arg(parametersFile) +
+                    tr("Could not locate cuTeDriver parameters file:\n\n  %1\n\n").arg(parametersFile) +
                     tr("Please click Ok to select correct folder, or Cancel to quit.\n\nNote: Location will be saved to Visualizer configuration."),
                     QMessageBox::Ok | QMessageBox::Cancel);
 
@@ -269,7 +269,7 @@ bool MainWindow::setup()
             return false; // exit
         }
 
-        tdriverPath = selectFolder( "Select folder of TDriver default tdriver_parameters.xml file", "Folder", QFileDialog::AcceptOpen, keyLastTDriverDir);
+        tdriverPath = selectFolder( "Select folder of cuTeDriver default tdriver_parameters.xml file", "Folder", QFileDialog::AcceptOpen, keyLastTDriverDir);
         if (!tdriverPath.endsWith('/')) tdriverPath += '/';
     }
     settings.setValue( "files/location", tdriverPath );
@@ -634,7 +634,7 @@ void MainWindow::statusbar( QString text, int currentProgressValue, int maxProgr
 
 void MainWindow::handleRbiError(QString title, QString text, QString details)
 {
-    tdriverMsgAppend(tr("Error from TDriver interface:\n")
+    tdriverMsgAppend(tr("Error from cuTeDriver interface:\n")
                      + title
                      + "\n____________________\n"
                      + text
@@ -899,7 +899,7 @@ void MainWindow::receiveTDriverMessage(quint32 seqNum, QByteArray name, const BA
 
 void MainWindow::messageTimeoutSlot()
 {
-    statusbar(tr("TDriver interface time-out!"), 1000);
+    statusbar(tr("cuTeDriver interface time-out!"), 1000);
     resetMessageSequenceFlags();
 }
 
@@ -939,7 +939,7 @@ void MainWindow::processErrorMessage(ExecuteCommandType commandType, const QStri
         case commandRefreshImage: clearError = tr("Failed to refresh screen capture image."); break;
         case commandKeyPress: clearError = tr("Failed to press key %1.").arg(additionalInformation); break;
         case commandSetAttribute: clearError = tr("Failed to set attribute %1.").arg(additionalInformation); break;
-        case commandGetVersionNumber: clearError = tr("Failed to retrieve TDriver version number."); break;
+        case commandGetVersionNumber: clearError = tr("Failed to retrieve cuTeDriver version number."); break;
         case commandStartApplication: clearError = tr("Failed to start application."); break;
         default: clearError = tr("Error with command string '%1'").arg(commandString);
         }
@@ -1031,7 +1031,7 @@ bool MainWindow::sendTDriverCommand( ExecuteCommandType commandType,
     else {
         // send message with sequence number 0 to trigger any followup action to happen
         if (!errorName.isNull()) {
-            statusbar(tr("ERROR: Sending %1 command to TDriver failed!").arg(errorName), 1000);
+            statusbar(tr("ERROR: Sending %1 command to cuTeDriver failed!").arg(errorName), 1000);
         }
         sentTDriverMsgs[0] = SentTDriverMsg(commandType, msg, errorName, typeStr, -1);
         receiveTDriverMessage(0, TDriverUtil::visualizationId);
@@ -1057,7 +1057,7 @@ bool MainWindow::resendTDriverCommand(SentTDriverMsg &msg)
     }
     else {
         if (!msg.err.isNull()) {
-            statusbar(tr("ERROR: Sending %1 command to TDriver failed!").arg(msg.err), 1000);
+            statusbar(tr("ERROR: Sending %1 command to cuTeDriver failed!").arg(msg.err), 1000);
         }
         sentTDriverMsgs[0] = msg;
         receiveTDriverMessage(0, TDriverUtil::visualizationId);
@@ -1073,8 +1073,8 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType,
                                         BAListMap *reply )
 {
     QMessageBox infoBox(QMessageBox::Information,
-                        tr("Synchronous TDriver Command"),
-                        tr("Executing TDriver command:\n\n")+commandString);
+                        tr("Synchronous cuTeDriver Command"),
+                        tr("Executing cuTeDriver command:\n\n")+commandString);
 
     infoBox.setStandardButtons(0);
     infoBox.show();
@@ -1159,7 +1159,7 @@ bool MainWindow::executeTDriverCommand( ExecuteCommandType commandType,
 void MainWindow::createActions()
 {
 
-    parseSUT = new QAction( tr("&Parse TDriver parameters xml file..." ), this);
+    parseSUT = new QAction( tr("&Parse cuTeDriver parameters xml file..." ), this);
     parseSUT->setObjectName("main parsesut");
     parseSUT->setShortcuts(QList<QKeySequence>() <<
                            QKeySequence(tr("Ctrl+M, P")) <<

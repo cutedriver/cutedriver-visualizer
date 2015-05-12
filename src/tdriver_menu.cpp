@@ -455,7 +455,7 @@ void MainWindow::openRecordWindow()
         if (!currentApplication.useId()) {
 
             QMessageBox::warning(this,
-                                 tr("TDriver Visualizer Recorder" ),
+                                 tr("cuTeDriver Visualizer Recorder" ),
                                  tr("In order to start recording a target application must be selected\n"
                                     "from applications menu.\n\nPlease select one and try again."));
 

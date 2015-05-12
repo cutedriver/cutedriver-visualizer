@@ -62,7 +62,7 @@ void TDriverRecorder::setup() {
 
     resize( 800,500 );
 
-    setWindowTitle( "TDriver Visualizer Recorder" );
+    setWindowTitle( "cuTeDriver Visualizer Recorder" );
 
     mScriptField = new QPlainTextEdit( this );
     mScriptField->setObjectName("recorder text");

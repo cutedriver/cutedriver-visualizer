@@ -53,7 +53,7 @@ void MainWindow::showAboutVisualizer() {
             this,
             tr("About Visualizer"),
             tr("<table><tr><td width=\"250\" align=\"center\" valign=\"middle\">") +
-            tr("TDriver Visualizer") +
+            tr("cuTeDriver Visualizer") +
             tr("<br>Build number: <b>") + VISUALIZER_VERSION + tr("</b>") +
             tr("</tr></td></table>")
             );
@@ -63,10 +63,7 @@ void MainWindow::showAboutVisualizer() {
 //    Shows the Visualizer help page.
 void MainWindow::showVisualizerHelp()
 {
-    //showContextVisualizerAssistant("howto-visualizer.html");
-    //QUrl helpUrl("https://cwiki.nokia.com/Testability/TDriverVisualizer");
-
-    QUrl helpUrl("https://projects.forum.nokia.com/Testabilitydriver/wiki/FeatureVisualizer");
+    QUrl helpUrl("https://github.com/nomovok-opensource/cutedriver-agent_qt/wiki");
     QDesktopServices::openUrl(helpUrl);
 }
 
@@ -74,8 +71,6 @@ void MainWindow::showVisualizerHelp()
 //    Shows TDriver API Doc for qt windows
 void MainWindow::showVisualizerQtWindowsHelp()
 {
-    //showContextVisualizerAssistant("howto-visualizer.html");
-    //QUrl helpUrl("https://cwiki.nokia.com/Testability/TDriverVisualizer");
     QUrl helpUrl(TDriverUtil::helpUrlString("/qt_windows/index.html"));
     QDesktopServices::openUrl(helpUrl);
 }
@@ -83,8 +78,6 @@ void MainWindow::showVisualizerQtWindowsHelp()
 //    Shows TDriver API Doc for qt linux
 void MainWindow::showVisualizerQtLinuxHelp()
 {
-    //showContextVisualizerAssistant("howto-visualizer.html");
-    //QUrl helpUrl("https://cwiki.nokia.com/Testability/TDriverVisualizer");
     QUrl helpUrl(TDriverUtil::helpUrlString("/qt_linux/index.html"));
     QDesktopServices::openUrl(helpUrl);
 }
@@ -92,8 +85,6 @@ void MainWindow::showVisualizerQtLinuxHelp()
 //    Shows TDriver API Doc for qt symbian
 void MainWindow::showVisualizerQtSymbianHelp()
 {
-    //showContextVisualizerAssistant("howto-visualizer.html");
-    //QUrl helpUrl("https://cwiki.nokia.com/Testability/TDriverVisualizer");
     QUrl helpUrl(TDriverUtil::helpUrlString("/qt_symbian/index.html"));
     QDesktopServices::openUrl(helpUrl);
 }
@@ -101,7 +92,7 @@ void MainWindow::showVisualizerQtSymbianHelp()
 //    Shows the main TDriver Visualizer help page.
 void MainWindow::showMainVisualizerAssistant()
 {
-    QUrl helpUrl("https://projects.forum.nokia.com/Testabilitydriver/wiki/FeatureDocumentation");
+    QUrl helpUrl("https://github.com/nomovok-opensource/cutedriver-agent_qt/wiki");
     QDesktopServices::openUrl(helpUrl);
 }
 
@@ -161,7 +152,7 @@ void MainWindow::createUi()
 
 void MainWindow::updateWindowTitle() {
 
-    QString tempTitle = tr("TDriver Visualizer v%1 - ").arg(VISUALIZER_VERSION);
+    QString tempTitle = tr("cuTeDriver Visualizer v%1 - ").arg(VISUALIZER_VERSION);
 
     if ( currentApplication.isForeground() ){
         tempTitle += tr("Foreground app: ");

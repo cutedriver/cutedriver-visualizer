@@ -47,7 +47,7 @@ void MainWindow::createXMLFileDataWindow() {
     // reset find dialog position, stored before closing the dialog and restored when dialog opened
     xmlViewPos = QPoint(-1, -1);
 
-    xmlView->setWindowTitle( "TDriver Visualizer XML" );
+    xmlView->setWindowTitle( "cuTeDriver Visualizer XML" );
 
     QVBoxLayout *layout = new QVBoxLayout( xmlView );
     layout->setObjectName("xmlview");
