@@ -1279,7 +1279,7 @@ void MainWindow::createActions()
 
     visualizerAssistant = new QAction( this );
     visualizerAssistant->setObjectName("main help assistant");
-    visualizerAssistant->setText( tr( "TDriver &Help" ) );
+    visualizerAssistant->setText( tr( "cuTeDriver &Help" ) );
     // Remove the next line if F1 presses are to be handled in the custom event handler ( for context sensitivity ).
     visualizerAssistant->setShortcut( tr( "F1" ) );
 
