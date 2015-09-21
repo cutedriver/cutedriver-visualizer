@@ -34,8 +34,8 @@
 #include "tdriver_debug_macros.h"
 
 // debug macros
-#define VALIDATE_THREAD (Q_ASSERT(validThread == NULL || validThread == QThread::currentThread()))
-#define VALIDATE_THREAD_NOT (Q_ASSERT(validThread != QThread::currentThread()))
+#define VALIDATE_THREAD Q_ASSERT(validThread == NULL || validThread == QThread::currentThread())
+#define VALIDATE_THREAD_NOT Q_ASSERT(validThread != QThread::currentThread())
 
 
 TDriverRbiProtocol::TDriverRbiProtocol(QAbstractSocket *connection, QMutex *cm, QWaitCondition *mwc, QWaitCondition *hwc, QObject *parent) :

@@ -42,8 +42,8 @@ static const char InteractDelimCstr[] = { delimChar, delimChar, 0 };
 
 
 // debug macros
-#define VALIDATE_THREAD (Q_ASSERT(validThread == QThread::currentThread()))
-#define VALIDATE_THREAD_NOT (Q_ASSERT(validThread != QThread::currentThread()))
+#define VALIDATE_THREAD Q_ASSERT(validThread == QThread::currentThread())
+#define VALIDATE_THREAD_NOT Q_ASSERT(validThread != QThread::currentThread())
 
 
 TDriverRubyInterface::TDriverRubyInterface() :
