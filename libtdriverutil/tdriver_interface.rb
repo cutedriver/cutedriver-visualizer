@@ -563,7 +563,7 @@ class ListenerObject
   def initialize
 
     # set directory where to save xml & png
-    if (/win/ =~ Config::CONFIG[ 'target_os' ] or /mingw/  =~ Config::CONFIG[ 'target_os' ]) and /darwin/io !~ Config::CONFIG[ 'target_os' ]
+    if (/win/ =~ RbConfig::CONFIG[ 'target_os' ] or /mingw/  =~ RbConfig::CONFIG[ 'target_os' ]) and /darwin/io !~ RbConfig::CONFIG[ 'target_os' ]
       # windows
       set_working_directory( File.expand_path( ENV[ 'TEMP' ] ) )
     else
