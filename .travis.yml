@@ -1,3 +1,62 @@
 notifications:
   slack:
     secure: PubmDlEnZpcogNAknukIyVvmQeRasbs3ZROAaGN5gFRM+SHad3HvZMbZNORcKnnj23t7FllU3deGEVU3Zy1PmzAddI3d8D+aSt9TMSSSNGVckmTt2EA6qdEWfz8drKMw9irkh7ZFXWSOJcn9YSWhxaUFDEwO7dwspUTu37jRmdKchSYBvjrGNXrBKigbC2+BgtkFVH+22KP9qPNMcFMBPL9DeJLweSSQiALvsIb0sOeMPtw02ngD4EATUyja2+Ryset6jqT25jzHqMvS1RDx9yI3KxCmH6xgKwo4Gck3cXKytMF5Qneb+XYQ1Q/EaQAIMDFN8QeLimW8qByj9HJZb+xL6kuVJFucdLItlun1PMTTtlC4TzYCFivS4w27RMMS5F+Sk+/cjM9LGcaKdRDWGt7FWdyFeAlBbTvF9f0/c4WFpHV470OZ74eeH3ogeOfWIognzhxJIaUK1gbv46EHkv8iy4VTxABoJhRAOxY6ycyFkd94hxgkm8Z9n2Jl8ArmvZV/igHj3BL54FUWVhqpV90WKVrAu4F87BIxU/WreQKdM9BgLPy+z4sBf+U1IoquUmz6gUnfTjDOX5t2AVHaBjJKXVVu6NxVtr1J/1LQ+mIpuL+gnKT5H5SWUaHt3h6RCvPezU5QnMzjYp2LxOsuW20qPonzYznp2fN7K11N/u0=
+
+language: cpp
+os:
+- linux
+- osx
+dist: trusty
+compiler:
+- clang
+- gcc
+sudo: required
+env:
+- QT=56 BREW=5  PPA=beineri/opt-qt562-trusty
+- QT=57 BREW=ex PPA=beineri/opt-qt571-trusty
+- QT=58 BREW=ex PPA=beineri/opt-qt58-trusty
+matrix:
+  allow_failures:
+  - os: osx
+    env: QT=55 BREW=55 PPA=beineri/opt-qt551-trusty
+  exclude:
+  - os: osx
+    env: QT=57 BREW=ex PPA=beineri/opt-qt571-trusty
+  - os: osx
+    env: QT=58 BREW=ex PPA=beineri/opt-qt58-trusty
+  - os: osx
+    compiler: gcc
+    env: QT=5  BREW=5
+  - os: osx
+    compiler: gcc
+    env: QT=56 BREW=5  PPA=beineri/opt-qt562-trusty
+before_install:
+- '[[ "$TRAVIS_OS_NAME" != linux || -z "$PPA" ]] || sudo add-apt-repository -y ppa:$PPA'
+- '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
+- '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
+install:
+- echo Installing QT ${QT}
+- '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" != */opt-* ]] || sudo apt-get -qy install
+  qt${QT}3d qt${QT}base qt${QT}canvas3d qt${QT}connectivity qt${QT}declarative qt${QT}graphicaleffects
+  qt${QT}imageformats qt${QT}location qt${QT}multimedia qt${QT}quickcontrols qt${QT}quickcontrols2
+  qt${QT}script qt${QT}sensors qt${QT}serialport qt${QT}svg qt${QT}tools qt${QT}translations
+  qt${QT}x11extras qt${QT}xmlpatterns'
+- '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt$BREW'
+- '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt$BREW'
+- echo Installing Dependencies ${QT}
+- '[[ "$TRAVIS_OS_NAME" != linux ]] || sudo apt-get -qy install libx11-dev libxext-dev
+  libxi-dev libxtst-dev'
+before_script:
+- '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != clang++ ]] || export QMAKESPEC=linux-clang'
+- '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
+- '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
+- '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != g++     ]] || export QMAKESPEC=macx-g++'
+- '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" != */opt-* ]] || . /opt/qt$QT/bin/qt$QT-env.sh'
+- '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" == */opt-* ]] || export QT_SELECT=qt5'
+- pushd $TRAVIS_BUILD_DIR
+- sed -i "s/ Config::CONFIG/RbConfig::CONFIG/g" libtdriverutil/tdriver_interface.rb
+- qmake -r CONFIG+=no_webkit CONFIG+=no_mobility
+- popd
+script:
+- pushd $TRAVIS_BUILD_DIR
+- make all -j2
